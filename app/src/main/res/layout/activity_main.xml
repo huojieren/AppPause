@@ -28,15 +28,23 @@
         android:layout_marginBottom="16dp"
         android:text="授予使用情况访问权限" />
 
-    <!-- 显示悬浮窗按钮（测试用） -->
+    <!--    &lt;!&ndash; 显示悬浮窗按钮（测试用） &ndash;&gt;-->
+    <!--    <Button-->
+    <!--        android:id="@+id/showFloatingWindowButton"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginBottom="16dp"-->
+    <!--        android:text="测试悬浮窗" />-->
+
+    <!-- 跳转到监控应用列表按钮 -->
     <Button
-        android:id="@+id/showFloatingWindowButton"
+        android:id="@+id/monitoredAppsButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="测试悬浮窗" />
+        android:text="监控应用列表" />
 
-    <!-- 开始监控按钮 -->
+    <!-- 开始/停止监控按钮 -->
     <Button
         android:id="@+id/startMonitoringButton"
         android:layout_width="match_parent"
