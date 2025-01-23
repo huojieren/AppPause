@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -107,8 +109,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         appMonitor.startMonitoring { packageName ->
-            overlayManager.showFloatingWindow { selectedTime ->
-                startTimer(selectedTime, packageName)
+            val remainingTime = appMonitor.getRemainingTime(packageName)
+            if (remainingTime > 0) {
+                notificationManager.showNotification("应用正在使用", remainingTime)
+                overlayManager.showFloatingWindow(remainingTime) { selectedTime ->
+                    appMonitor.setRemainingTime(packageName, selectedTime)
+                    startTimer(selectedTime, packageName) // 启动计时器
+                }
+            } else {
+                overlayManager.showFloatingWindow(0) { selectedTime ->
+                    appMonitor.setRemainingTime(packageName, selectedTime)
+                    startTimer(selectedTime, packageName) // 启动计时器
+                }
             }
         }
     }
@@ -118,7 +130,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTimer(selectedTime: Int, packageName: String) {
-        // 启动计时器逻辑
+        // 创建一个 Handler 用于延迟执行
+        val handler = Handler(Looper.getMainLooper())
+        val runnable = object : Runnable {
+            override fun run() {
+                // 计时器结束时，强制关闭应用并显示超时提醒
+                forceCloseApp(packageName)
+                overlayManager.showTimeoutOverlay {
+                    // 用户点击关闭按钮后的逻辑
+                    showToast("应用已关闭")
+                }
+            }
+        }
+
+        // 将选定的时间转换为毫秒
+        val delayMillis = selectedTime * 60 * 1000L
+
+        // 延迟执行 runnable
+        handler.postDelayed(runnable, delayMillis)
+
+        // 显示计时器启动的提示
+        showToast("计时器已启动：$selectedTime 分钟")
     }
 
     private fun showToast(message: String) {

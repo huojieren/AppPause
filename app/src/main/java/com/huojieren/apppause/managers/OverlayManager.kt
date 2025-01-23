@@ -6,13 +6,14 @@ import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.NumberPicker
+import android.widget.TextView
 import com.huojieren.apppause.R
 
 class OverlayManager(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-    fun showFloatingWindow(onTimeSelected: (Int) -> Unit) {
+    fun showFloatingWindow(remainingTime: Int, onTimeSelected: (Int) -> Unit) {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val floatingView = inflater.inflate(R.layout.floating_window, null)
 
@@ -31,10 +32,13 @@ class OverlayManager(private val context: Context) {
 
         val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker)
         val confirmButton = floatingView.findViewById<Button>(R.id.confirmButton)
+        val remainingTimeTextView = floatingView.findViewById<TextView>(R.id.remainingTimeTextView)
 
         timePicker.minValue = 1
         timePicker.maxValue = 60
-        timePicker.value = 5
+        timePicker.value = remainingTime
+
+        remainingTimeTextView.text = "剩余时长: $remainingTime 分钟"
 
         confirmButton.setOnClickListener {
             val selectedTime = timePicker.value

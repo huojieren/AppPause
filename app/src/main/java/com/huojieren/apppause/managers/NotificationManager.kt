@@ -9,7 +9,7 @@ import com.huojieren.apppause.R
 
 class NotificationManager(private val context: Context) {
 
-    fun showNotification(message: String) {
+    fun showNotification(message: String, remainingTime: Int) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -24,7 +24,7 @@ class NotificationManager(private val context: Context) {
 
         val notification = NotificationCompat.Builder(context, "AppPauseChannel")
             .setContentTitle("AppPause 提醒")
-            .setContentText(message)
+            .setContentText("$message 剩余时长: $remainingTime 分钟")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
