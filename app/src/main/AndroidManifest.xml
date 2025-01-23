@@ -21,6 +21,8 @@
     <!--            <action android:name="android.intent.action.MAIN" />-->
     <!--        </intent>-->
     <!--    </queries>-->
+    <!-- 关闭后台应用权限-->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
     <application
         android:allowBackup="true"

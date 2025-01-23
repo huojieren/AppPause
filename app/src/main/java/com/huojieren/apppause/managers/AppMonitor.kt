@@ -1,18 +1,15 @@
 package com.huojieren.apppause.managers
 
-import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
+import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
 class AppMonitor(private val context: Context) {
 
     private val handler = Handler(Looper.getMainLooper())
     private var runnable: Runnable? = null
-    private var startTime: Long = 0
-    private var selectedTime: Int = 5 // 默认使用时长
     private val monitoredApps = mutableSetOf<String>() // 被监控的应用列表
     private val appTimers = mutableMapOf<String, Int>() // 存储每个应用的剩余时长
 
@@ -22,16 +19,9 @@ class AppMonitor(private val context: Context) {
     }
 
     fun startMonitoring(onAppDetected: (String) -> Unit) {
-        // 检查使用情况访问权限
-        if (!checkUsageStatsPermission()) {
-            // 如果没有权限，提示用户并返回
-            Toast.makeText(context, "请授予使用情况访问权限", Toast.LENGTH_SHORT).show()
-            return
-        }
-
         // 如果被监控的应用列表为空，提示用户并返回
         if (monitoredApps.isEmpty()) {
-            Toast.makeText(context, "没有应用被监控，请先添加应用", Toast.LENGTH_SHORT).show()
+            showToast(context, "没有应用被监控，请先添加应用")
             return
         }
 
@@ -40,13 +30,8 @@ class AppMonitor(private val context: Context) {
             override fun run() {
                 for (packageName in monitoredApps) {
                     if (isAppInForeground(packageName)) {
-                        val remainingTime = appTimers[packageName] ?: selectedTime
-                        if (remainingTime > 0) {
-                            appTimers[packageName] = remainingTime - 1
-                            onAppDetected(packageName)
-                        } else {
-                            onAppDetected(packageName)
-                        }
+                        val remainingTime = getRemainingTime(packageName)
+                        onAppDetected(packageName) // 通知外部检测到应用在前台运行
                         handler.removeCallbacks(this)
                         return
                     }
@@ -97,15 +82,5 @@ class AppMonitor(private val context: Context) {
             }
         }
         return false
-    }
-
-    private fun checkUsageStatsPermission(): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            context.packageName
-        )
-        return mode == AppOpsManager.MODE_ALLOWED
     }
 }
