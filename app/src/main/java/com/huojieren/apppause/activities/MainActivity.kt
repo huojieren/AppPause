@@ -106,15 +106,37 @@ class MainActivity : AppCompatActivity() {
             val remainingTime = appMonitor.getRemainingTime(packageName)
             if (remainingTime > 0) {
                 notificationManager.showNotification("应用正在使用", remainingTime)
-                overlayManager.showFloatingWindow(remainingTime) { selectedTime ->
-                    appMonitor.setRemainingTime(packageName, selectedTime)
-                    startTimer(selectedTime, packageName) // 启动计时器
-                }
+                overlayManager.showFloatingWindow(
+                    remainingTime,
+                    { selectedTime ->
+                        // 用户选择时间后的回调
+                        appMonitor.setRemainingTime(packageName, selectedTime)
+                        startTimer(selectedTime, packageName) // 启动计时器
+                    },
+                    { extendTime ->
+                        // 用户点击“延长使用时间”按钮后的回调
+                        val newRemainingTime = remainingTime + extendTime
+                        appMonitor.setRemainingTime(packageName, newRemainingTime)
+                        showToast(this, "已延长使用时间: $extendTime 分钟")
+                    }
+                )
             } else {
-                overlayManager.showFloatingWindow(0) { selectedTime ->
-                    appMonitor.setRemainingTime(packageName, selectedTime)
-                    startTimer(selectedTime, packageName) // 启动计时器
-                }
+                overlayManager.showFloatingWindow(
+                    0,
+                    { selectedTime ->
+                        // 用户选择时间后的回调
+                        appMonitor.setRemainingTime(packageName, selectedTime)
+                        startTimer(selectedTime, packageName) // 启动计时器
+                        showToast(this, "计时器已启动：$selectedTime 分钟")
+                    },
+                    { extendTime ->
+                        // 用户点击“延长使用时间”按钮后的回调
+                        val newRemainingTime = extendTime // 如果剩余时间为 0，直接设置为延长时间
+                        appMonitor.setRemainingTime(packageName, newRemainingTime)
+                        startTimer(newRemainingTime, packageName) // 启动计时器
+                        showToast(this, "已延长使用时间: $extendTime 分钟")
+                    }
+                )
             }
         }
     }
@@ -125,7 +147,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTimer(selectedTime: Int, packageName: String) {
-        // 创建一个 Handler 用于延迟执行
         val handler = Handler(Looper.getMainLooper())
         var remainingTime = selectedTime // 剩余时间
 
@@ -143,23 +164,28 @@ class MainActivity : AppCompatActivity() {
         // 启动日志输出任务
         handler.post(logRunnable)
 
-        // 倒计时结束后强制关闭应用
-        val timerRunnable = Runnable {
-            forceCloseApp(packageName)
-            overlayManager.showTimeoutOverlay {
-                // 用户点击关闭按钮后的逻辑
-                showToast(this@MainActivity, "应用已关闭")
+        // 倒计时结束后返回桌面并显示全屏悬浮窗
+        val timerRunnable = object : Runnable {
+            override fun run() {
+                returnToHomeScreen()
+                overlayManager.showTimeoutOverlay {
+                    showToast(this@MainActivity, "时间已到")
+                }
             }
         }
 
-        // 将选定的时间转换为毫秒（秒为单位）
+        // 将选定的时间转换为毫秒
         val delayMillis = selectedTime * 60 * 1000L
 
         // 延迟执行倒计时结束任务
         handler.postDelayed(timerRunnable, delayMillis)
+    }
 
-        // 显示计时器启动的提示
-        showToast(this, "计时器已启动：$selectedTime 分钟")
+    private fun returnToHomeScreen() {
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.addCategory(Intent.CATEGORY_HOME)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
     }
 
     private fun forceCloseApp(packageName: String) {

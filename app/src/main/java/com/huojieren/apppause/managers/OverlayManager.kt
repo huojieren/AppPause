@@ -13,7 +13,11 @@ class OverlayManager(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-    fun showFloatingWindow(remainingTime: Int, onTimeSelected: (Int) -> Unit) {
+    fun showFloatingWindow(
+        remainingTime: Int,
+        onTimeSelected: (Int) -> Unit,
+        onExtendTime: (Int) -> Unit
+    ) {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val floatingView = inflater.inflate(R.layout.floating_window, null)
 
@@ -33,16 +37,28 @@ class OverlayManager(private val context: Context) {
         val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker)
         val confirmButton = floatingView.findViewById<Button>(R.id.confirmButton)
         val remainingTimeTextView = floatingView.findViewById<TextView>(R.id.remainingTimeTextView)
+        val extend5MinutesButton = floatingView.findViewById<Button>(R.id.extend5MinutesButton)
+        val extend10MinutesButton = floatingView.findViewById<Button>(R.id.extend10MinutesButton)
 
         timePicker.minValue = 1
         timePicker.maxValue = 60
         timePicker.value = remainingTime
 
-        remainingTimeTextView.text = "剩余时长: $remainingTime 分钟"
+        remainingTimeTextView.text = "剩余时间: $remainingTime 分钟"
 
         confirmButton.setOnClickListener {
             val selectedTime = timePicker.value
             onTimeSelected(selectedTime)
+            windowManager.removeView(floatingView)
+        }
+
+        extend5MinutesButton.setOnClickListener {
+            onExtendTime(5) // 延长 5 分钟
+            windowManager.removeView(floatingView)
+        }
+
+        extend10MinutesButton.setOnClickListener {
+            onExtendTime(10) // 延长 10 分钟
             windowManager.removeView(floatingView)
         }
     }

@@ -6,19 +6,42 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 剩余时长 -->
+    <!-- 剩余时间 -->
     <TextView
+        android:layout_gravity="center"
         android:id="@+id/remainingTimeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="剩余时长: 5 分钟"
+        android:text="剩余时间: 5 分钟"
         android:textSize="16sp" />
 
     <!-- 时间选择器 -->
     <NumberPicker
+        android:layout_gravity="center"
         android:id="@+id/timePicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <!-- 固定延长时间选项 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/extend5MinutesButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="延长 5 分钟" />
+
+        <Button
+            android:id="@+id/extend10MinutesButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="延长 10 分钟" />
+    </LinearLayout>
 
     <!-- 确认按钮 -->
     <Button
