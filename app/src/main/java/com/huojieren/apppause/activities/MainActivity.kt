@@ -132,10 +132,10 @@ class MainActivity : AppCompatActivity() {
         // 每秒输出剩余时间
         val logRunnable = object : Runnable {
             override fun run() {
-                logDebug("剩余时间: " + remainingTime + "秒")
+                logDebug("剩余时间: " + remainingTime + "分钟")
                 if (remainingTime > 0) {
                     remainingTime--
-                    handler.postDelayed(this, 1000) // 每秒执行一次
+                    handler.postDelayed(this, 60000) // 每分钟执行一次
                 }
             }
         }
@@ -153,15 +153,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 将选定的时间转换为毫秒（秒为单位）
-//        val delayMillis = selectedTime * 60 * 1000L
-        val delayMillis = selectedTime * 1000L
+        val delayMillis = selectedTime * 60 * 1000L
 
         // 延迟执行倒计时结束任务
         handler.postDelayed(timerRunnable, delayMillis)
 
         // 显示计时器启动的提示
-//        showToast(this, "计时器已启动：$selectedTime 分钟")
-        showToast(this, "计时器已启动：$selectedTime 秒")
+        showToast(this, "计时器已启动：$selectedTime 分钟")
     }
 
     private fun forceCloseApp(packageName: String) {
