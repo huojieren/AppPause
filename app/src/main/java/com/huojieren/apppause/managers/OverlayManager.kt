@@ -1,6 +1,7 @@
 package com.huojieren.apppause.managers
 
 import android.content.Context
+import android.content.Intent
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
@@ -8,6 +9,7 @@ import android.widget.Button
 import android.widget.NumberPicker
 import android.widget.TextView
 import com.huojieren.apppause.R
+import com.huojieren.apppause.utils.LogUtil.Companion.logDebug
 
 class OverlayManager(private val context: Context) {
 
@@ -63,7 +65,7 @@ class OverlayManager(private val context: Context) {
         }
     }
 
-    fun showTimeoutOverlay(onCloseClicked: () -> Unit) {
+    fun showTimeoutOverlay() {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val overlayView = inflater.inflate(R.layout.timeout_overlay, null)
 
@@ -79,7 +81,13 @@ class OverlayManager(private val context: Context) {
 
         val closeButton = overlayView.findViewById<Button>(R.id.closeButton)
         closeButton.setOnClickListener {
-            onCloseClicked()
+            // 回到桌面
+            val intent = Intent(Intent.ACTION_MAIN)
+            intent.addCategory(Intent.CATEGORY_HOME)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+            logDebug("回到桌面")
+
             windowManager.removeView(overlayView)
         }
     }

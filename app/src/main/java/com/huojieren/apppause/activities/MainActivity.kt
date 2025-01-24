@@ -1,7 +1,5 @@
 package com.huojieren.apppause.activities
 
-import android.app.ActivityManager
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -167,10 +165,8 @@ class MainActivity : AppCompatActivity() {
         // 倒计时结束后返回桌面并显示全屏悬浮窗
         val timerRunnable = object : Runnable {
             override fun run() {
-                returnToHomeScreen()
-                overlayManager.showTimeoutOverlay {
-                    showToast(this@MainActivity, "时间已到")
-                }
+                logDebug("倒计时结束")
+                overlayManager.showTimeoutOverlay()
             }
         }
 
@@ -179,25 +175,6 @@ class MainActivity : AppCompatActivity() {
 
         // 延迟执行倒计时结束任务
         handler.postDelayed(timerRunnable, delayMillis)
-    }
-
-    private fun returnToHomeScreen() {
-        val intent = Intent(Intent.ACTION_MAIN)
-        intent.addCategory(Intent.CATEGORY_HOME)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
-    }
-
-    private fun forceCloseApp(packageName: String) {
-        val intent = Intent(Intent.ACTION_MAIN)
-        intent.addCategory(Intent.CATEGORY_HOME)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent) // 返回桌面
-
-        // 强制退出目标应用
-        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        activityManager.killBackgroundProcesses(packageName)
-        showToast(this, "已强制退出应用：$packageName")
     }
 
     companion object {
