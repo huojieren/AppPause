@@ -1,5 +1,6 @@
 package com.huojieren.apppause.managers
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.view.Gravity
@@ -23,6 +24,8 @@ class OverlayManager(private val context: Context) {
         onExtendTime: (Int) -> Unit
     ) {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
+        @SuppressLint("InflateParams")// 忽略根视图可能为空警告
         val floatingView = inflater.inflate(R.layout.floating_window, null)
 
         val layoutParams = WindowManager.LayoutParams(
@@ -71,6 +74,8 @@ class OverlayManager(private val context: Context) {
 
     fun showTimeoutOverlay() {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
+        @SuppressLint("InflateParams")// 忽略根视图可能为空警告
         val overlayView = inflater.inflate(R.layout.timeout_overlay, null)
 
         val layoutParams = WindowManager.LayoutParams(

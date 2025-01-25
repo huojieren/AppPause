@@ -9,6 +9,6 @@
         android:id="@+id/appNameTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="App Name"
+        android:text=""
         android:textSize="16sp" />
 </LinearLayout>

@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="授予悬浮窗权限" />
+        android:text="@string/request_overlay" />
 
     <!-- 通知权限按钮 -->
     <Button
@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="授予通知权限" />
+        android:text="@string/request_notification" />
 
     <!-- 使用情况访问权限按钮 -->
     <Button
@@ -26,15 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="授予使用情况访问权限" />
-
-    <!--    &lt;!&ndash; 显示悬浮窗按钮（测试用） &ndash;&gt;-->
-    <!--    <Button-->
-    <!--        android:id="@+id/showFloatingWindowButton"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginBottom="16dp"-->
-    <!--        android:text="测试悬浮窗" />-->
+        android:text="@string/request_usage_stats" />
 
     <!-- 跳转到监控应用列表按钮 -->
     <Button
@@ -42,7 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="监控应用列表" />
+        android:text="@string/monitor_list" />
 
     <!-- 开始/停止监控按钮 -->
     <Button
@@ -50,5 +42,5 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="开始监控" />
+        android:text="@string/start_monitor" />
 </LinearLayout>

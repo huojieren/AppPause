@@ -32,7 +32,6 @@ class AppMonitor(private val context: Context) {
             override fun run() {
                 for (packageName in monitoredApps) {
                     if (isAppInForeground(packageName)) {
-                        val remainingTime = getRemainingTime(packageName)
                         onAppDetected(packageName) // 通知外部检测到应用在前台运行
                         handler.removeCallbacks(this)
                         return
@@ -49,7 +48,9 @@ class AppMonitor(private val context: Context) {
     }
 
     fun stopMonitoring() {
-        handler.removeCallbacks(runnable!!)
+        if (runnable != null) {
+            handler.removeCallbacks(runnable!!)
+        }
     }
 
     fun setRemainingTime(packageName: String, time: Int) {

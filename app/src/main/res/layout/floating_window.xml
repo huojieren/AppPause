@@ -14,8 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:textSize="16sp"
-        tools:text="" />
-    <!--TODO : 合并分支之后修改tools:text-->
+        tools:text="@string/remain_time" />
 
     <!-- 时间选择器 -->
     <NumberPicker
@@ -35,17 +34,14 @@
             android:id="@+id/extend5UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="" />
-        <!--TODO : 合并分支之后修改tools:text-->
+            tools:text="@string/extend_5" />
 
         <Button
             android:id="@+id/extend10UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="延长 10 分钟"
-            tools:text="" />
-        <!--TODO : 合并分支之后修改tools:text-->
+            tools:text="@string/extend_10" />
     </LinearLayout>
 
     <!-- 确认按钮 -->
@@ -55,5 +51,5 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        android:text="确认" />
+        android:text="@string/confirm" />
 </LinearLayout>

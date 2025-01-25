@@ -98,14 +98,17 @@ class MainActivity : AppCompatActivity() {
     private fun startMonitoring() {
         // 检查权限
         if (!permissionManager.checkUsageStatsPermission()) {
+            logDebug("使用权限未获取")
             permissionManager.requestUsageStatsPermission(this)
             return
         }
 
         // 启动监控
         appMonitor.startMonitoring { packageName ->
+            logDebug("应用正在使用: $packageName")
             val remainingTime = appMonitor.getRemainingTime(packageName)
             if (remainingTime > 0) {
+                logDebug("剩余时间: $remainingTime $timeDesc")
                 notificationManager.showNotification("应用正在使用", remainingTime)
                 overlayManager.showFloatingWindow(
                     remainingTime,
@@ -122,6 +125,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
             } else {
+                logDebug("应用无剩余时间")
                 overlayManager.showFloatingWindow(
                     0,
                     { selectedTime ->
@@ -142,8 +146,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun stopMonitoring() {
+        logDebug("停止监控")
         appMonitor.stopMonitoring()
     }
 

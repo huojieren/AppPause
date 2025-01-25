@@ -4,15 +4,13 @@
     android:background="#80000000"
     android:gravity="center"
     android:orientation="vertical">
-    <!-- android:background="#80000000"-->
-    <!-- 半透明黑色背景 -->
 
     <!-- 提示文本 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="使用时间已到"
+        android:text="@string/time_out"
         android:textColor="@android:color/white"
         android:textSize="24sp" />
 
@@ -21,6 +19,6 @@
         android:id="@+id/closeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="返回桌面"
+        android:text="@string/return_to_home"
         android:textSize="18sp" />
 </LinearLayout>
