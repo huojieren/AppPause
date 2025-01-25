@@ -5,9 +5,11 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 
 class NotificationManager(private val context: Context) {
+    private val timeDesc = BuildConfig.TIME_DESC
 
     fun showNotification(message: String, remainingTime: Int) {
         val notificationManager =
@@ -24,7 +26,7 @@ class NotificationManager(private val context: Context) {
 
         val notification = NotificationCompat.Builder(context, "AppPauseChannel")
             .setContentTitle("AppPause 提醒")
-            .setContentText("$message 剩余时长: $remainingTime 秒")
+            .setContentText("$message 剩余时长: $remainingTime $timeDesc")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()

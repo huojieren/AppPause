@@ -1,4 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@android:color/white"
@@ -8,19 +9,20 @@
 
     <!-- 剩余时间 -->
     <TextView
-        android:layout_gravity="center"
         android:id="@+id/remainingTimeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="剩余时间: 5 分钟"
-        android:textSize="16sp" />
+        android:layout_gravity="center"
+        android:textSize="16sp"
+        tools:text="" />
+    <!--TODO : 合并分支之后修改tools:text-->
 
     <!-- 时间选择器 -->
     <NumberPicker
-        android:layout_gravity="center"
         android:id="@+id/timePicker"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
 
     <!-- 固定延长时间选项 -->
     <LinearLayout
@@ -30,17 +32,20 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/extend5MinutesButton"
+            android:id="@+id/extend5UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="延长 5 分钟" />
+            tools:text="" />
+        <!--TODO : 合并分支之后修改tools:text-->
 
         <Button
-            android:id="@+id/extend10MinutesButton"
+            android:id="@+id/extend10UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="延长 10 分钟" />
+            android:text="延长 10 分钟"
+            tools:text="" />
+        <!--TODO : 合并分支之后修改tools:text-->
     </LinearLayout>
 
     <!-- 确认按钮 -->

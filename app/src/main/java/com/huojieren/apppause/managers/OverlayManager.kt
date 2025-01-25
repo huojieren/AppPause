@@ -8,12 +8,14 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.NumberPicker
 import android.widget.TextView
+import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.utils.LogUtil.Companion.logDebug
 
 class OverlayManager(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val timeDesc = BuildConfig.TIME_DESC
 
     fun showFloatingWindow(
         remainingTime: Int,
@@ -39,14 +41,16 @@ class OverlayManager(private val context: Context) {
         val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker)
         val confirmButton = floatingView.findViewById<Button>(R.id.confirmButton)
         val remainingTimeTextView = floatingView.findViewById<TextView>(R.id.remainingTimeTextView)
-        val extend5MinutesButton = floatingView.findViewById<Button>(R.id.extend5MinutesButton)
-        val extend10MinutesButton = floatingView.findViewById<Button>(R.id.extend10MinutesButton)
+        val extend5UnitsButton = floatingView.findViewById<Button>(R.id.extend5UnitsButton)
+        val extend10UnitsButton = floatingView.findViewById<Button>(R.id.extend10UnitsButton)
 
         timePicker.minValue = 1
         timePicker.maxValue = 60
         timePicker.value = remainingTime
 
-        remainingTimeTextView.text = "剩余时间: $remainingTime 分钟"
+        remainingTimeTextView.text = "剩余时间: $remainingTime $timeDesc"
+        extend5UnitsButton.text = "延长 5 $timeDesc"
+        extend10UnitsButton.text = "延长 10 $timeDesc"
 
         confirmButton.setOnClickListener {
             val selectedTime = timePicker.value
@@ -54,13 +58,13 @@ class OverlayManager(private val context: Context) {
             windowManager.removeView(floatingView)
         }
 
-        extend5MinutesButton.setOnClickListener {
-            onExtendTime(5) // 延长 5 分钟
+        extend5UnitsButton.setOnClickListener {
+            onExtendTime(5) // 延长 5 秒/分钟
             windowManager.removeView(floatingView)
         }
 
-        extend10MinutesButton.setOnClickListener {
-            onExtendTime(10) // 延长 10 分钟
+        extend10UnitsButton.setOnClickListener {
+            onExtendTime(10) // 延长 10 秒/分钟
             windowManager.removeView(floatingView)
         }
     }

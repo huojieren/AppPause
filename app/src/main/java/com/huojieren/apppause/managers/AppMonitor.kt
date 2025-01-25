@@ -4,6 +4,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
 class AppMonitor(private val context: Context) {
@@ -12,6 +13,7 @@ class AppMonitor(private val context: Context) {
     private var runnable: Runnable? = null
     private val monitoredApps = mutableSetOf<String>() // 被监控的应用列表
     private val appTimers = mutableMapOf<String, Int>() // 存储每个应用的剩余时长
+    private val timeUnit = BuildConfig.TIME_UNIT // 从 BuildConfig 中获取计时单位
 
     init {
         // 初始化时加载被监控的应用列表
@@ -37,8 +39,8 @@ class AppMonitor(private val context: Context) {
                     }
                 }
 
-                // 每隔1秒检查一次
-                handler.postDelayed(this, 1000)
+                // 循环运行run检查
+                handler.postDelayed(this, timeUnit) // 使用 BuildConfig 中的计时单位
             }
         }
 

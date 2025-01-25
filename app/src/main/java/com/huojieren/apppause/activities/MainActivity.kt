@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
+import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.databinding.ActivityMainBinding
 import com.huojieren.apppause.managers.AppMonitor
 import com.huojieren.apppause.managers.NotificationManager
@@ -22,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var overlayManager: OverlayManager
     private lateinit var notificationManager: NotificationManager
     private var isMonitoring = false
+    private val timeUnit = BuildConfig.TIME_UNIT
+    private val timeDesc = BuildConfig.TIME_DESC
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,7 +118,7 @@ class MainActivity : AppCompatActivity() {
                         // 用户点击“延长使用时间”按钮后的回调
                         val newRemainingTime = remainingTime + extendTime
                         appMonitor.setRemainingTime(packageName, newRemainingTime)
-                        showToast(this, "已延长使用时间: $extendTime 分钟")
+                        showToast(this, "已延长使用时间: $extendTime $timeDesc")
                     }
                 )
             } else {
@@ -125,14 +128,14 @@ class MainActivity : AppCompatActivity() {
                         // 用户选择时间后的回调
                         appMonitor.setRemainingTime(packageName, selectedTime)
                         startTimer(selectedTime, packageName) // 启动计时器
-                        showToast(this, "计时器已启动：$selectedTime 分钟")
+                        showToast(this, "计时器已启动：$selectedTime $timeDesc")
                     },
                     { extendTime ->
                         // 用户点击“延长使用时间”按钮后的回调
                         val newRemainingTime = extendTime // 如果剩余时间为 0，直接设置为延长时间
                         appMonitor.setRemainingTime(packageName, newRemainingTime)
                         startTimer(newRemainingTime, packageName) // 启动计时器
-                        showToast(this, "已延长使用时间: $extendTime 分钟")
+                        showToast(this, "已延长使用时间: $extendTime $timeDesc")
                     }
                 )
             }
@@ -148,13 +151,13 @@ class MainActivity : AppCompatActivity() {
         val handler = Handler(Looper.getMainLooper())
         var remainingTime = selectedTime // 剩余时间
 
-        // 每秒输出剩余时间
+        // 每秒/分钟输出剩余时间
         val logRunnable = object : Runnable {
             override fun run() {
-                logDebug("剩余时间: " + remainingTime + "分钟")
+                logDebug("剩余时间: $remainingTime $timeDesc")
                 if (remainingTime > 0) {
                     remainingTime--
-                    handler.postDelayed(this, 60000) // 每分钟执行一次
+                    handler.postDelayed(this, timeUnit) // 每秒/分钟执行一次
                 }
             }
         }
