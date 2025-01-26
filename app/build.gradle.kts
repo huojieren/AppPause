@@ -25,9 +25,12 @@ android {
     // 配置构建类型
     buildTypes {
         debug {
+            applicationIdSuffix = ".debug"
             isMinifyEnabled = false// 是否混淆
             buildConfigField("long", "TIME_UNIT", "1000L")
             buildConfigField("String", "TIME_DESC", "\"秒\"")
+            buildConfigField("String", "APP_NAME", "\"AppPause Debug\"")
+            resValue("string", "app_name", "AppPause Debug")
         }
         release {
             isMinifyEnabled = false// 是否混淆
@@ -37,6 +40,9 @@ android {
             )
             buildConfigField("long", "TIME_UNIT", "60000L")
             buildConfigField("String", "TIME_DESC", "\"分钟\"")
+            buildConfigField("String", "APP_NAME", "\"AppPause\"")
+            resValue("string", "app_name", "AppPause")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
