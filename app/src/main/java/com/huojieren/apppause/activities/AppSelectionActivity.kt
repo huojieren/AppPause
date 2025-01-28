@@ -38,10 +38,12 @@ class AppSelectionActivity : AppCompatActivity() {
         for (app in installedApps) {
             if (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) { // 过滤系统应用
                 val appName = packageManager.getApplicationLabel(app).toString()
-                appList.add(AppInfo(appName, app.packageName))
+                val appInfo = AppInfo(appName, app.packageName)
+                appList.add(appInfo)
+                // 通知适配器有新项插入
+                appListAdapter.notifyItemInserted(appList.size - 1)
             }
         }
-        appListAdapter.notifyDataSetChanged()
     }
 
     // 返回选中的应用

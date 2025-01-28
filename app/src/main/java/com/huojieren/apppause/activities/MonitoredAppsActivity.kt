@@ -50,9 +50,10 @@ class MonitoredAppsActivity : AppCompatActivity() {
     private fun loadMonitoredApps() {
         val sharedPreferences = getSharedPreferences("AppPause", Context.MODE_PRIVATE)
         val apps = sharedPreferences.getStringSet("monitoredApps", mutableSetOf()) ?: mutableSetOf()
+        val startPosition = monitoredApps.size // 记录当前列表的大小，表示从当前列表的末尾插入新项
         monitoredApps.clear()
         monitoredApps.addAll(apps)
-        monitoredAppsAdapter.notifyDataSetChanged()
+        monitoredAppsAdapter.notifyItemRangeInserted(startPosition, apps.size) // 通知适配器有新项插入
     }
 
     // 添加被监控的应用
@@ -62,14 +63,17 @@ class MonitoredAppsActivity : AppCompatActivity() {
         }
         monitoredApps.add(packageName)
         saveMonitoredApps()
-        monitoredAppsAdapter.notifyDataSetChanged()
+        monitoredAppsAdapter.notifyItemInserted(monitoredApps.size - 1) // 通知适配器有新项插入
     }
 
     // 删除被监控的应用
     private fun removeMonitoredApp(packageName: String) {
-        monitoredApps.remove(packageName)
-        saveMonitoredApps()
-        monitoredAppsAdapter.notifyDataSetChanged()
+        val index = monitoredApps.indexOf(packageName) // 获取要删除的项的索引
+        if (index != -1) {
+            monitoredApps.remove(packageName)
+            saveMonitoredApps()
+            monitoredAppsAdapter.notifyItemRemoved(index) // 通知适配器有项被移除
+        }
     }
 
     // 保存被监控的应用列表

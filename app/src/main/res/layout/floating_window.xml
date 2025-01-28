@@ -34,14 +34,14 @@
             android:id="@+id/extend5UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="@string/extend_5" />
+            tools:text="延长 5 分钟" />
 
         <Button
             android:id="@+id/extend10UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            tools:text="@string/extend_10" />
+            tools:text="延长 10 分钟" />
     </LinearLayout>
 
     <!-- 确认按钮 -->
