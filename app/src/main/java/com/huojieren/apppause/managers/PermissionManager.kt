@@ -4,8 +4,11 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.checkSelfPermission
 
 class PermissionManager(private val context: Context) {
 
@@ -19,6 +22,21 @@ class PermissionManager(private val context: Context) {
             Uri.parse("package:${context.packageName}")
         )
         activity.startActivityForResult(intent, requestCode)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    // Android 12 及以下不需要申请 POST_NOTIFICATIONS 权限
+    fun checkNotificationPermission(): Boolean {
+        return checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun requestNotificationPermission(activity: AppCompatActivity, requestCode: Int) {
+        activity.requestPermissions(
+            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+            requestCode
+        )
     }
 
     fun checkUsageStatsPermission(): Boolean {

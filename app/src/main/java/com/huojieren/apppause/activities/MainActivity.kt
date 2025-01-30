@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.databinding.ActivityMainBinding
@@ -26,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private val timeUnit = BuildConfig.TIME_UNIT
     private val timeDesc = BuildConfig.TIME_DESC
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -48,19 +50,11 @@ class MainActivity : AppCompatActivity() {
 
         // 通知权限按钮
         binding.notificationPermissionButton.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
-                    android.content.pm.PackageManager.PERMISSION_GRANTED
-                ) {
-                    showToast(this, "通知权限已授予")
-                } else {
-                    requestPermissions(
-                        arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                        REQUEST_CODE_NOTIFICATION
-                    )
-                }
+            if (permissionManager.checkNotificationPermission()) {
+                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                showToast(this, "通知权限已授予")
             } else {
-                showToast(this, "通知权限已自动授予（Android 12 及以下）")
+                permissionManager.requestNotificationPermission(this, REQUEST_CODE_NOTIFICATION)
             }
         }
 
@@ -82,10 +76,19 @@ class MainActivity : AppCompatActivity() {
         // 开始/停止监控按钮
         binding.startMonitoringButton.setOnClickListener {
             if (!isMonitoring) {
-                startMonitoring()
-                binding.startMonitoringButton.text = "停止监控"
-                showToast(this, "监控已开始")
-                isMonitoring = true
+                // 检查权限
+                if (!permissionManager.checkOverlayPermission()
+                    || !permissionManager.checkNotificationPermission()
+                    || !permissionManager.checkUsageStatsPermission()
+                ) {
+                    logDebug("权限未获取")
+                    showToast(this, "请授予相关权限后再试")
+                } else {
+                    startMonitoring()
+                    binding.startMonitoringButton.text = "停止监控"
+                    showToast(this, "监控已开始")
+                    isMonitoring = true
+                }
             } else {
                 stopMonitoring()
                 binding.startMonitoringButton.text = "开始监控"
@@ -95,53 +98,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startMonitoring() {
-        // 检查权限
-        if (!permissionManager.checkUsageStatsPermission()) {
-            logDebug("使用权限未获取")
-            permissionManager.requestUsageStatsPermission(this)
-            return
-        }
-
-        // 启动监控
+    private fun startMonitoring() { // 启动监控
         appMonitor.startMonitoring { packageName ->
             logDebug("应用正在使用: $packageName")
             val remainingTime = appMonitor.getRemainingTime(packageName)
             if (remainingTime > 0) {
                 logDebug("剩余时间: $remainingTime $timeDesc")
                 notificationManager.showNotification("应用正在使用", remainingTime)
-                overlayManager.showFloatingWindow(
-                    remainingTime,
-                    { selectedTime ->
-                        // 用户选择时间后的回调
-                        appMonitor.setRemainingTime(packageName, selectedTime)
-                        startTimer(selectedTime) // 启动计时器
-                    },
-                    { extendTime ->
-                        // 用户点击“延长使用时间”按钮后的回调
-                        val newRemainingTime = remainingTime + extendTime
-                        appMonitor.setRemainingTime(packageName, newRemainingTime)
-                        showToast(this, "已延长使用时间: $extendTime $timeDesc")
-                    }
-                )
+                overlayManager.showFloatingWindow(remainingTime, { selectedTime ->
+                    // 用户选择时间后的回调
+                    appMonitor.setRemainingTime(packageName, selectedTime)
+                    startTimer(selectedTime) // 启动计时器
+                }, { extendTime ->
+                    // 用户点击“延长使用时间”按钮后的回调
+                    val newRemainingTime = remainingTime + extendTime
+                    appMonitor.setRemainingTime(packageName, newRemainingTime)
+                    showToast(this, "已延长使用时间: $extendTime $timeDesc")
+                })
             } else {
                 logDebug("应用无剩余时间")
-                overlayManager.showFloatingWindow(
-                    0,
-                    { selectedTime ->
-                        // 用户选择时间后的回调
-                        appMonitor.setRemainingTime(packageName, selectedTime)
-                        startTimer(selectedTime) // 启动计时器
-                        showToast(this, "计时器已启动：$selectedTime $timeDesc")
-                    },
-                    { extendTime ->
-                        // 用户点击“延长使用时间”按钮后的回调
-                        val newRemainingTime = extendTime // 如果剩余时间为 0，直接设置为延长时间
-                        appMonitor.setRemainingTime(packageName, newRemainingTime)
-                        startTimer(newRemainingTime) // 启动计时器
-                        showToast(this, "已延长使用时间: $extendTime $timeDesc")
-                    }
-                )
+                overlayManager.showFloatingWindow(0, { selectedTime ->
+                    // 用户选择时间后的回调
+                    appMonitor.setRemainingTime(packageName, selectedTime)
+                    startTimer(selectedTime) // 启动计时器
+                    showToast(this, "计时器已启动：$selectedTime $timeDesc")
+                }, { extendTime ->
+                    // 用户点击“延长使用时间”按钮后的回调
+                    val newRemainingTime = extendTime // 如果剩余时间为 0，直接设置为延长时间
+                    appMonitor.setRemainingTime(packageName, newRemainingTime)
+                    startTimer(newRemainingTime) // 启动计时器
+                    showToast(this, "已延长使用时间: $extendTime $timeDesc")
+                })
             }
         }
     }
