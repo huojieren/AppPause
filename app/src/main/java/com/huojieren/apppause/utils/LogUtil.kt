@@ -4,7 +4,7 @@ import android.util.Log
 
 class LogUtil {
     companion object {
-        private val TAG: String = "appPause"
+        private const val TAG: String = "appPause"
         fun logDebug(message: String) {
             Log.d(TAG, message)
         }

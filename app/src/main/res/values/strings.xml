@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">${appName}</string>
-    <string name="remaining_time">剩余时间: %d 分钟</string>
     <string name="return_to_home">返回桌面</string>
     <string name="time_out">使用时间已到</string>
     <string name="request_overlay">授予悬浮窗权限</string>

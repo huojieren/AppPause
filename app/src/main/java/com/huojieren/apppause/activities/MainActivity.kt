@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                     { selectedTime ->
                         // 用户选择时间后的回调
                         appMonitor.setRemainingTime(packageName, selectedTime)
-                        startTimer(selectedTime, packageName) // 启动计时器
+                        startTimer(selectedTime) // 启动计时器
                     },
                     { extendTime ->
                         // 用户点击“延长使用时间”按钮后的回调
@@ -131,14 +131,14 @@ class MainActivity : AppCompatActivity() {
                     { selectedTime ->
                         // 用户选择时间后的回调
                         appMonitor.setRemainingTime(packageName, selectedTime)
-                        startTimer(selectedTime, packageName) // 启动计时器
+                        startTimer(selectedTime) // 启动计时器
                         showToast(this, "计时器已启动：$selectedTime $timeDesc")
                     },
                     { extendTime ->
                         // 用户点击“延长使用时间”按钮后的回调
                         val newRemainingTime = extendTime // 如果剩余时间为 0，直接设置为延长时间
                         appMonitor.setRemainingTime(packageName, newRemainingTime)
-                        startTimer(newRemainingTime, packageName) // 启动计时器
+                        startTimer(newRemainingTime) // 启动计时器
                         showToast(this, "已延长使用时间: $extendTime $timeDesc")
                     }
                 )
@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         appMonitor.stopMonitoring()
     }
 
-    private fun startTimer(selectedTime: Int, packageName: String) {
+    private fun startTimer(selectedTime: Int) {
         val handler = Handler(Looper.getMainLooper())
         var remainingTime = selectedTime // 剩余时间
 
@@ -170,11 +170,9 @@ class MainActivity : AppCompatActivity() {
         handler.post(logRunnable)
 
         // 倒计时结束后返回桌面并显示全屏悬浮窗
-        val timerRunnable = object : Runnable {
-            override fun run() {
-                logDebug("倒计时结束")
-                overlayManager.showTimeoutOverlay()
-            }
+        val timerRunnable = Runnable {
+            logDebug("倒计时结束")
+            overlayManager.showTimeoutOverlay()
         }
 
         // 将选定的时间转换为毫秒

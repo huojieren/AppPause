@@ -34,6 +34,7 @@
             android:id="@+id/extend5UnitsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            style="@style/AppButtonStyle"
             tools:text="延长 5 分钟" />
 
         <Button
@@ -41,6 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            style="@style/AppButtonStyle"
             tools:text="延长 10 分钟" />
     </LinearLayout>
 
@@ -51,5 +53,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
+        style="@style/AppButtonStyle"
         android:text="@string/confirm" />
 </LinearLayout>
