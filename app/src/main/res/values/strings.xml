@@ -8,9 +8,8 @@
     <string name="monitor_list">监控应用列表</string>
     <string name="start_monitor">开始监控</string>
     <string name="add_app">添加应用</string>
-    <string name="remain_time">剩余时间: 5 分钟</string>
-    <string name="extend_5">延长 5 分钟</string>
-    <string name="extend_10">延长 10 分钟</string>
+    <string name="remaining_time">剩余时间: %d </string>
+    <string name="extend_time">延长 %d </string>
     <string name="confirm">确认</string>
     <string name="delete">删除</string>
     <string name="request_accessibility">请求无障碍权限</string>

@@ -1,20 +1,21 @@
 package com.huojieren.apppause.managers
 
-import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import com.huojieren.apppause.BuildConfig
-import com.huojieren.apppause.utils.LogUtil
-import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
+import com.huojieren.apppause.utils.LogUtil.Companion.logDebug
 
 class AppMonitor(private val context: Context) {
 
-    private val handler = Handler(Looper.getMainLooper())
-    private var runnable: Runnable? = null
     private val monitoredApps = mutableSetOf<String>() // 被监控的应用列表
     private val appTimers = mutableMapOf<String, Int>() // 存储每个应用的剩余时长
     private val timeUnit = BuildConfig.TIME_UNIT // 从 BuildConfig 中获取计时单位
+    private val timeDesc = BuildConfig.TIME_DESC // 从 BuildConfig 中获取计时单位描述
+    private val overlayManager = OverlayManager(context)
+    private var isMonitoring: Boolean = false
+    private val TAG = "AppMonitor"
 
     // 单例模式
     companion object {
@@ -33,44 +34,20 @@ class AppMonitor(private val context: Context) {
         loadMonitoredApps()
     }
 
-    fun startMonitoring(onAppDetected: (String) -> Unit) {
-        // 如果被监控的应用列表为空，提示用户并返回
-        if (monitoredApps.isEmpty()) {
-            showToast(context, "没有应用被监控，请先添加应用")
-            return
-        }
-
-        // 初始化 runnable
-        runnable = object : Runnable {
-            override fun run() {
-                for (packageName in monitoredApps) {
-                    if (isAppInForeground(packageName)) {
-                        onAppDetected(packageName) // 通知外部检测到应用在前台运行
-                        handler.removeCallbacks(this)
-                        return
-                    }
-                }
-
-                // 循环运行run检查
-                handler.postDelayed(this, timeUnit) // 使用 BuildConfig 中的计时单位
-            }
-        }
-
-        // 启动监控
-        handler.post(runnable!!)
+    fun isEmptyMonitoredApps(): Boolean {
+        return monitoredApps.isEmpty()
     }
 
-    fun stopMonitoring() {
-        if (runnable != null) {
-            handler.removeCallbacks(runnable!!)
-        }
+    // 检查应用是否在被监控列表中
+    private fun isMonitoredApp(packageName: String): Boolean {
+        return monitoredApps.contains(packageName)
     }
 
-    fun setRemainingTime(packageName: String, time: Int) {
+    private fun setRemainingTime(packageName: String, time: Int) {
         appTimers[packageName] = time
     }
 
-    fun getRemainingTime(packageName: String): Int {
+    private fun getRemainingTime(packageName: String): Int {
         return appTimers[packageName] ?: 0
     }
 
@@ -82,29 +59,67 @@ class AppMonitor(private val context: Context) {
         monitoredApps.addAll(apps)
     }
 
-    private fun isAppInForeground(packageName: String): Boolean {
-        val usageStatsManager =
-            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val endTime = System.currentTimeMillis()
-        val usageStats = usageStatsManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            endTime - 1000, // 检查过去1秒内的使用情况
-            endTime
-        )
+    fun notifyForegroundApp(packageName: String?) {
+        // 重新加载被监控的应用列表
+        loadMonitoredApps()
+        // 从 SharedPreferences 中读取 isMonitoring
+        val sharedPreferences = context.getSharedPreferences("AppPause", Context.MODE_PRIVATE)
+        isMonitoring = sharedPreferences.getBoolean("isMonitoring", false)
 
-        for (usageStat in usageStats) {
-            if (usageStat.packageName == packageName && usageStat.lastTimeUsed >= endTime - 1000) {
-                return true
-            }
-        }
-        return false
+        if (isMonitoring) {
+            Log.d(TAG, "notifyForegroundApp: isMonitoring = true")
+            if (packageName != null) {
+                Log.d(TAG, "notifyForegroundApp: packageName = $packageName")
+                // 检查应用是否在被监控列表中
+                if (isMonitoredApp(packageName)) {
+                    Log.d(TAG, "notifyForegroundApp: isMonitoredApp = true")
+                    // 获取剩余时间
+                    val remainingTime = getRemainingTime(packageName)
+                    // 显示倒计时弹窗
+                    OverlayManager(context).showFloatingWindow(
+                        remainingTime,
+                        onTimeSelected = { selectedTime ->
+                            setRemainingTime(packageName, remainingTime + selectedTime)
+                            startTimer(remainingTime + selectedTime)
+                        },
+                        onExtendTime = { extendTime ->
+                            setRemainingTime(packageName, remainingTime + extendTime)
+                            startTimer(remainingTime + extendTime)
+                        }
+                    )
+                } else
+                    Log.d(TAG, "notifyForegroundApp: isMonitoredApp = false")
+            } else
+                Log.d(TAG, "notifyForegroundApp: packageName = null")
+        } else
+            Log.d(TAG, "notifyForegroundApp: isMonitoring = false")
     }
 
-    fun onForegroundAppDetected(packageName: String) {
-        if (monitoredApps.contains(packageName)) {
-            // 触发提醒或强制关闭操作
-            LogUtil.logDebug("Detected foreground app: $packageName")
-            // 这里可以调用 OverlayManager 或 NotificationManager 显示提醒
+    private fun startTimer(time: Int) {
+        val handler = Handler(Looper.getMainLooper())
+        var remainingTime = time // 剩余时间
+
+        // 创建日志输出任务
+        val logRunnable = object : Runnable {
+            override fun run() {
+                logDebug("剩余时间: $remainingTime $timeDesc")
+                if (remainingTime > 0) {
+                    remainingTime--
+                    handler.postDelayed(this, timeUnit) // 每秒/分钟执行一次
+                }
+            }
         }
+        // 启动日志输出任务
+        handler.post(logRunnable)
+
+        // 创建倒计时结束任务
+        val timerRunnable = Runnable {
+            logDebug("倒计时结束")
+            overlayManager.showTimeoutOverlay()
+        }
+        // 将选定的时间转换为毫秒
+        val delayMillis = time * 60 * 1000L
+        // 延迟执行倒计时结束任务
+        handler.postDelayed(timerRunnable, delayMillis)
     }
 }

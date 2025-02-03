@@ -51,9 +51,18 @@ class OverlayManager(private val context: Context) {
         timePicker.maxValue = 60
         timePicker.value = remainingTime
 
-        remainingTimeTextView.text = "剩余时间: $remainingTime $timeDesc"
-        extend5UnitsButton.text = "延长 5 $timeDesc"
-        extend10UnitsButton.text = "延长 10 $timeDesc"
+        remainingTimeTextView.text = buildString {
+            append(context.getString(R.string.remaining_time, remainingTime))
+            append(" $timeDesc")
+        }
+        extend5UnitsButton.text = buildString {
+            append(context.getString(R.string.extend_time, 5))
+            append(" $timeDesc")
+        }
+        extend10UnitsButton.text = buildString {
+            append(context.getString(R.string.extend_time, 10))
+            append(" $timeDesc")
+        }
 
         confirmButton.setOnClickListener {
             val selectedTime = timePicker.value
