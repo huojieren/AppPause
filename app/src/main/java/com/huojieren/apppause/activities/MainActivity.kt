@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.databinding.ActivityMainBinding
 import com.huojieren.apppause.managers.AppMonitor
+import com.huojieren.apppause.managers.AppPauseAccessibilityService
 import com.huojieren.apppause.managers.NotificationManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
@@ -38,6 +39,15 @@ class MainActivity : AppCompatActivity() {
         appMonitor = AppMonitor(this)
         overlayManager = OverlayManager(this)
         notificationManager = NotificationManager(this)
+
+        // 无障碍权限按钮
+        binding.accessibilityPermissionButton.setOnClickListener {
+            if (permissionManager.checkAccessibilityPermission()) {
+                showToast(this, "无障碍权限已授予")
+            } else {
+                permissionManager.requestAccessibilityPermission()
+            }
+        }
 
         // 悬浮窗权限按钮
         binding.overlayPermissionButton.setOnClickListener {
@@ -96,6 +106,43 @@ class MainActivity : AppCompatActivity() {
                 isMonitoring = false
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    // Android 12 及以下不需要申请 POST_NOTIFICATIONS 权限
+    override fun onResume() {
+        super.onResume()
+
+        // 动态更新无障碍权限按钮状态
+        if (permissionManager.checkAccessibilityPermission()) {
+            binding.accessibilityPermissionButton.text = "无障碍权限已授予"
+        } else {
+            binding.accessibilityPermissionButton.text = "请求无障碍权限"
+        }
+
+        // 动态更新悬浮窗权限按钮状态
+        if (permissionManager.checkOverlayPermission()) {
+            binding.overlayPermissionButton.text = "悬浮窗权限已授予"
+        } else {
+            binding.overlayPermissionButton.text = "请求悬浮窗权限"
+        }
+
+        // 动态更新通知权限按钮状态
+        if (permissionManager.checkNotificationPermission()) {
+            binding.notificationPermissionButton.text = "通知权限已授予"
+        } else {
+            binding.notificationPermissionButton.text = "请求通知权限"
+        }
+
+        // 动态更新使用情况访问权限按钮状态
+        if (permissionManager.checkUsageStatsPermission()) {
+            binding.usageStatsPermissionButton.text = "使用情况访问权限已授予"
+        } else {
+            binding.usageStatsPermissionButton.text = "请求使用情况访问权限"
+        }
+
+        // 启动 AccessibilityService
+        AppPauseAccessibilityService.start(this)
     }
 
     private fun startMonitoring() { // 启动监控

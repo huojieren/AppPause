@@ -13,4 +13,5 @@
     <string name="extend_10">延长 10 分钟</string>
     <string name="confirm">确认</string>
     <string name="delete">删除</string>
+    <string name="request_accessibility">请求无障碍权限</string>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.huojieren.apppause.BuildConfig
+import com.huojieren.apppause.utils.LogUtil
 import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
 class AppMonitor(private val context: Context) {
@@ -14,6 +15,18 @@ class AppMonitor(private val context: Context) {
     private val monitoredApps = mutableSetOf<String>() // 被监控的应用列表
     private val appTimers = mutableMapOf<String, Int>() // 存储每个应用的剩余时长
     private val timeUnit = BuildConfig.TIME_UNIT // 从 BuildConfig 中获取计时单位
+
+    // 单例模式
+    companion object {
+        @Volatile
+        private var instance: AppMonitor? = null
+
+        fun getInstance(context: Context): AppMonitor {
+            return instance ?: synchronized(this) {
+                instance ?: AppMonitor(context).also { instance = it }
+            }
+        }
+    }
 
     init {
         // 初始化时加载被监控的应用列表
@@ -85,5 +98,13 @@ class AppMonitor(private val context: Context) {
             }
         }
         return false
+    }
+
+    fun onForegroundAppDetected(packageName: String) {
+        if (monitoredApps.contains(packageName)) {
+            // 触发提醒或强制关闭操作
+            LogUtil.logDebug("Detected foreground app: $packageName")
+            // 这里可以调用 OverlayManager 或 NotificationManager 显示提醒
+        }
     }
 }

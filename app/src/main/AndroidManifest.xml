@@ -46,6 +46,18 @@
         <activity android:name=".activities.MonitoredAppsActivity" />
         <activity android:name=".activities.AppSelectionActivity" />
 
+        <service
+            android:name=".managers.AppPauseAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
 
 </manifest>

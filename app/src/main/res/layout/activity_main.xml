@@ -4,6 +4,14 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- 辅助功能权限按钮 -->
+    <Button
+        android:id="@+id/accessibilityPermissionButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="@string/request_accessibility" />
+
     <!-- 悬浮窗权限按钮 -->
     <Button
         android:id="@+id/overlayPermissionButton"
