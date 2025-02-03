@@ -7,12 +7,16 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.checkSelfPermission
+import com.huojieren.apppause.BuildConfig
 
 class PermissionManager(private val context: Context) {
+
+    private val TAG = "PermissionManager"
 
     // 检查无障碍权限是否已授权
     fun checkAccessibilityPermission(): Boolean {
@@ -20,9 +24,17 @@ class PermissionManager(private val context: Context) {
             context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
         val enabledServices =
             accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        val serviceName = context.packageName + "/.managers.AppPauseAccessibilityService"
+
+        // 动态生成 serviceName，确保与 service.id 格式一致
+        val serviceName = if (BuildConfig.DEBUG) {
+            "${context.packageName}/com.huojieren.apppause.managers.AppPauseAccessibilityService"
+        } else {
+            "${context.packageName}/.managers.AppPauseAccessibilityService"
+        }
 
         for (service in enabledServices) {
+            Log.d(TAG, "checkAccessibilityPermission: service.id= ${service.id}")
+            Log.d(TAG, "checkAccessibilityPermission: serviceName= $serviceName")
             if (service.id == serviceName) {
                 return true
             }

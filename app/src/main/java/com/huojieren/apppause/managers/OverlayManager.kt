@@ -3,6 +3,7 @@ package com.huojieren.apppause.managers
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
@@ -11,12 +12,12 @@ import android.widget.NumberPicker
 import android.widget.TextView
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
-import com.huojieren.apppause.utils.LogUtil.Companion.logDebug
 
 class OverlayManager(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val timeDesc = BuildConfig.TIME_DESC
+    private val TAG = "OverlayManager"
 
     fun showFloatingWindow(
         remainingTime: Int,
@@ -104,7 +105,7 @@ class OverlayManager(private val context: Context) {
             intent.addCategory(Intent.CATEGORY_HOME)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
-            logDebug("回到桌面")
+            Log.d(TAG, "showTimeoutOverlay: 回到桌面")
 
             windowManager.removeView(overlayView)
         }

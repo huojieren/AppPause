@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.databinding.ActivityMainBinding
 import com.huojieren.apppause.managers.AppMonitor
 import com.huojieren.apppause.managers.AppPauseAccessibilityService
@@ -23,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var overlayManager: OverlayManager
     private lateinit var notificationManager: NotificationManager
     private var isMonitoring: Boolean = false
+    private val timeUnit = BuildConfig.TIME_UNIT
+    private val timeDesc = BuildConfig.TIME_DESC
     private val TAG = "MainActivity"
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -92,7 +95,8 @@ class MainActivity : AppCompatActivity() {
                     showToast(this, "没有应用被监控，请先添加应用")
                 } else {
                     // 检查权限是否全部获取
-                    if (!permissionManager.checkOverlayPermission()
+                    if (!permissionManager.checkAccessibilityPermission()
+                        || !permissionManager.checkOverlayPermission()
                         || !permissionManager.checkNotificationPermission()
                         || !permissionManager.checkUsageStatsPermission()
                     ) {
@@ -100,18 +104,18 @@ class MainActivity : AppCompatActivity() {
                         showToast(this, "请授予相关权限后再试")
                     } else {
                         binding.startMonitoringButton.text = "停止监控"
-                        Log.d(TAG, "onCreate: 监控已开始")
-                        showToast(this, "监控已开始")
                         isMonitoring = true
                         sharedPreferences.edit().putBoolean("isMonitoring", isMonitoring).apply()
+                        Log.d(TAG, "onCreate: 监控已开始")
+                        showToast(this, "监控已开始")
                     }
                 }
             } else {
                 binding.startMonitoringButton.text = "开始监控"
-                Log.d(TAG, "onCreate: 监控已停止")
-                showToast(this, "监控已停止")
                 isMonitoring = false
                 sharedPreferences.edit().putBoolean("isMonitoring", isMonitoring).apply()
+                Log.d(TAG, "onCreate: 监控已停止")
+                showToast(this, "监控已停止")
             }
         }
     }

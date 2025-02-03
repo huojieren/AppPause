@@ -6,10 +6,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.huojieren.apppause.R
-import com.huojieren.apppause.activities.AppSelectionActivity
+import com.huojieren.apppause.models.AppInfo
 
 class AppListAdapter(
-    private val appList: List<AppSelectionActivity.AppInfo>,
+    private val appList: List<AppInfo>,
     private val onItemClick: (String) -> Unit
 ) : RecyclerView.Adapter<AppListAdapter.ViewHolder>() {
 

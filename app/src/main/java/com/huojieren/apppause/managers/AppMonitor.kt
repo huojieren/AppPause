@@ -5,7 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.huojieren.apppause.BuildConfig
-import com.huojieren.apppause.utils.LogUtil.Companion.logDebug
+import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
 class AppMonitor(private val context: Context) {
 
@@ -79,12 +79,16 @@ class AppMonitor(private val context: Context) {
                     OverlayManager(context).showFloatingWindow(
                         remainingTime,
                         onTimeSelected = { selectedTime ->
-                            setRemainingTime(packageName, remainingTime + selectedTime)
-                            startTimer(remainingTime + selectedTime)
+                            setRemainingTime(packageName, selectedTime)
+                            startTimer(packageName, selectedTime)
+                            Log.d(TAG, "notifyForegroundApp: selectedTime = $selectedTime")
+                            showToast(context, "已选择 $selectedTime $timeDesc")
                         },
                         onExtendTime = { extendTime ->
-                            setRemainingTime(packageName, remainingTime + extendTime)
-                            startTimer(remainingTime + extendTime)
+                            setRemainingTime(packageName, extendTime)
+                            startTimer(packageName, extendTime)
+                            Log.d(TAG, "notifyForegroundApp: extendTime = $extendTime")
+                            showToast(context, "已延长 $extendTime $timeDesc")
                         }
                     )
                 } else
@@ -95,14 +99,14 @@ class AppMonitor(private val context: Context) {
             Log.d(TAG, "notifyForegroundApp: isMonitoring = false")
     }
 
-    private fun startTimer(time: Int) {
+    private fun startTimer(packageName: String, time: Int) {
         val handler = Handler(Looper.getMainLooper())
         var remainingTime = time // 剩余时间
 
         // 创建日志输出任务
         val logRunnable = object : Runnable {
             override fun run() {
-                logDebug("剩余时间: $remainingTime $timeDesc")
+                Log.d(TAG, "run: 剩余时间: $remainingTime $timeDesc")
                 if (remainingTime > 0) {
                     remainingTime--
                     handler.postDelayed(this, timeUnit) // 每秒/分钟执行一次
@@ -114,11 +118,12 @@ class AppMonitor(private val context: Context) {
 
         // 创建倒计时结束任务
         val timerRunnable = Runnable {
-            logDebug("倒计时结束")
             overlayManager.showTimeoutOverlay()
+            setRemainingTime(packageName, 0)
+            Log.d(TAG, "startTimer: 倒计时结束")
         }
         // 将选定的时间转换为毫秒
-        val delayMillis = time * 60 * 1000L
+        val delayMillis = if (BuildConfig.DEBUG) time * 1000L else time * 60 * 1000L
         // 延迟执行倒计时结束任务
         handler.postDelayed(timerRunnable, delayMillis)
     }

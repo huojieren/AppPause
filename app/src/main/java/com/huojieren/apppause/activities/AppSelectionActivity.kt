@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.huojieren.apppause.adapters.AppListAdapter
 import com.huojieren.apppause.databinding.ActivityAppSelectionBinding
+import com.huojieren.apppause.models.AppInfo
 
 class AppSelectionActivity : AppCompatActivity() {
 
@@ -53,7 +54,4 @@ class AppSelectionActivity : AppCompatActivity() {
         setResult(RESULT_OK, intent)
         finish()
     }
-
-    // 应用信息数据类
-    data class AppInfo(val name: String, val packageName: String)
 }
