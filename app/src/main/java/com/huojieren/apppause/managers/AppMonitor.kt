@@ -9,12 +9,13 @@ import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
 class AppMonitor(private val context: Context) {
 
+    var isMonitoring: Boolean = false
+
     private val monitoredApps = mutableSetOf<String>() // 被监控的应用列表
     private val appTimers = mutableMapOf<String, Int>() // 存储每个应用的剩余时长
     private val timeUnit = BuildConfig.TIME_UNIT // 从 BuildConfig 中获取计时单位
     private val timeDesc = BuildConfig.TIME_DESC // 从 BuildConfig 中获取计时单位描述
     private val overlayManager = OverlayManager(context)
-    private var isMonitoring: Boolean = false
     private val TAG = "AppMonitor"
 
     // 单例模式
@@ -29,17 +30,14 @@ class AppMonitor(private val context: Context) {
         }
     }
 
-    init {
-        // 初始化时加载被监控的应用列表
-        loadMonitoredApps()
-    }
-
     fun isEmptyMonitoredApps(): Boolean {
+        loadMonitoredApps()
         return monitoredApps.isEmpty()
     }
 
     // 检查应用是否在被监控列表中
     private fun isMonitoredApp(packageName: String): Boolean {
+        loadMonitoredApps()
         return monitoredApps.contains(packageName)
     }
 
@@ -49,6 +47,16 @@ class AppMonitor(private val context: Context) {
 
     private fun getRemainingTime(packageName: String): Int {
         return appTimers[packageName] ?: 0
+    }
+
+    fun startMonitoring() {
+        isMonitoring = true
+        Log.d(TAG, "startMonitoring: isMonitoring = true")
+    }
+
+    fun stopMonitoring() {
+        isMonitoring = false
+        Log.d(TAG, "stopMonitoring: isMonitoring = false")
     }
 
     // 加载被监控的应用列表
@@ -62,9 +70,6 @@ class AppMonitor(private val context: Context) {
     fun notifyForegroundApp(packageName: String?) {
         // 重新加载被监控的应用列表
         loadMonitoredApps()
-        // 从 SharedPreferences 中读取 isMonitoring
-        val sharedPreferences = context.getSharedPreferences("AppPause", Context.MODE_PRIVATE)
-        isMonitoring = sharedPreferences.getBoolean("isMonitoring", false)
 
         if (isMonitoring) {
             Log.d(TAG, "notifyForegroundApp: isMonitoring = true")
@@ -101,30 +106,21 @@ class AppMonitor(private val context: Context) {
 
     private fun startTimer(packageName: String, time: Int) {
         val handler = Handler(Looper.getMainLooper())
-        var remainingTime = time // 剩余时间
+        var remainingTime = time
 
-        // 创建日志输出任务
-        val logRunnable = object : Runnable {
+        val runnable = object : Runnable {
             override fun run() {
                 Log.d(TAG, "run: 剩余时间: $remainingTime $timeDesc")
                 if (remainingTime > 0) {
                     remainingTime--
                     handler.postDelayed(this, timeUnit) // 每秒/分钟执行一次
+                } else {
+                    setRemainingTime(packageName, 0)
+                    overlayManager.showTimeoutOverlay()
+                    Log.d(TAG, "startTimer: 倒计时结束")
                 }
             }
         }
-        // 启动日志输出任务
-        handler.post(logRunnable)
-
-        // 创建倒计时结束任务
-        val timerRunnable = Runnable {
-            overlayManager.showTimeoutOverlay()
-            setRemainingTime(packageName, 0)
-            Log.d(TAG, "startTimer: 倒计时结束")
-        }
-        // 将选定的时间转换为毫秒
-        val delayMillis = if (BuildConfig.DEBUG) time * 1000L else time * 60 * 1000L
-        // 延迟执行倒计时结束任务
-        handler.postDelayed(timerRunnable, delayMillis)
+        handler.post(runnable) // 启动倒计时任务
     }
 }

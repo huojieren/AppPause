@@ -1,6 +1,5 @@
 package com.huojieren.apppause.activities
 
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -36,11 +35,9 @@ class MainActivity : AppCompatActivity() {
 
         // 初始化管理器
         permissionManager = PermissionManager(this)
-        appMonitor = AppMonitor(this)
+        appMonitor = AppMonitor.getInstance(this)
         overlayManager = OverlayManager(this)
         notificationManager = NotificationManager(this)
-
-        val sharedPreferences = getSharedPreferences("AppPause", Context.MODE_PRIVATE)
 
         // 无障碍权限按钮
         binding.accessibilityPermissionButton.setOnClickListener {
@@ -88,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         // 开始/停止监控按钮
         binding.startMonitoringButton.setOnClickListener {
             // 判断是否正在监控
-            if (!isMonitoring) {
+            if (!appMonitor.isMonitoring) {
                 // 检查监控应用是否为空
                 if (appMonitor.isEmptyMonitoredApps()) {
                     Log.d(TAG, "onCreate: 监控应用列表为空，开启监控失败")
@@ -104,16 +101,14 @@ class MainActivity : AppCompatActivity() {
                         showToast(this, "请授予相关权限后再试")
                     } else {
                         binding.startMonitoringButton.text = "停止监控"
-                        isMonitoring = true
-                        sharedPreferences.edit().putBoolean("isMonitoring", isMonitoring).apply()
+                        appMonitor.startMonitoring()
                         Log.d(TAG, "onCreate: 监控已开始")
                         showToast(this, "监控已开始")
                     }
                 }
             } else {
                 binding.startMonitoringButton.text = "开始监控"
-                isMonitoring = false
-                sharedPreferences.edit().putBoolean("isMonitoring", isMonitoring).apply()
+                appMonitor.stopMonitoring()
                 Log.d(TAG, "onCreate: 监控已停止")
                 showToast(this, "监控已停止")
             }
