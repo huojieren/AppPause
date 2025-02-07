@@ -10,6 +10,7 @@ import com.huojieren.apppause.R
 class NotificationManager(private val context: Context) {
     private val timeDesc = BuildConfig.TIME_DESC
 
+    @Suppress("unused")
     fun showNotification(message: String, remainingTime: Int) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

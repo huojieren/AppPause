@@ -17,7 +17,7 @@ class OverlayManager(private val context: Context) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val timeDesc = BuildConfig.TIME_DESC
-    private val TAG = "OverlayManager"
+    private val tag = "OverlayManager"
 
     fun showFloatingWindow(
         remainingTime: Int,
@@ -105,7 +105,7 @@ class OverlayManager(private val context: Context) {
             intent.addCategory(Intent.CATEGORY_HOME)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
-            Log.d(TAG, "showTimeoutOverlay: 回到桌面")
+            Log.d(tag, "showTimeoutOverlay: 回到桌面")
 
             windowManager.removeView(overlayView)
         }

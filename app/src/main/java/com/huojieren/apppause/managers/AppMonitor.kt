@@ -1,5 +1,6 @@
 package com.huojieren.apppause.managers
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -16,16 +17,17 @@ class AppMonitor(private val context: Context) {
     private val timeUnit = BuildConfig.TIME_UNIT // 从 BuildConfig 中获取计时单位
     private val timeDesc = BuildConfig.TIME_DESC // 从 BuildConfig 中获取计时单位描述
     private val overlayManager = OverlayManager(context)
-    private val TAG = "AppMonitor"
+    private val tag = "AppMonitor"
 
     // 单例模式
     companion object {
         @Volatile
+        @SuppressLint("StaticFieldLeak") // 忽略 Lint 内存泄漏警告
         private var instance: AppMonitor? = null
-
         fun getInstance(context: Context): AppMonitor {
+            val appContext = context.applicationContext // 获取全局上下文
             return instance ?: synchronized(this) {
-                instance ?: AppMonitor(context).also { instance = it }
+                instance ?: AppMonitor(appContext).also { instance = it } // 使用全局上下文避免内存泄漏
             }
         }
     }
@@ -51,12 +53,12 @@ class AppMonitor(private val context: Context) {
 
     fun startMonitoring() {
         isMonitoring = true
-        Log.d(TAG, "startMonitoring: isMonitoring = true")
+        Log.d(tag, "startMonitoring: isMonitoring = true")
     }
 
     fun stopMonitoring() {
         isMonitoring = false
-        Log.d(TAG, "stopMonitoring: isMonitoring = false")
+        Log.d(tag, "stopMonitoring: isMonitoring = false")
     }
 
     // 加载被监控的应用列表
@@ -72,12 +74,12 @@ class AppMonitor(private val context: Context) {
         loadMonitoredApps()
 
         if (isMonitoring) {
-            Log.d(TAG, "notifyForegroundApp: isMonitoring = true")
+            Log.d(tag, "notifyForegroundApp: isMonitoring = true")
             if (packageName != null) {
-                Log.d(TAG, "notifyForegroundApp: packageName = $packageName")
+                Log.d(tag, "notifyForegroundApp: packageName = $packageName")
                 // 检查应用是否在被监控列表中
                 if (isMonitoredApp(packageName)) {
-                    Log.d(TAG, "notifyForegroundApp: isMonitoredApp = true")
+                    Log.d(tag, "notifyForegroundApp: isMonitoredApp = true")
                     // 获取剩余时间
                     val remainingTime = getRemainingTime(packageName)
                     // 显示倒计时弹窗
@@ -86,22 +88,22 @@ class AppMonitor(private val context: Context) {
                         onTimeSelected = { selectedTime ->
                             setRemainingTime(packageName, selectedTime)
                             startTimer(packageName, selectedTime)
-                            Log.d(TAG, "notifyForegroundApp: selectedTime = $selectedTime")
+                            Log.d(tag, "notifyForegroundApp: selectedTime = $selectedTime")
                             showToast(context, "已选择 $selectedTime $timeDesc")
                         },
                         onExtendTime = { extendTime ->
                             setRemainingTime(packageName, extendTime)
                             startTimer(packageName, extendTime)
-                            Log.d(TAG, "notifyForegroundApp: extendTime = $extendTime")
+                            Log.d(tag, "notifyForegroundApp: extendTime = $extendTime")
                             showToast(context, "已延长 $extendTime $timeDesc")
                         }
                     )
                 } else
-                    Log.d(TAG, "notifyForegroundApp: isMonitoredApp = false")
+                    Log.d(tag, "notifyForegroundApp: isMonitoredApp = false")
             } else
-                Log.d(TAG, "notifyForegroundApp: packageName = null")
+                Log.d(tag, "notifyForegroundApp: packageName = null")
         } else
-            Log.d(TAG, "notifyForegroundApp: isMonitoring = false")
+            Log.d(tag, "notifyForegroundApp: isMonitoring = false")
     }
 
     private fun startTimer(packageName: String, time: Int) {
@@ -110,14 +112,14 @@ class AppMonitor(private val context: Context) {
 
         val runnable = object : Runnable {
             override fun run() {
-                Log.d(TAG, "run: 剩余时间: $remainingTime $timeDesc")
+                Log.d(tag, "run: 剩余时间: $remainingTime $timeDesc")
                 if (remainingTime > 0) {
                     remainingTime--
                     handler.postDelayed(this, timeUnit) // 每秒/分钟执行一次
                 } else {
                     setRemainingTime(packageName, 0)
                     overlayManager.showTimeoutOverlay()
-                    Log.d(TAG, "startTimer: 倒计时结束")
+                    Log.d(tag, "startTimer: 倒计时结束")
                 }
             }
         }

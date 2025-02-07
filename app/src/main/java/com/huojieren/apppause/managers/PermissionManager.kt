@@ -16,7 +16,7 @@ import com.huojieren.apppause.BuildConfig
 
 class PermissionManager(private val context: Context) {
 
-    private val TAG = "PermissionManager"
+    private val tag = "PermissionManager"
 
     // 检查无障碍权限是否已授权
     fun checkAccessibilityPermission(): Boolean {
@@ -33,8 +33,8 @@ class PermissionManager(private val context: Context) {
         }
 
         for (service in enabledServices) {
-            Log.d(TAG, "checkAccessibilityPermission: service.id= ${service.id}")
-            Log.d(TAG, "checkAccessibilityPermission: serviceName= $serviceName")
+            Log.d(tag, "checkAccessibilityPermission: service.id= ${service.id}")
+            Log.d(tag, "checkAccessibilityPermission: serviceName= $serviceName")
             if (service.id == serviceName) {
                 return true
             }
