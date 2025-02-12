@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
             if (permissionManager.checkAccessibilityPermission()) {
                 showToast(this, "无障碍权限已授予")
             } else {
-                permissionManager.requestAccessibilityPermission()
+                permissionManager.requestAccessibilityPermission(this)
             }
         }
 
@@ -82,19 +82,19 @@ class MainActivity : AppCompatActivity() {
         binding.startMonitoringButton.setOnClickListener {
             // 判断是否正在监控
             if (!appMonitor.isMonitoring) {
-                // 检查监控应用是否为空
-                if (appMonitor.isEmptyMonitoredApps()) {
-                    Log.d(tag, "onCreate: 监控应用列表为空，开启监控失败")
-                    showToast(this, "没有应用被监控，请先添加应用")
+                // 检查权限是否全部获取
+                if (!permissionManager.checkAccessibilityPermission()
+                    || !permissionManager.checkOverlayPermission()
+                    || !permissionManager.checkNotificationPermission()
+                    || !permissionManager.checkUsageStatsPermission()
+                ) {
+                    Log.d(tag, "onCreate: 权限未获取，开启监控失败")
+                    showToast(this, "请授予相关权限后再试")
                 } else {
-                    // 检查权限是否全部获取
-                    if (!permissionManager.checkAccessibilityPermission()
-                        || !permissionManager.checkOverlayPermission()
-                        || !permissionManager.checkNotificationPermission()
-                        || !permissionManager.checkUsageStatsPermission()
-                    ) {
-                        Log.d(tag, "onCreate: 权限未获取，开启监控失败")
-                        showToast(this, "请授予相关权限后再试")
+                    // 检查监控应用是否为空
+                    if (appMonitor.isEmptyMonitoredApps()) {
+                        Log.d(tag, "onCreate: 监控应用列表为空，开启监控失败")
+                        showToast(this, "没有应用被监控，请先添加应用")
                     } else {
                         binding.startMonitoringButton.text = "停止监控"
                         appMonitor.startMonitoring()

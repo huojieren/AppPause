@@ -43,9 +43,10 @@ class PermissionManager(private val context: Context) {
     }
 
     // 请求无障碍权限
-    fun requestAccessibilityPermission() {
+    fun requestAccessibilityPermission(activity: AppCompatActivity) {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         context.startActivity(intent)
+        waitForPermissionAndReturn(activity) { checkAccessibilityPermission() }
     }
 
     // 检查悬浮窗权限是否已授权
@@ -60,6 +61,7 @@ class PermissionManager(private val context: Context) {
             Uri.parse("package:${context.packageName}")
         )
         activity.startActivityForResult(intent, requestCode)
+        waitForPermissionAndReturn(activity) { checkOverlayPermission() }
     }
 
     // 检查通知权限是否已授权
@@ -94,5 +96,28 @@ class PermissionManager(private val context: Context) {
     fun requestUsageStatsPermission(activity: AppCompatActivity) {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         activity.startActivity(intent)
+        waitForPermissionAndReturn(activity) { checkUsageStatsPermission() }
+    }
+
+    // 启动后台检查，当获取权限时自动返回应用
+    private fun waitForPermissionAndReturn(
+        activity: AppCompatActivity,
+        permissionCheck: () -> Boolean
+    ) {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val checkRunnable = object : Runnable {
+            override fun run() {
+                if (permissionCheck()) {
+                    Log.d(tag, "run: 检测到获取权限，返回应用")
+                    val intent =
+                        activity.packageManager.getLaunchIntentForPackage(activity.packageName)
+                    intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    activity.startActivity(intent)
+                } else {
+                    handler.postDelayed(this, 100) // 100ms 后再次检查
+                }
+            }
+        }
+        handler.post(checkRunnable) // 启动定时检查
     }
 }
