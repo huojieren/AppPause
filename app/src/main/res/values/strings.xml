@@ -13,4 +13,5 @@
     <string name="delete">删除</string>
     <string name="request_accessibility">请求无障碍权限</string>
     <string name="accessibility_description">App Pause无障碍服务用于监控前台应用的切换状态。</string>
+    <string name="version_text">当前版本：v%s</string>
 </resources>

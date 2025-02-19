@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.huojieren.apppause.BuildConfig
+import com.huojieren.apppause.R
 import com.huojieren.apppause.databinding.ActivityMainBinding
 import com.huojieren.apppause.managers.AppMonitor
 import com.huojieren.apppause.managers.AppPauseAccessibilityService
@@ -77,6 +79,9 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, MonitoredAppsActivity::class.java)
             startActivity(intent)
         }
+
+        // 显示版本号
+        binding.versionTextView.text = getString(R.string.version_text, BuildConfig.VERSION_NAME)
 
         // 开始/停止监控按钮
         binding.startMonitoringButton.setOnClickListener {

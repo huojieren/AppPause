@@ -14,7 +14,7 @@ android {
         minSdk = 26 // 最低支持的 SDK 版本
         targetSdk = 35 // 目标 SDK 版本
         versionCode = 1 // 版本代码
-        versionName = "1.0" // 版本名称
+        versionName = "0.5.0" // 版本名称
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" // 测试用例运行器
     }
 

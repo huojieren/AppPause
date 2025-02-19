@@ -1,4 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tool="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -51,4 +52,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:text="@string/start_monitor" />
+
+    <!-- 显示版本号 -->
+    <TextView
+        android:id="@+id/versionTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="16sp"
+        tool:text="Version: “版本号”" />
 </LinearLayout>
