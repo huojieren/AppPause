@@ -45,6 +45,33 @@
         android:layout_marginBottom="16dp"
         android:text="@string/monitor_list" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+        <!-- 清空日志按钮 -->
+        <Button
+            android:id="@+id/clearLogButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:text="@string/clearLog"
+            tool:ignore="ButtonStyle" />
+
+        <!-- 保存日志按钮 -->
+        <Button
+            android:id="@+id/saveLogButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:text="@string/saveLog"
+            tool:ignore="ButtonStyle" />
+    </LinearLayout>
+
     <!-- 开始/停止监控按钮 -->
     <Button
         android:id="@+id/startMonitoringButton"

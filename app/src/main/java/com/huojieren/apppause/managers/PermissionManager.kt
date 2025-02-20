@@ -7,12 +7,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.huojieren.apppause.BuildConfig
+import com.huojieren.apppause.utils.LogUtil
 
 class PermissionManager(private val context: Context) {
 
@@ -33,8 +33,8 @@ class PermissionManager(private val context: Context) {
         }
 
         for (service in enabledServices) {
-            Log.d(tag, "checkAccessibilityPermission: service.id= ${service.id}")
-            Log.d(tag, "checkAccessibilityPermission: serviceName= $serviceName")
+            LogUtil(context).d(tag, "checkAccessibilityPermission: service.id= ${service.id}")
+            LogUtil(context).d(tag, "checkAccessibilityPermission: serviceName= $serviceName")
             if (service.id == serviceName) {
                 return true
             }
@@ -108,7 +108,7 @@ class PermissionManager(private val context: Context) {
         val checkRunnable = object : Runnable {
             override fun run() {
                 if (permissionCheck()) {
-                    Log.d(tag, "run: 检测到获取权限，返回应用")
+                    LogUtil(context).d(tag, "run: 检测到获取权限，返回应用")
                     val intent =
                         activity.packageManager.getLaunchIntentForPackage(activity.packageName)
                     intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)

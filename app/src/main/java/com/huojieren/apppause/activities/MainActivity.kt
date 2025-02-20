@@ -3,7 +3,6 @@ package com.huojieren.apppause.activities
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.huojieren.apppause.BuildConfig
@@ -14,6 +13,7 @@ import com.huojieren.apppause.managers.AppPauseAccessibilityService
 import com.huojieren.apppause.managers.NotificationManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
+import com.huojieren.apppause.utils.LogUtil
 import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
 class MainActivity : AppCompatActivity() {
@@ -83,6 +83,16 @@ class MainActivity : AppCompatActivity() {
         // 显示版本号
         binding.versionTextView.text = getString(R.string.version_text, BuildConfig.VERSION_NAME)
 
+        binding.clearLogButton.setOnClickListener {
+            LogUtil(this).d(tag, "onCreate: 清除日志")
+            LogUtil(this).clearLog()
+        }
+
+        binding.saveLogButton.setOnClickListener {
+            LogUtil(this).d(tag, "onCreate: 保存日志")
+            LogUtil(this).saveLog()
+        }
+
         // 开始/停止监控按钮
         binding.startMonitoringButton.setOnClickListener {
             // 判断是否正在监控
@@ -93,24 +103,24 @@ class MainActivity : AppCompatActivity() {
                     || !permissionManager.checkNotificationPermission()
                     || !permissionManager.checkUsageStatsPermission()
                 ) {
-                    Log.d(tag, "onCreate: 权限未获取，开启监控失败")
+                    LogUtil(this).d(tag, "onCreate: 权限未获取，开启监控失败")
                     showToast(this, "请授予相关权限后再试")
                 } else {
                     // 检查监控应用是否为空
                     if (appMonitor.isEmptyMonitoredApps()) {
-                        Log.d(tag, "onCreate: 监控应用列表为空，开启监控失败")
+                        LogUtil(this).d(tag, "onCreate: 监控应用列表为空，开启监控失败")
                         showToast(this, "没有应用被监控，请先添加应用")
                     } else {
                         binding.startMonitoringButton.text = "停止监控"
                         appMonitor.startMonitoring()
-                        Log.d(tag, "onCreate: 监控已开始")
+                        LogUtil(this).d(tag, "onCreate: 监控已开始")
                         showToast(this, "监控已开始")
                     }
                 }
             } else {
                 binding.startMonitoringButton.text = "开始监控"
                 appMonitor.stopMonitoring()
-                Log.d(tag, "onCreate: 监控已停止")
+                LogUtil(this).d(tag, "onCreate: 监控已停止")
                 showToast(this, "监控已停止")
             }
         }

@@ -3,7 +3,6 @@ package com.huojieren.apppause.managers
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
@@ -11,6 +10,7 @@ import android.widget.Button
 import android.widget.NumberPicker
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
+import com.huojieren.apppause.utils.LogUtil
 
 class OverlayManager(private val context: Context) {
 
@@ -98,7 +98,7 @@ class OverlayManager(private val context: Context) {
             intent.addCategory(Intent.CATEGORY_HOME)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
-            Log.d(tag, "showTimeoutOverlay: 回到桌面")
+            LogUtil(context).d(tag, "showTimeoutOverlay: 回到桌面")
 
             windowManager.removeView(overlayView)
         }
