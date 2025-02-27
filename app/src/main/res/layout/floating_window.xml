@@ -2,9 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:background="@color/white"
     android:elevation="8dp"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:ignore="Overdraw">
 
     <!-- 时间选择器 -->
     <NumberPicker
@@ -22,27 +24,27 @@
 
         <Button
             android:id="@+id/extend5UnitsButton"
+            style="@style/AppButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/AppButtonStyle"
             tools:text="延长 5 分钟" />
 
         <Button
             android:id="@+id/extend10UnitsButton"
+            style="@style/AppButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            style="@style/AppButtonStyle"
             tools:text="延长 10 分钟" />
     </LinearLayout>
 
     <!-- 确认按钮 -->
     <Button
         android:id="@+id/confirmButton"
+        style="@style/AppButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        style="@style/AppButtonStyle"
         android:text="@string/confirm" />
 </LinearLayout>

@@ -19,6 +19,7 @@ class OverlayManager(private val context: Context) {
     private val tag = "OverlayManager"
 
     fun showFloatingWindow(
+        onDisMiss: () -> Unit,
         onTimeSelected: (Int) -> Unit,
         onExtendTime: (Int) -> Unit
     ) {
@@ -62,16 +63,19 @@ class OverlayManager(private val context: Context) {
             val selectedTime = timePicker.value
             onTimeSelected(selectedTime)
             windowManager.removeView(floatingView)
+            onDisMiss()
         }
 
         extend5UnitsButton.setOnClickListener {
             onExtendTime(5) // 延长 5 秒/分钟
             windowManager.removeView(floatingView)
+            onDisMiss()
         }
 
         extend10UnitsButton.setOnClickListener {
             onExtendTime(10) // 延长 10 秒/分钟
             windowManager.removeView(floatingView)
+            onDisMiss()
         }
     }
 

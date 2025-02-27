@@ -1,53 +1,19 @@
 package com.huojieren.apppause.managers
 
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.checkSelfPermission
-import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.utils.LogUtil
 
 class PermissionManager(private val context: Context) {
 
     private val tag = "PermissionManager"
-
-    // 检查无障碍权限是否已授权
-    fun checkAccessibilityPermission(): Boolean {
-        val accessibilityManager =
-            context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val enabledServices =
-            accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-
-        // 动态生成 serviceName，确保与 service.id 格式一致
-        val serviceName = if (BuildConfig.DEBUG) {
-            "${context.packageName}/com.huojieren.apppause.managers.AppPauseAccessibilityService"
-        } else {
-            "${context.packageName}/.managers.AppPauseAccessibilityService"
-        }
-
-        for (service in enabledServices) {
-            LogUtil(context).d(tag, "checkAccessibilityPermission: service.id= ${service.id}")
-            LogUtil(context).d(tag, "checkAccessibilityPermission: serviceName= $serviceName")
-            if (service.id == serviceName) {
-                return true
-            }
-        }
-        return false
-    }
-
-    // 请求无障碍权限
-    fun requestAccessibilityPermission(activity: AppCompatActivity) {
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-        context.startActivity(intent)
-        waitForPermissionAndReturn(activity) { checkAccessibilityPermission() }
-    }
 
     // 检查悬浮窗权限是否已授权
     fun checkOverlayPermission(): Boolean {

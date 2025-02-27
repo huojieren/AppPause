@@ -6,15 +6,6 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 辅助功能权限按钮 -->
-    <Button
-        android:id="@+id/accessibilityPermissionButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/request_accessibility" />
-
     <!-- 悬浮窗权限按钮 -->
     <Button
         android:id="@+id/overlayPermissionButton"
@@ -58,6 +49,7 @@
         android:layout_marginBottom="16dp"
         android:gravity="center"
         android:orientation="horizontal">
+
         <!-- 清空日志按钮 -->
         <Button
             android:id="@+id/clearLogButton"
@@ -80,13 +72,23 @@
     </LinearLayout>
 
     <!-- 开始/停止监控按钮 -->
-    <Button
-        android:id="@+id/startMonitoringButton"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="16dp"
-        android:text="@string/start_monitor" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <!-- 通过使用情况访问权限开始监控 -->
+        <Button
+            android:id="@+id/startWithUsageStatsManagerButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:text="@string/start_with_usageStatsManager" />
+    </LinearLayout>
 
     <!-- 显示版本号 -->
     <TextView

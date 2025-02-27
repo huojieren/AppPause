@@ -9,7 +9,6 @@ import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.databinding.ActivityMainBinding
 import com.huojieren.apppause.managers.AppMonitor
-import com.huojieren.apppause.managers.AppPauseAccessibilityService
 import com.huojieren.apppause.managers.NotificationManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
@@ -36,15 +35,6 @@ class MainActivity : AppCompatActivity() {
         appMonitor = AppMonitor.getInstance(this)
         overlayManager = OverlayManager(this)
         notificationManager = NotificationManager(this)
-
-        // 无障碍权限按钮
-        binding.accessibilityPermissionButton.setOnClickListener {
-            if (permissionManager.checkAccessibilityPermission()) {
-                showToast(this, "无障碍权限已授予")
-            } else {
-                permissionManager.requestAccessibilityPermission(this)
-            }
-        }
 
         // 悬浮窗权限按钮
         binding.overlayPermissionButton.setOnClickListener {
@@ -93,35 +83,38 @@ class MainActivity : AppCompatActivity() {
             LogUtil(this).saveLog()
         }
 
-        // 开始/停止监控按钮
-        binding.startMonitoringButton.setOnClickListener {
-            // 判断是否正在监控
-            if (!appMonitor.isMonitoring) {
-                // 检查权限是否全部获取
-                if (!permissionManager.checkAccessibilityPermission()
-                    || !permissionManager.checkOverlayPermission()
-                    || !permissionManager.checkNotificationPermission()
-                    || !permissionManager.checkUsageStatsPermission()
-                ) {
-                    LogUtil(this).d(tag, "onCreate: 权限未获取，开启监控失败")
-                    showToast(this, "请授予相关权限后再试")
-                } else {
-                    // 检查监控应用是否为空
-                    if (appMonitor.isEmptyMonitoredApps()) {
-                        LogUtil(this).d(tag, "onCreate: 监控应用列表为空，开启监控失败")
-                        showToast(this, "没有应用被监控，请先添加应用")
+        // 通过使用情况访问权限开始监控
+        binding.startWithUsageStatsManagerButton.setOnClickListener {
+            if (binding.startWithUsageStatsManagerButton.isClickable) {
+                // 判断是否正在监控
+                if (!appMonitor.isMonitoring) {
+                    // 检查权限是否全部获取
+                    if (!permissionManager.checkOverlayPermission()
+                        || !permissionManager.checkNotificationPermission()
+                        || !permissionManager.checkUsageStatsPermission()
+                    ) {
+                        LogUtil(this).d(tag, "onCreate: 权限未获取，开启监控失败")
+                        showToast(this, "请授予相关权限后再试")
                     } else {
-                        binding.startMonitoringButton.text = "停止监控"
-                        appMonitor.startMonitoring()
-                        LogUtil(this).d(tag, "onCreate: 监控已开始")
-                        showToast(this, "监控已开始")
+                        // 检查监控应用是否为空
+                        if (appMonitor.isEmptyMonitoredApps()) {
+                            LogUtil(this).d(tag, "onCreate: 监控应用列表为空，开启监控失败")
+                            showToast(this, "没有应用被监控，请先添加应用")
+                        } else {
+                            binding.startWithUsageStatsManagerButton.text =
+                                getString(R.string.stop_monitor)
+                            appMonitor.startMonitoring()
+                            LogUtil(this).d(tag, "onCreate: 监控已开始")
+                            showToast(this, "监控已开始")
+                        }
                     }
+                } else {
+                    binding.startWithUsageStatsManagerButton.text =
+                        getString(R.string.start_with_usageStatsManager)
+                    appMonitor.stopMonitoring()
+                    LogUtil(this).d(tag, "onCreate: 监控已停止")
+                    showToast(this, "监控已停止")
                 }
-            } else {
-                binding.startMonitoringButton.text = "开始监控"
-                appMonitor.stopMonitoring()
-                LogUtil(this).d(tag, "onCreate: 监控已停止")
-                showToast(this, "监控已停止")
             }
         }
     }
@@ -130,13 +123,6 @@ class MainActivity : AppCompatActivity() {
     // Android 12 及以下不需要申请 POST_NOTIFICATIONS 权限
     override fun onResume() {
         super.onResume()
-
-        // 动态更新无障碍权限按钮状态
-        if (permissionManager.checkAccessibilityPermission()) {
-            binding.accessibilityPermissionButton.text = "无障碍权限已授予"
-        } else {
-            binding.accessibilityPermissionButton.text = "请求无障碍权限"
-        }
 
         // 动态更新悬浮窗权限按钮状态
         if (permissionManager.checkOverlayPermission()) {
@@ -158,9 +144,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.usageStatsPermissionButton.text = "请求使用情况访问权限"
         }
-
-        // 启动 AccessibilityService
-        AppPauseAccessibilityService.start(this)
     }
 
     companion object {

@@ -39,18 +39,21 @@ class LogUtil(private val context: Context) {
     }
 
     // Log.i 重定向到文件
+    @Suppress("unused")
     fun i(tag: String, message: String) {
         Log.i(tag, message)
         logToFile("INFO: [$tag] $message")
     }
 
     // Log.w 重定向到文件
+    @Suppress("unused")
     fun w(tag: String, message: String) {
         Log.w(tag, message)
         logToFile("WARN: [$tag] $message")
     }
 
     // Log.e 重定向到文件
+    @Suppress("unused")
     fun e(tag: String, message: String) {
         Log.e(tag, message)
         logToFile("ERROR: [$tag] $message")
