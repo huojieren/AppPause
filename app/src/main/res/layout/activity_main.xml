@@ -87,7 +87,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:layout_weight="1"
-            android:text="@string/start_with_usageStatsManager" />
+            android:text="@string/start_monitor" />
     </LinearLayout>
 
     <!-- 显示版本号 -->

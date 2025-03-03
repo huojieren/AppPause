@@ -162,7 +162,6 @@ class AppMonitor(private val context: Context) {
             // 显示悬浮窗让用户设置时间
             OverlayManager(context).showFloatingWindow(
                 onDisMiss = {
-                    // TODO: 给悬浮窗添加取消按钮，点击后返回桌面（禁止使用应用）
                     // 如果用户取消了设置时间，则继续监控
                     startMonitoring()
                 },

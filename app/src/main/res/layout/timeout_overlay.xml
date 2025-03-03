@@ -16,7 +16,6 @@
         android:orientation="vertical">
 
         <!-- 提示文本 -->
-        <!--TODO: 添加应用名 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

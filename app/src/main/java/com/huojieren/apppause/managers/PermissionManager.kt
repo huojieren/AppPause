@@ -71,8 +71,12 @@ class PermissionManager(private val context: Context) {
         permissionCheck: () -> Boolean
     ) {
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val maxAttempts = 600 // 最大检查次数（100ms × 600 = 1分钟）
+        var currentAttempt = 0
+
         val checkRunnable = object : Runnable {
             override fun run() {
+                currentAttempt++
                 if (permissionCheck()) {
                     LogUtil(context).d(tag, "run: 检测到获取权限，返回应用")
                     val intent =
@@ -80,10 +84,14 @@ class PermissionManager(private val context: Context) {
                     intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     activity.startActivity(intent)
                 } else {
-                    handler.postDelayed(this, 100) // 100ms 后再次检查
+                    if (currentAttempt < maxAttempts) {
+                        handler.postDelayed(this, 100)
+                    } else {
+                        LogUtil(context).d(tag, "权限检测超时，需手动跳转")
+                    }
                 }
             }
         }
-        handler.post(checkRunnable) // 启动定时检查
+        handler.post(checkRunnable)
     }
 }

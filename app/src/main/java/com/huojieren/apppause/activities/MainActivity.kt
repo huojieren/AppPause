@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else {
                     binding.startWithUsageStatsManagerButton.text =
-                        getString(R.string.start_with_usageStatsManager)
+                        getString(R.string.start_monitor)
                     appMonitor.stopMonitoring()
                     LogUtil(this).d(tag, "onCreate: 监控已停止")
                     showToast(this, "监控已停止")
