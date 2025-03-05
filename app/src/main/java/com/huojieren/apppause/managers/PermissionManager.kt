@@ -78,7 +78,7 @@ class PermissionManager(private val context: Context) {
             override fun run() {
                 currentAttempt++
                 if (permissionCheck()) {
-                    LogUtil(context).d(tag, "run: 检测到获取权限，返回应用")
+                    LogUtil(context).log(tag, "[DEBUG] 检测到获取权限，返回应用")
                     val intent =
                         activity.packageManager.getLaunchIntentForPackage(activity.packageName)
                     intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -87,7 +87,7 @@ class PermissionManager(private val context: Context) {
                     if (currentAttempt < maxAttempts) {
                         handler.postDelayed(this, 100)
                     } else {
-                        LogUtil(context).d(tag, "权限检测超时，需手动跳转")
+                        LogUtil(context).log(tag, "[DEBUG] 权限检测超时，需手动跳转")
                     }
                 }
             }

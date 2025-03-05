@@ -74,12 +74,12 @@ class MainActivity : AppCompatActivity() {
         binding.versionTextView.text = getString(R.string.version_text, BuildConfig.VERSION_NAME)
 
         binding.clearLogButton.setOnClickListener {
-            LogUtil(this).d(tag, "onCreate: 清除日志")
+            LogUtil(this).log(tag, "[DEBUG] 清除日志")
             LogUtil(this).clearLog()
         }
 
         binding.saveLogButton.setOnClickListener {
-            LogUtil(this).d(tag, "onCreate: 保存日志")
+            LogUtil(this).log(tag, "[DEBUG] 保存日志")
             LogUtil(this).saveLog()
         }
 
@@ -93,18 +93,18 @@ class MainActivity : AppCompatActivity() {
                         || !permissionManager.checkNotificationPermission()
                         || !permissionManager.checkUsageStatsPermission()
                     ) {
-                        LogUtil(this).d(tag, "onCreate: 权限未获取，开启监控失败")
+                        LogUtil(this).log(tag, "[DEBUG] 检查权限失败")
                         showToast(this, "请授予相关权限后再试")
                     } else {
                         // 检查监控应用是否为空
                         if (appMonitor.isEmptyMonitoredApps()) {
-                            LogUtil(this).d(tag, "onCreate: 监控应用列表为空，开启监控失败")
+                            LogUtil(this).log(tag, "[DEBUG] 检查应用失败")
                             showToast(this, "没有应用被监控，请先添加应用")
                         } else {
                             binding.startWithUsageStatsManagerButton.text =
                                 getString(R.string.stop_monitor)
                             appMonitor.startMonitoring()
-                            LogUtil(this).d(tag, "onCreate: 监控已开始")
+                            LogUtil(this).log(tag, "[STATE] 开始监控")
                             showToast(this, "监控已开始")
                         }
                     }
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                     binding.startWithUsageStatsManagerButton.text =
                         getString(R.string.start_monitor)
                     appMonitor.stopMonitoring()
-                    LogUtil(this).d(tag, "onCreate: 监控已停止")
+                    LogUtil(this).log(tag, "[STATE] 停止监控")
                     showToast(this, "监控已停止")
                 }
             }

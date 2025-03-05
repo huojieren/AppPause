@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.IBinder
@@ -11,7 +12,7 @@ import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.huojieren.apppause.R
-import com.huojieren.apppause.managers.AppMonitor
+import com.huojieren.apppause.utils.LogUtil
 
 class MonitorService : Service() {
 
@@ -21,25 +22,33 @@ class MonitorService : Service() {
     private val notificationId = 1
     private val handler = Handler(Looper.getMainLooper())
 
+    companion object {
+        fun getServiceIntent(context: Context): Intent {
+            return Intent(context, MonitorService::class.java).apply {
+            }
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
+        LogUtil(this).log("MonitorService", "[STATE] 创建前台服务")
         createNotificationChannel()
         acquireWakeLock()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        LogUtil(this).log("MonitorService", "[STATE] 开始前台服务")
         val notification = buildNotification()
         startForeground(notificationId, notification)
-        AppMonitor.getInstance(this).startMonitoring()
         return START_STICKY
     }
 
     override fun onDestroy() {
-        releaseWakeLock()
-        AppMonitor.getInstance(this).stopMonitoring()
         super.onDestroy()
+        LogUtil(this).log("MonitorService", "[STATE] 销毁前台服务")
+        releaseWakeLock()
     }
 
     private fun createNotificationChannel() {

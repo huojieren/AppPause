@@ -102,7 +102,7 @@ class OverlayManager(private val context: Context) {
             intent.addCategory(Intent.CATEGORY_HOME)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
-            LogUtil(context).d(tag, "showTimeoutOverlay: 回到桌面")
+            LogUtil(context).log(tag, "[STATE] 回到桌面")
 
             windowManager.removeView(overlayView)
         }

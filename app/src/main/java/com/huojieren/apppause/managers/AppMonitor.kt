@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.huojieren.apppause.BuildConfig
@@ -67,8 +66,9 @@ class AppMonitor(private val context: Context) {
     }
 
     fun startMonitoring() {
-        LogUtil(context).d(tag, "startMonitoring: 开始监控应用")
         if (isMonitoring) return
+
+        LogUtil(context).log(tag, "[STATE] 启动应用监控")
         // 创建监控任务
         monitorRunnable = object : Runnable {
             override fun run() {
@@ -82,17 +82,34 @@ class AppMonitor(private val context: Context) {
             }
         }
         handler.post(monitorRunnable!!)
-        context.startService(Intent(context, MonitorService::class.java))
+        context.startService(MonitorService.getServiceIntent(context))
         isMonitoring = true
     }
 
     fun stopMonitoring() {
-        isMonitoring = false
-        LogUtil(context).d(tag, "stopMonitoring: 停止监控应用")
+        if (!isMonitoring) return
+
+        LogUtil(context).log(tag, "[STATE] 停止应用监控")
+
+        // 停止所有定时器
+        runningTimerRunnableMap.values.forEach {
+            handler.removeCallbacks(it)
+        }
+        runningTimerRunnableMap.clear()
+
+        // 停止主监控循环
         monitorRunnable?.let {
-            handler.removeCallbacksAndMessages(it)
+            handler.removeCallbacks(it)
             monitorRunnable = null
         }
+
+        // 停止服务
+        context.stopService(MonitorService.getServiceIntent(context))
+        isMonitoring = false
+
+        // 重置状态变量
+        currentMonitorApp = null
+        lastDetectedApp = null
     }
 
     private fun getForegroundApp(context: Context): String? {
@@ -131,13 +148,39 @@ class AppMonitor(private val context: Context) {
     }
 
     fun checkForegroundApp(packageName: String?) {
+        when {
+            !isValidApp(packageName) -> {
+                LogUtil(context).log(
+                    tag,
+                    "[DEBUG] 无效应用" +
+                            " | 包名=${packageName}" +
+                            " | 原因=${if (packageName.isNullOrEmpty()) "空包名" else "自身应用"}"
+                )
+            }
+
+            !isMonitoredApp(packageName!!) -> {
+                LogUtil(context).log(
+                    tag,
+                    "[DEBUG] 非监控应用" +
+                            " | 包名=${packageName}" +
+                            " | 已监控应用数=${monitoredAppMap.size}"
+                )
+            }
+
+            else -> {
+                LogUtil(context).log(
+                    tag,
+                    "[STATE] 开始处理监控应用" +
+                            " | 包名=${packageName}" +
+                            " | 剩余时间=${appTimerMap[packageName] ?: 0}s"
+                )
+            }
+        }
+
         // 重新加载被监控的应用列表
         loadMonitoredApps()
-        // 检查包名是否有效
+        // 检查应用是否有效
         if (!isValidApp(packageName)) {
-            LogUtil(context).d(tag, "checkForegroundApp: packageName 为 null 或正在使用 App Pause")
-            // 如果包名无效，则重新开始监控
-            startMonitoring()
             return
         }
         // 如果当前正在监控的应用和当前前台应用不同，则暂停当前正在监控应用的倒计时
@@ -146,9 +189,6 @@ class AppMonitor(private val context: Context) {
         }
         // 检查是否为正在监控的应用
         if (!isMonitoredApp(packageName!!)) {
-            LogUtil(context).d(tag, "checkForegroundApp: packageName 不在被监控的应用列表中")
-            // 如果该应用不在被监控的应用列表中，则重新开始监控
-            startMonitoring()
             return
         }
         // 获取该应用剩余时间
@@ -168,7 +208,6 @@ class AppMonitor(private val context: Context) {
                 onTimeSelected = { selectedTime ->
                     appTimerMap[packageName] = selectedTime
                     startTimer(packageName, selectedTime)
-                    LogUtil(context).d(tag, "checkForegroundApp: selectedTime = $selectedTime")
                     showToast(context, "已选择 $selectedTime $timeDesc")
                     currentMonitorApp = packageName
                     startMonitoring()
@@ -176,7 +215,6 @@ class AppMonitor(private val context: Context) {
                 onExtendTime = { extendTime ->
                     appTimerMap[packageName] = extendTime
                     startTimer(packageName, extendTime)
-                    LogUtil(context).d(tag, "checkForegroundApp: extendTime = $extendTime")
                     showToast(context, "已延长 $extendTime $timeDesc")
                     currentMonitorApp = packageName
                     startMonitoring()
@@ -188,6 +226,7 @@ class AppMonitor(private val context: Context) {
     private fun startTimer(packageName: String, time: Int) {
         // 初始化 remainingTime 为传入的时间
         var remainingTime = time
+        // 记录上次日志时间
         // 取消当前任务（如果存在且是针对同一应用）
         runningTimerRunnableMap[packageName]?.let { handler.removeCallbacks(it) }
         // 创建一个 Runnable 对象，用于执行倒计时逻辑
@@ -195,14 +234,26 @@ class AppMonitor(private val context: Context) {
             override fun run() {
                 // 如果剩余时间大于0，则继续倒计时
                 if (remainingTime > 0) {
-                    LogUtil(context).d(tag, "run: [$packageName] 剩余时间 = $remainingTime")
+                    // 仅在特殊节点记录
+                    if (((time - remainingTime) * 100 / time) % 10 == 0) {
+                        LogUtil(context).log(
+                            tag,
+                            "[DEBUG] [$packageName] 剩余时间=${remainingTime}" + timeDesc +
+                                    " | 总时长=${time}" + timeDesc +
+                                    " | 进度=${(time - remainingTime) * 100 / time}%"
+                        )
+                    }
                     // 更新剩余时间，并保存到 appTimerMap 中
                     remainingTime--
                     appTimerMap[packageName] = remainingTime
                     // 延迟1个时间单位执行下一次倒计时
                     handler.postDelayed(this, timeUnit)
                 } else {
-                    LogUtil(context).d(tag, "run: [$packageName] 倒计时结束")
+                    LogUtil(context).log(
+                        tag,
+                        "[STATE] [$packageName] 倒计时结束" +
+                                " | 总耗时=${time}" + timeDesc
+                    )
                     // 如果剩余时间小于等于0，则倒计时结束，显示悬浮窗，重置相关变量
                     appTimerMap.remove(packageName)
                     overlayManager.showTimeoutOverlay()
@@ -220,6 +271,9 @@ class AppMonitor(private val context: Context) {
             handler.removeCallbacks(it)
         }
         showToast(context, "暂停倒计时")
-        LogUtil(context).d(tag, "pauseTimer: [$packageName] 暂停倒计时")
+        LogUtil(context).log(
+            tag,
+            "[STATE] [$packageName] 暂停倒计时"
+        )
     }
 }

@@ -32,31 +32,28 @@ class LogUtil(private val context: Context) {
         }
     }
 
-    // Log.d 重定向到文件
-    fun d(tag: String, message: String) {
-        Log.d(tag, message)
-        logToFile("DEBUG: [$tag] $message")
-    }
+    fun log(tag: String, message: String, level: Int = Log.DEBUG) {
+        when (level) {
+            Log.DEBUG -> {
+                Log.d(tag, message)
+                logToFile("DEBUG: [$tag] $message")
+            }
 
-    // Log.i 重定向到文件
-    @Suppress("unused")
-    fun i(tag: String, message: String) {
-        Log.i(tag, message)
-        logToFile("INFO: [$tag] $message")
-    }
+            Log.INFO -> {
+                Log.i(tag, message)
+                logToFile("INFO: [$tag] $message")
+            }
 
-    // Log.w 重定向到文件
-    @Suppress("unused")
-    fun w(tag: String, message: String) {
-        Log.w(tag, message)
-        logToFile("WARN: [$tag] $message")
-    }
+            Log.WARN -> {
+                Log.w(tag, message)
+                logToFile("WARN: [$tag] $message")
+            }
 
-    // Log.e 重定向到文件
-    @Suppress("unused")
-    fun e(tag: String, message: String) {
-        Log.e(tag, message)
-        logToFile("ERROR: [$tag] $message")
+            Log.ERROR -> {
+                Log.e(tag, message)
+                logToFile("ERROR: [$tag] $message")
+            }
+        }
     }
 
 
