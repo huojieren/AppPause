@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">${appName}</string>
     <string name="return_to_home">返回桌面</string>
-    <string name="time_out">使用时间已到</string>
+    <string name="app_time_out">%s 使用时间已到</string>
     <string name="request_overlay">授予悬浮窗权限</string>
     <string name="request_notification">授予通知权限</string>
     <string name="request_usage_stats">授予使用情况访问权限</string>
@@ -16,4 +16,5 @@
     <string name="version_text">当前版本：v%s</string>
     <string name="clearLog">清空日志</string>
     <string name="saveLog">保存日志</string>
+    <string name="set_time_for_appName">为 %s 设置使用时长</string>
 </resources>

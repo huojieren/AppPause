@@ -8,12 +8,22 @@
     android:padding="16dp"
     tools:ignore="Overdraw">
 
+    <TextView
+        android:id="@+id/appNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:textSize="18sp"
+        tools:text="为抖音设置使用时长"
+        tools:textColor="@color/black" />
+
     <!-- 时间选择器 -->
     <NumberPicker
         android:id="@+id/timePicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp" />
 
     <LinearLayout
         android:layout_width="wrap_content"

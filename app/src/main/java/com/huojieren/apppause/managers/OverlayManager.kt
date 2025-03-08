@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.NumberPicker
+import android.widget.TextView
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.utils.LogUtil
@@ -25,19 +26,17 @@ class OverlayManager(private val context: Context) {
     private val tag = "OverlayManager"
     // endregion
 
-    // region 主悬浮窗逻辑
     fun showFloatingWindow(
         onDisMiss: () -> Unit,
         onTimeSelected: (Int) -> Unit,
-        onExtendTime: (Int) -> Unit
+        onExtendTime: (Int) -> Unit,
+        appName: String
     ) {
+        // region 窗口参数配置
         // 初始化视图
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
         @SuppressLint("InflateParams")
         val floatingView = inflater.inflate(R.layout.floating_window, null)
-
-        // 窗口参数配置（居中显示）
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -49,11 +48,11 @@ class OverlayManager(private val context: Context) {
             x = 0
             y = 0
         }
-
         // 添加视图到窗口
         windowManager.addView(floatingView, layoutParams)
+        // endregion
 
-        // 初始化控件
+        // region 初始化控件
         val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker).apply {
             minValue = 1   // 最小选择时间单位
             maxValue = 60  // 最大选择时间单位
@@ -64,8 +63,10 @@ class OverlayManager(private val context: Context) {
         val cancelButton = floatingView.findViewById<Button>(R.id.cancelButton)
         val extend5UnitsButton = floatingView.findViewById<Button>(R.id.extend5UnitsButton)
         val extend10UnitsButton = floatingView.findViewById<Button>(R.id.extend10UnitsButton)
+        val appNameTextView = floatingView.findViewById<TextView>(R.id.appNameTextView)
+        // endregion
 
-        // 配置按钮文本（动态拼接时间单位）
+        // region 配置按钮文本
         extend5UnitsButton.text = context.getString(
             R.string.extend_time_with_unit,
             5,
@@ -76,6 +77,7 @@ class OverlayManager(private val context: Context) {
             10,
             timeDesc
         )
+        // endregion
 
         // region 按钮事件处理
         confirmButton.setOnClickListener {
@@ -97,12 +99,15 @@ class OverlayManager(private val context: Context) {
             onExtendTime(10)
             removeViewSafely(floatingView)
         }
+
+        appNameTextView.text = context.getString(
+            R.string.set_time_for_appName,
+            appName
+        )
         // endregion
     }
-    // endregion
 
-    // region 超时覆盖层逻辑
-    fun showTimeoutOverlay() {
+    fun showTimeoutOverlay(appName: String) {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
         @SuppressLint("InflateParams")
@@ -118,6 +123,11 @@ class OverlayManager(private val context: Context) {
         )
 
         windowManager.addView(overlayView, layoutParams)
+
+        overlayView.findViewById<TextView>(R.id.appTimeOutTextView).text = context.getString(
+            R.string.app_time_out,
+            appName
+        )
 
         // 关闭按钮处理
         overlayView.findViewById<Button>(R.id.closeButton).setOnClickListener {
@@ -147,5 +157,4 @@ class OverlayManager(private val context: Context) {
             LogUtil(context).log(tag, "[ERROR] 移除悬浮窗失败: ${e.message}")
         }
     }
-    // endregion
 }

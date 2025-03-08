@@ -223,7 +223,8 @@ class AppMonitor(private val context: Context) {
                     showToast(context, "已延长 $extendTime $timeDesc")
                     currentMonitorApp = packageName
                     startMonitoring()
-                }
+                },
+                appName = getAppName(packageName)
             )
         }
     }
@@ -261,7 +262,7 @@ class AppMonitor(private val context: Context) {
                     )
                     // 如果剩余时间小于等于0，则倒计时结束，显示悬浮窗，重置相关变量
                     appTimerMap.remove(packageName)
-                    overlayManager.showTimeoutOverlay()
+                    overlayManager.showTimeoutOverlay(getAppName(packageName))
                     currentMonitorApp = null
                     runningTimerRunnableMap.remove(packageName)
                 }
@@ -280,5 +281,16 @@ class AppMonitor(private val context: Context) {
             tag,
             "[STATE] [$packageName] 暂停倒计时"
         )
+    }
+
+    private fun getAppName(packageName: String): String {
+        return try {
+            val pm = context.packageManager
+            val appInfo = pm.getApplicationInfo(packageName, 0)
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            LogUtil(context).log(tag, "[ERROR] 获取应用名称失败: ${e.message}")
+            "null" // 失败时返回包名
+        }
     }
 }
