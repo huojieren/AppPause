@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.huojieren.apppause.BuildConfig
@@ -202,7 +203,11 @@ class AppMonitor(private val context: Context) {
             // 显示悬浮窗让用户设置时间
             OverlayManager(context).showFloatingWindow(
                 onDisMiss = {
-                    // 如果用户取消了设置时间，则继续监控
+                    val intent = Intent(Intent.ACTION_MAIN)
+                    intent.addCategory(Intent.CATEGORY_HOME)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(intent)
+                    LogUtil(context).log(tag, "[STATE] 取消计时，回到桌面")
                     startMonitoring()
                 },
                 onTimeSelected = { selectedTime ->

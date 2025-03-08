@@ -12,79 +12,103 @@ import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.utils.LogUtil
 
+/**
+ * 悬浮窗管理类，负责：
+ * 1. 显示时间选择悬浮窗
+ * 2. 显示超时锁定覆盖层
+ * 3. 管理悬浮窗生命周期
+ */
 class OverlayManager(private val context: Context) {
-
+    // region 成员变量
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private val timeDesc = BuildConfig.TIME_DESC
+    private val timeDesc = BuildConfig.TIME_DESC // 时间单位描述（分钟/秒）
     private val tag = "OverlayManager"
+    // endregion
 
+    // region 主悬浮窗逻辑
     fun showFloatingWindow(
         onDisMiss: () -> Unit,
         onTimeSelected: (Int) -> Unit,
         onExtendTime: (Int) -> Unit
     ) {
+        // 初始化视图
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
-        @SuppressLint("InflateParams")// 忽略根视图可能为空警告
+        @SuppressLint("InflateParams")
         val floatingView = inflater.inflate(R.layout.floating_window, null)
 
+        // 窗口参数配置（居中显示）
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, // 不获取焦点防止影响底层应用
             android.graphics.PixelFormat.TRANSLUCENT
-        )
-        layoutParams.gravity = Gravity.CENTER
-        layoutParams.x = 0
-        layoutParams.y = 0
+        ).apply {
+            gravity = Gravity.CENTER
+            x = 0
+            y = 0
+        }
 
+        // 添加视图到窗口
         windowManager.addView(floatingView, layoutParams)
 
-        val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker)
+        // 初始化控件
+        val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker).apply {
+            minValue = 1   // 最小选择时间单位
+            maxValue = 60  // 最大选择时间单位
+            value = 1      // 默认选中值
+        }
+
         val confirmButton = floatingView.findViewById<Button>(R.id.confirmButton)
+        val cancelButton = floatingView.findViewById<Button>(R.id.cancelButton)
         val extend5UnitsButton = floatingView.findViewById<Button>(R.id.extend5UnitsButton)
         val extend10UnitsButton = floatingView.findViewById<Button>(R.id.extend10UnitsButton)
 
-        timePicker.minValue = 1
-        timePicker.maxValue = 60
-        timePicker.value = 1
+        // 配置按钮文本（动态拼接时间单位）
+        extend5UnitsButton.text = context.getString(
+            R.string.extend_time_with_unit,
+            5,
+            timeDesc
+        )
+        extend10UnitsButton.text = context.getString(
+            R.string.extend_time_with_unit,
+            10,
+            timeDesc
+        )
 
-        extend5UnitsButton.text = buildString {
-            append(context.getString(R.string.extend_time, 5))
-            append(" $timeDesc")
-        }
-        extend10UnitsButton.text = buildString {
-            append(context.getString(R.string.extend_time, 10))
-            append(" $timeDesc")
-        }
-
+        // region 按钮事件处理
         confirmButton.setOnClickListener {
-            val selectedTime = timePicker.value
-            onTimeSelected(selectedTime)
-            windowManager.removeView(floatingView)
+            onTimeSelected(timePicker.value)
+            removeViewSafely(floatingView)
+        }
+
+        cancelButton.setOnClickListener {
+            removeViewSafely(floatingView)
             onDisMiss()
         }
 
         extend5UnitsButton.setOnClickListener {
-            onExtendTime(5) // 延长 5 秒/分钟
-            windowManager.removeView(floatingView)
-            onDisMiss()
+            onExtendTime(5)
+            removeViewSafely(floatingView)
         }
 
         extend10UnitsButton.setOnClickListener {
-            onExtendTime(10) // 延长 10 秒/分钟
-            windowManager.removeView(floatingView)
-            onDisMiss()
+            onExtendTime(10)
+            removeViewSafely(floatingView)
         }
+        // endregion
     }
+    // endregion
 
+    // region 超时覆盖层逻辑
     fun showTimeoutOverlay() {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
-        @SuppressLint("InflateParams")// 忽略根视图可能为空警告
+        @SuppressLint("InflateParams")
         val overlayView = inflater.inflate(R.layout.timeout_overlay, null)
 
+        // 全屏覆盖层参数
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -95,16 +119,33 @@ class OverlayManager(private val context: Context) {
 
         windowManager.addView(overlayView, layoutParams)
 
-        val closeButton = overlayView.findViewById<Button>(R.id.closeButton)
-        closeButton.setOnClickListener {
-            // 回到桌面
-            val intent = Intent(Intent.ACTION_MAIN)
-            intent.addCategory(Intent.CATEGORY_HOME)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.startActivity(intent)
-            LogUtil(context).log(tag, "[STATE] 回到桌面")
-
-            windowManager.removeView(overlayView)
+        // 关闭按钮处理
+        overlayView.findViewById<Button>(R.id.closeButton).setOnClickListener {
+            // 返回桌面操作
+            Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(this)
+            }
+            LogUtil(context).log(tag, "[STATE] 触发返回桌面操作")
+            removeViewSafely(overlayView)
         }
     }
+    // endregion
+
+    // region 工具方法
+    /**
+     * 安全移除视图，避免重复移除导致的异常
+     */
+    @SuppressLint("NewApi")
+    private fun removeViewSafely(view: android.view.View) {
+        try {
+            if (view.isAttachedToWindow) {
+                windowManager.removeView(view)
+            }
+        } catch (e: Exception) {
+            LogUtil(context).log(tag, "[ERROR] 移除悬浮窗失败: ${e.message}")
+        }
+    }
+    // endregion
 }

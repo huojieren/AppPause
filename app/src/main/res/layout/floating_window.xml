@@ -13,38 +13,54 @@
         android:id="@+id/timePicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center" />
+        android:layout_gravity="center_horizontal" />
 
-    <!-- 固定延长时间选项 -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/extend5UnitsButton"
             style="@style/AppButtonStyle"
-            android:layout_width="wrap_content"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             tools:text="延长 5 分钟" />
 
         <Button
             android:id="@+id/extend10UnitsButton"
             style="@style/AppButtonStyle"
-            android:layout_width="wrap_content"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="8dp"
             tools:text="延长 10 分钟" />
     </LinearLayout>
 
-    <!-- 确认按钮 -->
-    <Button
-        android:id="@+id/confirmButton"
-        style="@style/AppButtonStyle"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        android:text="@string/confirm" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/confirmButton"
+            style="@style/AppButtonStyle"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/confirm" />
+
+        <Button
+            android:id="@+id/cancelButton"
+            style="@style/AppButtonStyle"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/cancel" />
+    </LinearLayout>
+
 </LinearLayout>

@@ -9,8 +9,9 @@
     <string name="start_monitor">开始监控</string>
     <string name="stop_monitor">停止监控</string>
     <string name="add_app">添加应用</string>
-    <string name="extend_time">延长 %d </string>
+    <string name="extend_time_with_unit">延长 %1$d %2$s</string>
     <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
     <string name="delete">删除</string>
     <string name="version_text">当前版本：v%s</string>
     <string name="clearLog">清空日志</string>
