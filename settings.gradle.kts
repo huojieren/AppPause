@@ -1,6 +1,9 @@
 // 插件管理配置
 pluginManagement {
     repositories {
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -21,6 +24,9 @@ dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     // 忽略实验性功能警告
     repositories {
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
         google() // Google Maven 仓库
         mavenCentral() // Maven 中央仓库
     }

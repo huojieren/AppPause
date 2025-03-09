@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.github.promeg.pinyinhelper.Pinyin
 import com.huojieren.apppause.adapters.AppListAdapter
 import com.huojieren.apppause.databinding.ActivityAppSelectionBinding
 import com.huojieren.apppause.models.AppInfo
@@ -14,7 +15,6 @@ class AppSelectionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAppSelectionBinding
     private lateinit var appListAdapter: AppListAdapter
-    private val appList = mutableListOf<AppInfo>() // 应用列表
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,7 +22,7 @@ class AppSelectionActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // 初始化 RecyclerView
-        appListAdapter = AppListAdapter(appList) { packageName ->
+        appListAdapter = AppListAdapter { packageName ->
             returnSelectedApp(packageName)
         }
         binding.appListRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -36,16 +36,27 @@ class AppSelectionActivity : AppCompatActivity() {
     private fun loadInstalledApps() {
         val packageManager = packageManager
         val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-        for (app in installedApps) {
-            if (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) { // 过滤系统应用
-                val appName = packageManager.getApplicationLabel(app).toString()
-                val appInfo = AppInfo(appName, app.packageName)
-                appList.add(appInfo)
-                // 通知适配器有新项插入
-                appListAdapter.notifyItemInserted(appList.size - 1)
-            }
+
+        val pinyinComparator = Comparator { app1: ApplicationInfo, app2: ApplicationInfo ->
+            val name1 = packageManager.getApplicationLabel(app1).toString()
+            val name2 = packageManager.getApplicationLabel(app2).toString()
+            Pinyin.toPinyin(name1, "").lowercase()
+                .compareTo(Pinyin.toPinyin(name2, "").lowercase())
         }
+
+        val sortedApps = installedApps
+            .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 }
+            .sortedWith(pinyinComparator)
+            .map { app ->
+                AppInfo(
+                    packageManager.getApplicationLabel(app).toString(),
+                    app.packageName
+                )
+            }
+
+        appListAdapter.updateList(sortedApps)
     }
+
 
     // 返回选中的应用
     private fun returnSelectedApp(packageName: String) {

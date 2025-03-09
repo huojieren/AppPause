@@ -69,4 +69,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit) // AndroidX JUnit 测试库
     androidTestImplementation(libs.androidx.espresso.core) // Espresso 测试库
     implementation(libs.constraintlayout) // ConstraintLayout 库
+    implementation(libs.tinypinyin) // TinyPinyin 库
+    implementation(libs.tinypinyin.lexicons.android.cncity)
 }

@@ -8,6 +8,7 @@ androidx-core = "1.15.0"
 androidx-appcompat = "1.7.0"
 constraintlayout = "2.2.1"
 androidx-junit = "1.2.1"
+tinypinyin = "2.0.3"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -17,6 +18,8 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+tinypinyin = { module = "com.github.promeg:tinypinyin", version.ref = "tinypinyin" }
+tinypinyin-lexicons-android-cncity = { module = "com.github.promeg:tinypinyin-lexicons-android-cncity", version.ref = "tinypinyin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
