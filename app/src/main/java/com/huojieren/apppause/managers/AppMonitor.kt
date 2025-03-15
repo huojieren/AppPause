@@ -27,6 +27,7 @@ class AppMonitor(private val context: Context) {
     private var monitorRunnable: Runnable? = null // 用于启动和停止监控的Runnable
     private var currentMonitorApp: String? = null // 当前前台被监控的应用包名（只会有一个活动倒计时）
     private var lastDetectedApp: String? = null // 用于记录上一次被检测到的应用包名
+    private val listeners = mutableListOf<() -> Unit>() // 用于存储监听器
 
     // 单例模式
     companion object {
@@ -85,6 +86,7 @@ class AppMonitor(private val context: Context) {
         handler.post(monitorRunnable!!)
         context.startService(MonitorService.getServiceIntent(context))
         isMonitoring = true
+        notifyStateChanged()
     }
 
     fun stopMonitoring() {
@@ -107,6 +109,7 @@ class AppMonitor(private val context: Context) {
         // 停止服务
         context.stopService(MonitorService.getServiceIntent(context))
         isMonitoring = false
+        notifyStateChanged()
 
         // 重置状态变量
         currentMonitorApp = null
@@ -292,5 +295,13 @@ class AppMonitor(private val context: Context) {
             LogUtil(context).log(tag, "[ERROR] 获取应用名称失败: ${e.message}")
             "null" // 失败时返回包名
         }
+    }
+
+    fun addStateListener(listener: () -> Unit) {
+        listeners.add(listener)
+    }
+
+    private fun notifyStateChanged() {
+        listeners.forEach { it.invoke() }
     }
 }

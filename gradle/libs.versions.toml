@@ -1,16 +1,41 @@
 [versions]
-agp = "8.9.0"
-kotlin = "1.9.24"
+accompanistSystemuicontroller = "0.30.1"
+activityCompose = "1.10.1"
+agp = "8.9.1"
+kotlin = "2.0.21"
 junit = "4.13.2"
 espressoCore = "3.6.1"
+lifecycleRuntimeKtx = "2.8.7"
+lifecycleViewmodelCompose = "2.8.7"
 material = "1.12.0"
 androidx-core = "1.15.0"
 androidx-appcompat = "1.7.0"
 constraintlayout = "2.2.1"
 androidx-junit = "1.2.1"
+material3 = "1.3.1"
+numberpicker = "1.0.3"
+runtimeLivedata = "1.7.8"
 tinypinyin = "2.0.3"
+ui = "1.7.8"
+uiToolingPreview = "1.7.8"
+workRuntimeKtx = "2.10.0"
 
 [libraries]
+accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-adaptive = { module = "androidx.compose.material3.adaptive:adaptive" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-material3 = { module = "androidx.compose.material3:material3" }
+androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
+androidx-runtime-rxjava2 = { module = "androidx.compose.runtime:runtime-rxjava2" }
+androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -18,10 +43,15 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+numberpicker = { module = "com.chargemap.compose:numberpicker", version.ref = "numberpicker" }
+runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "runtimeLivedata" }
 tinypinyin = { module = "com.github.promeg:tinypinyin", version.ref = "tinypinyin" }
 tinypinyin-lexicons-android-cncity = { module = "com.github.promeg:tinypinyin-lexicons-android-cncity", version.ref = "tinypinyin" }
+ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

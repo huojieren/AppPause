@@ -1,19 +1,36 @@
 package com.huojieren.apppause.managers
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.net.toUri
 import com.huojieren.apppause.utils.LogUtil
 
-class PermissionManager(private val context: Context) {
+class PermissionManager private constructor(private val context: Context) {
 
     private val tag = "PermissionManager"
+
+    companion object {
+        @SuppressLint("StaticFieldLeak") // 忽略 Lint 内存泄漏警告
+        @Volatile
+        private var instance: PermissionManager? = null
+
+        fun init(context: Context) {
+            instance ?: synchronized(this) {
+                instance ?: PermissionManager(context.applicationContext).also { instance = it }
+            }
+        }
+
+        fun get(): PermissionManager {
+            return instance ?: throw IllegalStateException("PermissionManager未初始化")
+        }
+    }
 
     // 检查悬浮窗权限是否已授权
     fun checkOverlayPermission(): Boolean {
@@ -21,18 +38,17 @@ class PermissionManager(private val context: Context) {
     }
 
     // 请求悬浮窗权限
-    fun requestOverlayPermission(activity: AppCompatActivity, requestCode: Int) {
+    fun requestOverlayPermission(activity: Activity) {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}")
+            "package:${context.packageName}".toUri()
         )
-        activity.startActivityForResult(intent, requestCode)
+        activity.startActivityForResult(intent, 1001)
         waitForPermissionAndReturn(activity) { checkOverlayPermission() }
     }
 
     // 检查通知权限是否已授权
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    // Android 12 及以下不需要申请 POST_NOTIFICATIONS 权限
     fun checkNotificationPermission(): Boolean {
         return checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
                 android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -40,10 +56,9 @@ class PermissionManager(private val context: Context) {
 
     // 请求通知权限
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun requestNotificationPermission(activity: AppCompatActivity, requestCode: Int) {
+    fun requestNotificationPermission(activity: Activity) {
         activity.requestPermissions(
-            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-            requestCode
+            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1002
         )
     }
 
@@ -59,7 +74,7 @@ class PermissionManager(private val context: Context) {
     }
 
     // 请求后台服务权限
-    fun requestUsageStatsPermission(activity: AppCompatActivity) {
+    fun requestUsageStatsPermission(activity: Activity) {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         activity.startActivity(intent)
         waitForPermissionAndReturn(activity) { checkUsageStatsPermission() }
@@ -67,7 +82,7 @@ class PermissionManager(private val context: Context) {
 
     // 启动后台检查，当获取权限时自动返回应用
     private fun waitForPermissionAndReturn(
-        activity: AppCompatActivity,
+        activity: Activity,
         permissionCheck: () -> Boolean
     ) {
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
