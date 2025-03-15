@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.android.application) // Android 应用插件
     alias(libs.plugins.kotlin.android) // Kotlin Android 插件
+    alias(libs.plugins.compose.compiler) // Compose 编译器插件
 }
 
 android {
@@ -20,8 +21,9 @@ android {
 
     // 构建功能配置
     buildFeatures {
-        buildConfig = true // 启用 BuildConfig 生成
+        buildConfig = true // 启用 BuildConfig
         viewBinding = true // 启用 ViewBinding
+        compose = true // 启用 Compose
     }
 
     // 构建类型配置
@@ -71,4 +73,46 @@ dependencies {
     implementation(libs.constraintlayout) // ConstraintLayout 库
     implementation(libs.tinypinyin) // TinyPinyin 库
     implementation(libs.tinypinyin.lexicons.android.cncity)
+
+    val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
+
+    implementation(libs.androidx.material3) // Material Design 3
+
+    // Android Studio Preview support
+    implementation(libs.androidx.ui.tooling.preview)
+    debugImplementation(libs.androidx.ui.tooling)
+
+    // UI Tests
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Optional - Included automatically by material, only add when you need
+    // the icons but not the material library (e.g. when using Material3 or a
+    // custom design system based on Foundation)
+    implementation(libs.androidx.material.icons.core)
+    // Optional - Add full set of material icons
+    implementation(libs.androidx.material.icons.extended)
+    // Optional - Add window size utils
+    implementation(libs.androidx.adaptive)
+
+    // Optional - Integration with activities
+    implementation(libs.androidx.activity.compose)
+    // Optional - Integration with ViewModels
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // Optional - Integration with LiveData
+    implementation(libs.androidx.runtime.livedata)
+    // Optional - Integration with RxJava
+    implementation(libs.androidx.runtime.rxjava2)
+
+    // Compose基础库
+    implementation(libs.androidx.ui)
+    implementation(libs.material3)
+    implementation(libs.ui.tooling.preview)
+
+    // 现有项目的兼容支持
+    implementation(libs.runtime.livedata)
+
 }
