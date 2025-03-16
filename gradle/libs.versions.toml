@@ -4,6 +4,8 @@ agp = "8.9.0"
 kotlin = "2.0.21"
 junit = "4.13.2"
 espressoCore = "3.6.1"
+lifecycleRuntimeKtx = "2.8.7"
+lifecycleRuntimeKtxVersion = "2.7.0"
 lifecycleViewmodelCompose = "2.8.7"
 material = "1.12.0"
 androidx-core = "1.15.0"
@@ -19,6 +21,7 @@ uiToolingPreview = "1.7.8"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-adaptive = { module = "androidx.compose.material3.adaptive:adaptive" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }

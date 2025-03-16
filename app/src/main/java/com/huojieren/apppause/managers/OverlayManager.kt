@@ -3,14 +3,18 @@ package com.huojieren.apppause.managers
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.NumberPicker
 import android.widget.TextView
+import androidx.compose.ui.platform.ComposeView
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
+import com.huojieren.apppause.ui.components.TimeoutOverlay
+import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.utils.LogUtil
 
 /**
@@ -24,6 +28,7 @@ class OverlayManager(private val context: Context) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val timeDesc = BuildConfig.TIME_DESC // 时间单位描述（分钟/秒）
     private val tag = "OverlayManager"
+    private var lifecycleOwner: MyComposeViewLifecycleOwner? = null
     // endregion
 
     fun showFloatingWindow(
@@ -35,6 +40,7 @@ class OverlayManager(private val context: Context) {
         // region 窗口参数配置
         // 初始化视图
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
         @SuppressLint("InflateParams")
         val floatingView = inflater.inflate(R.layout.floating_window, null)
         val layoutParams = WindowManager.LayoutParams(
@@ -42,7 +48,7 @@ class OverlayManager(private val context: Context) {
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, // 不获取焦点防止影响底层应用
-            android.graphics.PixelFormat.TRANSLUCENT
+            PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.CENTER
             x = 0
@@ -108,38 +114,46 @@ class OverlayManager(private val context: Context) {
     }
 
     fun showTimeoutOverlay(appName: String) {
-        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        // 创建 ComposeView 容器
+        val composeView = ComposeView(context).apply {
+            setContent {
+                AppTheme { // 使用项目主题
+                    TimeoutOverlay(
+                        appName = appName,
+                        onCloseRequest = {
+                            // 返回桌面操作
+                            Intent(Intent.ACTION_MAIN).apply {
+                                addCategory(Intent.CATEGORY_HOME)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                context.startActivity(this)
+                            }
+                            // TODO: 修改removeViewSafely函数为传递composeView
+                            // 移除视图
+                            windowManager.removeViewImmediate(this)
+                            lifecycleOwner?.onDestroy()
+                            lifecycleOwner = null
+                        }
+                    )
+                }
+            }
+        }
 
-        @SuppressLint("InflateParams")
-        val overlayView = inflater.inflate(R.layout.timeout_overlay, null)
-
-        // 全屏覆盖层参数
+        // 窗口参数配置
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            android.graphics.PixelFormat.TRANSLUCENT
+            PixelFormat.TRANSLUCENT
         )
 
-        windowManager.addView(overlayView, layoutParams)
-
-        overlayView.findViewById<TextView>(R.id.appTimeOutTextView).text = context.getString(
-            R.string.app_time_out,
-            appName
-        )
-
-        // 关闭按钮处理
-        overlayView.findViewById<Button>(R.id.closeButton).setOnClickListener {
-            // 返回桌面操作
-            Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                context.startActivity(this)
-            }
-            LogUtil(context).log(tag, "[STATE] 触发返回桌面操作")
-            removeViewSafely(overlayView)
+        lifecycleOwner = MyComposeViewLifecycleOwner().also {
+            it.attachToDecorView(composeView)
+            it.onCreate()
         }
+
+        // 添加视图到窗口
+        windowManager.addView(composeView, layoutParams)
     }
     // endregion
 

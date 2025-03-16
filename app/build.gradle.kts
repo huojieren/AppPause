@@ -115,4 +115,6 @@ dependencies {
     // 现有项目的兼容支持
     implementation(libs.runtime.livedata)
 
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
 }
