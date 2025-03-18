@@ -16,5 +16,6 @@
     <string name="version_text">当前版本：v%s</string>
     <string name="clearLog">清空日志</string>
     <string name="saveLog">保存日志</string>
-    <string name="set_time_for_appName">为 %s 设置使用时长</string>
+    <string name="for_appName">为 %s </string>
+    <string name="set_time">设置使用时长</string>
 </resources>

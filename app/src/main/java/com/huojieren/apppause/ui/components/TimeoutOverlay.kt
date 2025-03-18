@@ -24,11 +24,11 @@ fun TimeoutOverlay(
     appName: String,          // 需要显示的应用名称
     onCloseRequest: () -> Unit // 关闭按钮点击回调
 ) {
-    // Box 布局类似 FrameLayout，用于层叠元素
+    // 用于层叠元素
     Box(
         modifier = Modifier
             .fillMaxSize()    // 填充整个可用区域
-            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)) // 50% 透明黑色遮罩层
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f)) // 80% 透明黑色遮罩层
     ) {
         // 内容区域使用 Column 布局
         Column(

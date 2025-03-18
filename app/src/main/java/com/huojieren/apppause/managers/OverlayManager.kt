@@ -5,14 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.NumberPicker
-import android.widget.TextView
+import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import androidx.compose.ui.platform.ComposeView
 import com.huojieren.apppause.BuildConfig
-import com.huojieren.apppause.R
+import com.huojieren.apppause.ui.components.FloatingWindow
 import com.huojieren.apppause.ui.components.TimeoutOverlay
 import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.utils.LogUtil
@@ -26,7 +23,6 @@ import com.huojieren.apppause.utils.LogUtil
 class OverlayManager(private val context: Context) {
     // region 成员变量
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private val timeDesc = BuildConfig.TIME_DESC // 时间单位描述（分钟/秒）
     private val tag = "OverlayManager"
     private var lifecycleOwner: MyComposeViewLifecycleOwner? = null
     // endregion
@@ -37,80 +33,45 @@ class OverlayManager(private val context: Context) {
         onExtendTime: (Int) -> Unit,
         appName: String
     ) {
-        // region 窗口参数配置
-        // 初始化视图
-        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val composeView = ComposeView(context).apply {
+            setContent {
+                AppTheme {
+                    FloatingWindow(
+                        appName = appName,
+                        timeUnitDesc = BuildConfig.TIME_DESC,
+                        onConfirm = { time ->
+                            onTimeSelected(time)
+                            removeViewSafely(this)
+                        },
+                        onCancel = {
+                            onDisMiss()
+                            removeViewSafely(this)
+                        },
+                        onExtend = { units ->
+                            onExtendTime(units)
+                            removeViewSafely(this)
+                        }
+                    )
+                }
+            }
+        }
 
-        @SuppressLint("InflateParams")
-        val floatingView = inflater.inflate(R.layout.floating_window, null)
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, // 不获取焦点防止影响底层应用
+            FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.CENTER
-            x = 0
-            y = 0
-        }
-        // 添加视图到窗口
-        windowManager.addView(floatingView, layoutParams)
-        // endregion
-
-        // region 初始化控件
-        val timePicker = floatingView.findViewById<NumberPicker>(R.id.timePicker).apply {
-            minValue = 1   // 最小选择时间单位
-            maxValue = 60  // 最大选择时间单位
-            value = 1      // 默认选中值
         }
 
-        val confirmButton = floatingView.findViewById<Button>(R.id.confirmButton)
-        val cancelButton = floatingView.findViewById<Button>(R.id.cancelButton)
-        val extend5UnitsButton = floatingView.findViewById<Button>(R.id.extend5UnitsButton)
-        val extend10UnitsButton = floatingView.findViewById<Button>(R.id.extend10UnitsButton)
-        val appNameTextView = floatingView.findViewById<TextView>(R.id.appNameTextView)
-        // endregion
-
-        // region 配置按钮文本
-        extend5UnitsButton.text = context.getString(
-            R.string.extend_time_with_unit,
-            5,
-            timeDesc
-        )
-        extend10UnitsButton.text = context.getString(
-            R.string.extend_time_with_unit,
-            10,
-            timeDesc
-        )
-        // endregion
-
-        // region 按钮事件处理
-        confirmButton.setOnClickListener {
-            onTimeSelected(timePicker.value)
-            removeViewSafely(floatingView)
+        lifecycleOwner = MyComposeViewLifecycleOwner().also {
+            it.attachToDecorView(composeView)
+            it.onCreate()
         }
 
-        cancelButton.setOnClickListener {
-            removeViewSafely(floatingView)
-            onDisMiss()
-        }
-
-        extend5UnitsButton.setOnClickListener {
-            onExtendTime(5)
-            removeViewSafely(floatingView)
-        }
-
-        extend10UnitsButton.setOnClickListener {
-            onExtendTime(10)
-            removeViewSafely(floatingView)
-        }
-
-        appNameTextView.text = context.getString(
-            R.string.set_time_for_appName,
-            appName
-        )
-        // endregion
+        windowManager.addView(composeView, layoutParams)
     }
 
     fun showTimeoutOverlay(appName: String) {
@@ -143,7 +104,7 @@ class OverlayManager(private val context: Context) {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
 

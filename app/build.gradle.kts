@@ -15,7 +15,7 @@ android {
         minSdk = 26 // 最低支持的 SDK 版本
         targetSdk = 35 // 目标 SDK 版本
         versionCode = 2 // 版本代码
-        versionName = "0.6.0" // 版本名称
+        versionName = "0.7.0" // 版本名称
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" // 测试用例运行器
     }
 
@@ -66,7 +66,8 @@ android {
 dependencies {
     implementation(libs.androidx.core) // AndroidX Core 库
     implementation(libs.androidx.appcompat) // AndroidX AppCompat 库
-    implementation(libs.material) // Material Design 库
+    implementation(libs.material)
+    implementation(libs.androidx.work.runtime.ktx) // Material Design 库
     testImplementation(libs.junit) // JUnit 测试库
     androidTestImplementation(libs.androidx.junit) // AndroidX JUnit 测试库
     androidTestImplementation(libs.androidx.espresso.core) // Espresso 测试库
@@ -116,5 +117,6 @@ dependencies {
     implementation(libs.runtime.livedata)
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.numberpicker)
 
 }
