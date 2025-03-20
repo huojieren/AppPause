@@ -1,34 +1,45 @@
 package com.huojieren.apppause.activities
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.promeg.pinyinhelper.Pinyin
 import com.github.promeg.tinypinyin.lexicons.android.cncity.CnCityDict
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
-import com.huojieren.apppause.databinding.ActivityMainBinding
 import com.huojieren.apppause.managers.AppMonitor
 import com.huojieren.apppause.managers.NotificationManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
-import com.huojieren.apppause.ui.components.PermissionButtons
+import com.huojieren.apppause.ui.components.MonitorControlButton
+import com.huojieren.apppause.ui.components.MyFilledTonalButton
+import com.huojieren.apppause.ui.state.MonitorState
 import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.utils.LogUtil
 import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
     private lateinit var permissionManager: PermissionManager
     private lateinit var appMonitor: AppMonitor
     private lateinit var overlayManager: OverlayManager
     private lateinit var notificationManager: NotificationManager
     private val tag = "MainActivity"
+    private val monitorState by lazy {
+        MonitorState(AppMonitor.getInstance(this), PermissionManager(this))
+    }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,82 +47,96 @@ class MainActivity : AppCompatActivity() {
 
         Pinyin.init(Pinyin.newConfig().with(CnCityDict.getInstance(this)))
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
         // 初始化管理器
         permissionManager = PermissionManager(this)
         appMonitor = AppMonitor.getInstance(this)
         overlayManager = OverlayManager(this)
         notificationManager = NotificationManager(this)
 
-        // 初始化 ComposeView
-        binding.composeContainer.apply {
-            setContent {
-                AppTheme {
-                    PermissionButtons(
-                        overlayPermissionGranted = permissionManager.checkOverlayPermission(),
-                        notificationPermissionGranted = permissionManager.checkNotificationPermission(),
-                        usageStatsPermissionGranted = permissionManager.checkUsageStatsPermission(),
-                        onRequestOverlay = { requestPermission("overlay") },
-                        onRequestNotification = { requestPermission("notification") },
-                        onRequestUsageStats = { requestPermission("usageStats") },
-                        modifier = Modifier.padding(horizontal = 20.dp)
+        setContent {
+            AppTheme {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // 悬浮窗权限按钮
+                    MyFilledTonalButton(
+                        text = if (permissionManager.checkOverlayPermission()) "悬浮窗权限已授予" else "请求悬浮窗权限",
+                        onClick = { requestPermission("overlay") },
+                        enabled = !permissionManager.checkOverlayPermission()
                     )
-                }
-            }
-        }
-
-        // 显示版本号
-        binding.versionTextView.text = getString(R.string.version_text, BuildConfig.VERSION_NAME)
-
-        binding.clearLogButton.setOnClickListener {
-            LogUtil(this).log(tag, "[DEBUG] 清除日志")
-            LogUtil(this).clearLog()
-        }
-
-        binding.saveLogButton.setOnClickListener {
-            LogUtil(this).log(tag, "[DEBUG] 保存日志")
-            LogUtil(this).saveLog()
-        }
-
-        // 通过使用情况访问权限开始监控
-        binding.startWithUsageStatsManagerButton.setOnClickListener {
-            if (binding.startWithUsageStatsManagerButton.isClickable) {
-                // 判断是否正在监控
-                if (!appMonitor.isMonitoring) {
-                    // 检查权限是否全部获取
-                    if (!permissionManager.checkOverlayPermission()
-                        || !permissionManager.checkNotificationPermission()
-                        || !permissionManager.checkUsageStatsPermission()
+                    // 通知权限按钮
+                    MyFilledTonalButton(
+                        text = if (permissionManager.checkNotificationPermission()) "通知权限已授予" else "请求通知权限",
+                        onClick = { requestPermission("notification") },
+                        enabled = !permissionManager.checkNotificationPermission()
+                    )
+                    // 使用情况权限按钮
+                    MyFilledTonalButton(
+                        text = if (permissionManager.checkUsageStatsPermission()) "使用情况权限已授予" else "请求使用情况权限",
+                        onClick = { requestPermission("usageStats") },
+                        enabled = !permissionManager.checkUsageStatsPermission()
+                    )
+                    // 监控应用列表按钮
+                    MyFilledTonalButton(
+                        text = "监控应用列表",
+                        onClick = {
+                            val intent =
+                                Intent(this@MainActivity, MonitoredAppsActivity::class.java)
+                            startActivity(intent)
+                        },
+                        enabled = true
+                    )
+                    // 日志按钮
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        LogUtil(this).log(tag, "[DEBUG] 检查权限失败")
-                        showToast(this, "请授予相关权限后再试")
-                    } else {
-                        // 检查监控应用是否为空
-                        if (appMonitor.isEmptyMonitoredApps()) {
-                            LogUtil(this).log(tag, "[DEBUG] 检查应用失败")
-                            showToast(this, "没有应用被监控，请先添加应用")
-                        } else {
-                            binding.startWithUsageStatsManagerButton.text =
-                                getString(R.string.stop_monitor)
-                            appMonitor.startMonitoring()
-                            LogUtil(this).log(tag, "[STATE] 开始监控")
-                            showToast(this, "监控已开始")
-                        }
+                        MyFilledTonalButton(
+                            text = "清空日志",
+                            onClick = {
+                                LogUtil(this@MainActivity).log(
+                                    this@MainActivity.tag,
+                                    "[DEBUG] 清除日志"
+                                )
+                                LogUtil(this@MainActivity).clearLog()
+                            },
+                            enabled = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MyFilledTonalButton(
+                            text = "保存日志",
+                            onClick = {
+                                LogUtil(this@MainActivity).log(
+                                    this@MainActivity.tag,
+                                    "[DEBUG] 保存日志"
+                                )
+                                LogUtil(this@MainActivity).saveLog()
+                            },
+                            enabled = true,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-                } else {
-                    binding.startWithUsageStatsManagerButton.text =
-                        getString(R.string.start_monitor)
-                    appMonitor.stopMonitoring()
-                    LogUtil(this).log(tag, "[STATE] 停止监控")
-                    showToast(this, "监控已停止")
+                    // 开始监控按钮
+                    MonitorControlButton(
+                        state = monitorState,
+                        onStartMonitor = {
+                            appMonitor.startMonitoring()
+                            showToast(this@MainActivity, "监控已开始")
+                        },
+                        onStopMonitor = {
+                            appMonitor.stopMonitoring()
+                            showToast(this@MainActivity, "监控已停止")
+                        }
+                    )
+                    Text(
+                        text = getString(R.string.version_text, BuildConfig.VERSION_NAME)
+                    )
                 }
             }
         }
     }
 
-    // 保持原有权限请求方法不变
     // Android 12 及以下不需要申请 POST_NOTIFICATIONS 权限
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun requestPermission(requestCode: String) {
