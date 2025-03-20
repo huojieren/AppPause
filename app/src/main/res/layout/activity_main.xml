@@ -6,32 +6,12 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 悬浮窗权限按钮 -->
-    <Button
-        android:id="@+id/overlayPermissionButton"
+    <!-- Compose 视图容器 -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/request_overlay" />
-
-    <!-- 通知权限按钮 -->
-    <Button
-        android:id="@+id/notificationPermissionButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/request_notification" />
-
-    <!-- 使用情况访问权限按钮 -->
-    <Button
-        android:id="@+id/usageStatsPermissionButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/request_usage_stats" />
+        android:layout_marginBottom="24dp" />
 
     <!-- 跳转到监控应用列表按钮 -->
     <Button

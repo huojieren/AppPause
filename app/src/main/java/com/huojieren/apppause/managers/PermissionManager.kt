@@ -3,12 +3,12 @@ package com.huojieren.apppause.managers
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.net.toUri
 import com.huojieren.apppause.utils.LogUtil
 
 class PermissionManager(private val context: Context) {
@@ -24,7 +24,7 @@ class PermissionManager(private val context: Context) {
     fun requestOverlayPermission(activity: AppCompatActivity, requestCode: Int) {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}")
+            "package:${context.packageName}".toUri()
         )
         activity.startActivityForResult(intent, requestCode)
         waitForPermissionAndReturn(activity) { checkOverlayPermission() }

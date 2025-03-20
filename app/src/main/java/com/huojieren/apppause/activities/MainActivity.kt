@@ -1,10 +1,12 @@
 package com.huojieren.apppause.activities
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.github.promeg.pinyinhelper.Pinyin
 import com.github.promeg.tinypinyin.lexicons.android.cncity.CnCityDict
 import com.huojieren.apppause.BuildConfig
@@ -14,6 +16,8 @@ import com.huojieren.apppause.managers.AppMonitor
 import com.huojieren.apppause.managers.NotificationManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
+import com.huojieren.apppause.ui.components.PermissionButtons
+import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.utils.LogUtil
 import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
 
@@ -41,38 +45,21 @@ class MainActivity : AppCompatActivity() {
         overlayManager = OverlayManager(this)
         notificationManager = NotificationManager(this)
 
-        // 悬浮窗权限按钮
-        binding.overlayPermissionButton.setOnClickListener {
-            if (permissionManager.checkOverlayPermission()) {
-                showToast(this, "悬浮窗权限已授予")
-            } else {
-                permissionManager.requestOverlayPermission(this, REQUEST_CODE_OVERLAY)
+        // 初始化 ComposeView
+        binding.composeContainer.apply {
+            setContent {
+                AppTheme {
+                    PermissionButtons(
+                        overlayPermissionGranted = permissionManager.checkOverlayPermission(),
+                        notificationPermissionGranted = permissionManager.checkNotificationPermission(),
+                        usageStatsPermissionGranted = permissionManager.checkUsageStatsPermission(),
+                        onRequestOverlay = { requestPermission("overlay") },
+                        onRequestNotification = { requestPermission("notification") },
+                        onRequestUsageStats = { requestPermission("usageStats") },
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+                }
             }
-        }
-
-        // 通知权限按钮
-        binding.notificationPermissionButton.setOnClickListener {
-            if (permissionManager.checkNotificationPermission()) {
-                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                showToast(this, "通知权限已授予")
-            } else {
-                permissionManager.requestNotificationPermission(this, REQUEST_CODE_NOTIFICATION)
-            }
-        }
-
-        // 使用情况访问权限按钮
-        binding.usageStatsPermissionButton.setOnClickListener {
-            if (permissionManager.checkUsageStatsPermission()) {
-                showToast(this, "使用情况访问权限已授予")
-            } else {
-                permissionManager.requestUsageStatsPermission(this)
-            }
-        }
-
-        // 监控应用列表按钮
-        binding.monitoredAppsButton.setOnClickListener {
-            val intent = Intent(this, MonitoredAppsActivity::class.java)
-            startActivity(intent)
         }
 
         // 显示版本号
@@ -124,35 +111,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    // 保持原有权限请求方法不变
     // Android 12 及以下不需要申请 POST_NOTIFICATIONS 权限
-    override fun onResume() {
-        super.onResume()
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun requestPermission(requestCode: String) {
+        when (requestCode) {
+            "overlay" -> {
+                permissionManager.requestOverlayPermission(this, 1001)
+            }
 
-        // 动态更新悬浮窗权限按钮状态
-        if (permissionManager.checkOverlayPermission()) {
-            binding.overlayPermissionButton.text = "悬浮窗权限已授予"
-        } else {
-            binding.overlayPermissionButton.text = "请求悬浮窗权限"
+            "notification" -> {
+                permissionManager.requestNotificationPermission(this, 1002)
+            }
+
+            "usageStats" -> {
+                permissionManager.requestUsageStatsPermission(this)
+            }
         }
-
-        // 动态更新通知权限按钮状态
-        if (permissionManager.checkNotificationPermission()) {
-            binding.notificationPermissionButton.text = "通知权限已授予"
-        } else {
-            binding.notificationPermissionButton.text = "请求通知权限"
-        }
-
-        // 动态更新使用情况访问权限按钮状态
-        if (permissionManager.checkUsageStatsPermission()) {
-            binding.usageStatsPermissionButton.text = "使用情况访问权限已授予"
-        } else {
-            binding.usageStatsPermissionButton.text = "请求使用情况访问权限"
-        }
-    }
-
-    companion object {
-        private const val REQUEST_CODE_OVERLAY = 1001
-        private const val REQUEST_CODE_NOTIFICATION = 1002
     }
 }
