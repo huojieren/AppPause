@@ -1,5 +1,6 @@
 package com.huojieren.apppause.activities
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -129,6 +130,26 @@ class MainActivity : AppCompatActivity() {
                         type = "usageStats",
                         label = "使用情况权限",
                         appState = appState
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "应用管理",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    MyFilledTonalButton(
+                        text = "应用监控列表",
+                        onClick = {
+                            val intent =
+                                Intent(this@MainActivity, MonitoredAppsActivity::class.java)
+                            startActivity(intent)
+                        },
+                        enabled = true
                     )
                 }
 

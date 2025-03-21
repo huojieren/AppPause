@@ -81,7 +81,6 @@ fun PermissionButton(
     type: String,
     label: String,
     appState: AppState,
-    context: Context = LocalContext.current
 ) {
     val hasPermission = when (type) {
         "overlay" -> appState.hasOverlayPermission
