@@ -1,0 +1,110 @@
+package com.huojieren.apppause.ui.components
+
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.huojieren.apppause.R
+
+
+@Composable
+fun MonitoredAppsScreen(
+    monitoredApps: List<String>,
+    toAppSelectionClick: () -> Unit,
+    onRemoveAppClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    Column(
+        modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
+        MyFilledTonalButton(
+            text = stringResource(R.string.add_app),
+            onClick = toAppSelectionClick,
+            modifier = Modifier.padding(16.dp),
+            enabled = true
+        )
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(monitoredApps, key = { it }) { packageName ->
+                MonitoredAppItem(
+                    appName = getAppName(context, packageName),
+                    onRemoveClick = { onRemoveAppClick(packageName) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MonitoredAppItem(
+    appName: String,
+    onRemoveClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 应用名称
+        Text(
+            text = appName,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        // 删除按钮
+        IconButton(
+            onClick = onRemoveClick,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(R.string.delete),
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+private fun getAppName(context: Context, packageName: String): String {
+    return try {
+        context.packageManager.getApplicationLabel(
+            context.packageManager.getApplicationInfo(packageName, 0)
+        ).toString()
+    } catch (e: Exception) {
+        packageName
+    }
+}
