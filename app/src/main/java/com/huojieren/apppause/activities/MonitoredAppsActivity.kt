@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateListOf
 import androidx.core.content.edit
-import com.huojieren.apppause.ui.components.MonitoredAppsScreen
+import com.huojieren.apppause.ui.screens.MonitoredAppsScreen
 import com.huojieren.apppause.ui.theme.AppTheme
 
 class MonitoredAppsActivity : ComponentActivity() {

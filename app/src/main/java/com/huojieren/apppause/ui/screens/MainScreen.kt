@@ -1,4 +1,4 @@
-package com.huojieren.apppause.ui
+package com.huojieren.apppause.ui.screens
 
 import android.content.Context
 import android.content.Intent

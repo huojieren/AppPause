@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.huojieren.apppause.ui.components.AppSelectionScreen
+import com.huojieren.apppause.ui.screens.AppSelectionScreen
 import com.huojieren.apppause.ui.theme.AppTheme
 
 class AppSelectionActivity : ComponentActivity() {

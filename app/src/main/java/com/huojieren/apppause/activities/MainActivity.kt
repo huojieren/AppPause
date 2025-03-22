@@ -2,19 +2,19 @@ package com.huojieren.apppause.activities
 
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import com.github.promeg.pinyinhelper.Pinyin
 import com.github.promeg.tinypinyin.lexicons.android.cncity.CnCityDict
 import com.huojieren.apppause.managers.AppMonitor
 import com.huojieren.apppause.managers.PermissionManager
-import com.huojieren.apppause.ui.MainScreen
+import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.state.AppState
 import com.huojieren.apppause.ui.theme.AppTheme
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     private lateinit var appMonitor: AppMonitor
     private lateinit var appState: AppState

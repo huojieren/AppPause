@@ -1,4 +1,4 @@
-package com.huojieren.apppause.ui.components
+package com.huojieren.apppause.ui.screens
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -35,6 +35,8 @@ fun AppSelectionScreen(
     LaunchedEffect(Unit) {
         apps = loadInstalledApps(context.packageManager)
     }
+
+    // TODO: 修改配色
 
     LazyColumn(
         modifier = modifier

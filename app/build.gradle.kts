@@ -119,4 +119,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.numberpicker)
 
+    implementation(libs.accompanist.systemuicontroller)
 }

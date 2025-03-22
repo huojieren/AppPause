@@ -1,4 +1,4 @@
-package com.huojieren.apppause.ui.components
+package com.huojieren.apppause.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
+import com.huojieren.apppause.ui.components.MyFilledTonalButton
 
 
 @Composable
@@ -40,6 +41,7 @@ fun MonitoredAppsScreen(
         modifier
             .fillMaxSize()
             .statusBarsPadding()
+        // TODO: 修改配色 
     ) {
         MyFilledTonalButton(
             text = stringResource(R.string.add_app),
