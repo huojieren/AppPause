@@ -1,117 +1,105 @@
 # **App Pause**
 
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.6.1-blue.svg)](https://developer.android.com/jetpack/compose)
+![App Demo Screenshot.png](App%20Demo%20Screenshot.png)
+
 ## **简介**
 
-App Pause 是一款 Android 应用监控工具，旨在帮助用户管理应用的使用时间。虽然市面上已大量应用时间管理工具，但
-AppPause
-提供了更灵活的管理方式：允许用户为每次使用设置时间限制，帮助用户健康使用手机。我们还计划在下个版本中引入使用过程中实时提醒，以及在使用前展示用户每日目标或任务的功能，以帮助用户更好地集中注意力。
+新一代 Android 应用使用时间管理工具，通过 Jetpack Compose 实现现代化交互界面，提供以下核心价值：
 
----
+- 🕒 **灵活时段控制**：支持单次使用时长的动态调整
+- 🎨 **沉浸式体验**：符合 Material Design 3 设计规范，支持深色/浅色主题
+- 🔔 **智能提醒**：悬浮窗实时倒计时 + 即将到期的通知提醒
+- 🛡️ **权限透明**：最小化权限请求，所有权限操作均有明确引导
 
-## **功能特性**
+## **技术架构** 🧱
 
-1. **应用监控**：
-    - 监控指定应用的使用情况，并在应用进入前台时启动计时器。
-    - 允许用户为每次使用设置单独的时间限制。
+### 核心组件
 
-2. **悬浮窗提醒**：
-    - 显示剩余使用时间，帮助用户及时了解使用情况。
-    - 允许用户重新设置使用时长，提供一定的灵活性。
+| 模块        | 技术实现                 | 特性              |
+|-----------|----------------------|-----------------|
+| **UI 系统** | Jetpack Compose      | 声明式 UI + 状态驱动更新 |
+| **状态管理**  | AppState + ViewModel | 集中式状态管理         |
+| **主题系统**  | Material Design 3    | 动态色彩 + 深色模式支持   |
+| **悬浮窗**   | Compose Overlay      | 可交互式浮动组件        |
+| **应用监控**  | UsageStatsManager    | 实时应用使用检测        |
 
-3. **通知提醒**：
-    - 当应用使用时间接近限制时，发送通知提醒。**（未实现）**
+### 架构特性
 
-4. **强制关闭应用**：
-    - 当使用时间用尽时，强制关闭被监控的应用，并展示超时提醒。
+```Mermaid
+graph TD
+    A[MainActivity] --> B[Compose UI] 
+    B --> C[AppState] 
+    C --> D[AppMonitor] 
+    D -->E[OverlayManager] 
+    D --> F[PermissionManager] 
+    E --> G[Compose Components]
+```
 
-5. **权限管理**：
-    - 管理悬浮窗权限、通知权限和使用情况访问权限，确保正常运行。
+## **开发指南** 👨💻
 
----
+### 环境要求
 
-## **安装与使用**
+- Android Studio Flamingo 2022.2.1+
+- JDK 17
+- Target SDK 34 (Android 14)
 
-### **1. 安装**
+### 关键依赖
 
-- 下载最新的 APK 文件并安装到您的 Android 设备上。
-- 设备需要 Android 8.0（API 26）或更高版本。
+```gradle 
+dependencies { 
+    implementation "androidx.compose.material3:material3:1.2.0" 
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2" 
+    implementation "com.github.promeg:tinypinyin:2.0.3" }
+```
 
-### **2. 使用步骤**
+### 代码结构
 
-1. **授予权限**：
-    - 启动应用后，依次授予以下权限：
-        - **无障碍服务**：允许应用使用无障碍服务来监控应用使用情况。
-        - **悬浮窗权限**：允许应用显示悬浮窗。
-        - **通知权限**：允许应用发送通知。
-        - **使用情况访问权限**：允许应用监控其他应用的使用情况。
+```
+app/src/main 
+├── java/com/huojieren/apppause 
+│ ├── ui/ # Compose 组件 
+│ │ ├── screens/ # 主界面/应用选择/监控列表 
+│ │ ├── theme/ # 主题系统 
+│ │ └── components/ # 可复用组件 
+│ ├── managers/ # 功能模块管理 
+│ └── models/ # 数据模型 
+└── res 
+├── mipmap-anydpi-v26/ # 自适应图标 
+└── values/ 
+├── colors.xml # 兼容旧系统的颜色定义 
+└── theme/ # MD3 主题资源
+```
 
-2. **添加被监控的应用**：
-    - 进入“监控应用列表”页面，选择需要监控的应用并添加。
+### 静态分析
 
-3. **启动监控**：
-    - 返回主界面，点击“开始监控”按钮。
-    - 被监控的应用进入前台时，AppPause 会启动计时器。
+```bash
+ ./gradlew detektCheck # Kotlin 代码规范检查 
+ ./gradlew lintDebug # Android 项目静态分析
+```
 
-4. **设置使用时长**：
-    - 当应用进入前台时会弹出使用时长悬浮窗，用户可以通过悬浮窗调整使用时长。
+## **贡献指引** 🤝
 
-5. **强制关闭应用**：
-    - 当使用时间结束时，AppPause 会显示超时提醒并引导关闭应用。
+我们欢迎以下类型的贡献：
 
----
+- 🐛 错误报告：[新建 Issue](https://github.com/huojieren/AppPause/issues)
+- 💡 功能建议：[查看 Roadmap](https://github.com/users/huojieren/projects/2)
+- 📖 文档改进：直接提交 PR
+- 🎨 UI/UX 优化：附上 Figma 设计稿
 
-## **技术实现**
+### 提交规范
 
-### **1. 主要组件**
+```bash
+git commit -m "feat(ui): add dark mode support" 
+-m "Closes #123 #456" 
+```
 
-- **MainActivity**：负责权限管理、启动/停止监控以及用户界面交互。
-- **AppMonitor**：负责监控应用的使用情况，判断应用是否处于前台并管理倒计时。
-- **OverlayManager**：用于管理悬浮窗的显示和隐藏。
-- **PermissionManager**：管理悬浮窗、通知和使用情况访问权限。
-- **NotificationManager**：管理通知的发送和展示。
-- **AppPauseAccessibilityService**：通过无障碍服务监控应用使用情况。
+## **知识共享** 📚
 
-### **2. 关键技术**
+特别感谢以下资源：
 
-- **Handler 和 Runnable**：用于实现定时任务和倒计时逻辑。
-- **UsageStatsManager**：获取应用的使用情况。
-- **WindowManager**：用于显示悬浮窗。
-- **SharedPreferences**：持久化存储被监控应用列表。
-- **AccessibilityService**：用于监控应用使用情况。
+- Android 官方 Compose 示例
+- Material Design 3 设计规范
+- Jetpack 架构指南
 
----
-
-## **权限说明**
-
-AppPause 需要以下权限以实现完整功能：
-
-1. **悬浮窗权限**：用于显示悬浮窗。
-2. **通知权限**：用于发送通知提醒。
-3. **使用情况访问权限**：用于监控其他应用的使用情况。
-4. **强制关闭应用权限**：用于强制关闭被监控的应用。
-5. **无障碍服务**：用于监控应用使用情况。（软件无联网功能，页面识别内容仅用于监控应用使用情况）
-
----
-
-## **贡献与反馈**
-
-### **反馈方式**
-
-如果您遇到问题或有任何建议，请按照以下步骤提供反馈：
-
-1. **如果能够复现问题**：
-    - 在问题发生前，请点击“清空日志”按钮。
-    - 复现问题后，点击“保存日志”按钮，并上传日志文件，以便我们更好地排查问题。
-
-2. **如果无法复现问题**：
-    - 直接保存日志文件并反馈问题。
-
-您可以在 [GitHub Issues](https://github.com/huojieren/AppPause/issues)
-提交问题或新功能建议，同时也可以在 [GitHub Project](https://github.com/users/huojieren/projects/2)
-中查看当前正在开发的功能。
-
----
-
-## **致谢**
-
-- 特别感谢 ChatGPT、DeepSeek 提供的技术支持。
+以及 `通义灵码` 、 `DeepSeek` 、 `ChatGPT` 等大模型的大力支持
