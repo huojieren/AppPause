@@ -57,11 +57,23 @@ class LogUtil(private val context: Context) {
     }
 
 
-    // 获取外部存储下载目录
+    // 获取保存位置目录
     private fun getLogFile(): File {
+        // 获取外部存储下载目录
         val downloadsDir =
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        return File(downloadsDir, "app_logs.txt")
+        val saveDir = File(downloadsDir, "App Pause")
+        // 创建文件夹
+        if (!saveDir.exists()) {
+            if (saveDir.mkdirs()) {
+                LogUtil(context).log("AppMonitor", "创建\"App Pause\"文件夹成功", Log.DEBUG)
+            } else {
+                LogUtil(context).log("AppMonitor", "创建\"App Pause\"文件夹失败", Log.ERROR)
+            }
+        } else {
+            LogUtil(context).log("AppMonitor", "\"App Pause\"文件夹存在", Log.DEBUG)
+        }
+        return File(saveDir, "app_logs.txt")
     }
 
     // 清空日志
@@ -73,7 +85,7 @@ class LogUtil(private val context: Context) {
             }
             showToast(context, "日志已清空")
         } catch (e: Exception) {
-            Log.e("AppMonitor", "Error clearing log", e)
+            LogUtil(context).log("AppMonitor", "清空日志失败", Log.ERROR)
             showToast(context, "清空日志失败")
         }
     }
@@ -81,12 +93,12 @@ class LogUtil(private val context: Context) {
     // 保存日志
     fun saveLog() {
         try {
-            val logFile = getLogFile() // 获取外部存储下载目录
+            val logFile = getLogFile() // 获取文件保存位置
             val logContent = File(context.filesDir, "app_logs.txt").readText() // 从应用私有目录获取当前日志内容
-            logFile.writeText(logContent) // 将日志保存到下载目录
-            showToast(context, "日志已保存到下载目录")
+            logFile.writeText(logContent) // 将日志保存到指定位置
+            showToast(context, "日志已保存到：Download/App Pause/app_logs.txt")
         } catch (e: Exception) {
-            Log.e("AppMonitor", "Error saving log", e)
+            LogUtil(context).log("AppMonitor", "保存日志失败", Log.ERROR)
             showToast(context, "保存日志失败")
         }
     }
