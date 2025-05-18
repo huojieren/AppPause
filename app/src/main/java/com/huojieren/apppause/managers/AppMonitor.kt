@@ -1,6 +1,5 @@
 package com.huojieren.apppause.managers
 
-import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
@@ -11,8 +10,14 @@ import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.service.MonitorService
 import com.huojieren.apppause.utils.LogUtil
 import com.huojieren.apppause.utils.ToastUtil.Companion.showToast
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AppMonitor(private val context: Context) {
+@Singleton // 单例
+class AppMonitor @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     var isMonitoring: Boolean = false
 
@@ -28,24 +33,6 @@ class AppMonitor(private val context: Context) {
     private var currentMonitorApp: String? = null // 当前前台被监控的应用包名（只会有一个活动倒计时）
     private var lastDetectedApp: String? = null // 用于记录上一次被检测到的应用包名
     private val listeners = mutableListOf<() -> Unit>() // 用于存储监听器
-
-    // 单例模式
-    companion object {
-        @Volatile
-        @SuppressLint("StaticFieldLeak") // 忽略 Lint 内存泄漏警告
-        private var instance: AppMonitor? = null
-        fun getInstance(context: Context): AppMonitor {
-            val appContext = context.applicationContext // 获取全局上下文
-            return instance ?: synchronized(this) {
-                instance ?: AppMonitor(appContext).also { instance = it } // 使用全局上下文避免内存泄漏
-            }
-        }
-    }
-
-    fun isEmptyMonitoredApps(): Boolean {
-        loadMonitoredApps()
-        return monitoredAppMap.isEmpty()
-    }
 
     private fun loadMonitoredApps() {
         val sharedPreferences = context.getSharedPreferences("AppPause", Context.MODE_PRIVATE)
@@ -70,6 +57,7 @@ class AppMonitor(private val context: Context) {
     fun startMonitoring() {
         if (isMonitoring) return
 
+        showToast(context, "应用监控已开启")
         LogUtil(context).log(tag, "[STATE] 启动应用监控")
         // 创建监控任务
         monitorRunnable = object : Runnable {
@@ -92,6 +80,7 @@ class AppMonitor(private val context: Context) {
     fun stopMonitoring() {
         if (!isMonitoring) return
 
+        showToast(context, "应用监控已停止")
         LogUtil(context).log(tag, "[STATE] 停止应用监控")
 
         // 停止所有定时器
@@ -297,11 +286,13 @@ class AppMonitor(private val context: Context) {
         }
     }
 
-    fun addStateListener(listener: () -> Unit) {
-        listeners.add(listener)
-    }
-
     private fun notifyStateChanged() {
         listeners.forEach { it.invoke() }
+    }
+
+    // 获取正在监控的应用列表
+    fun getMonitoredApps(): Set<String> {
+        loadMonitoredApps()
+        return monitoredAppMap.toSet()
     }
 }

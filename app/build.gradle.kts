@@ -3,6 +3,9 @@ plugins {
     alias(libs.plugins.android.application) // Android 应用插件
     alias(libs.plugins.kotlin.android) // Kotlin Android 插件
     alias(libs.plugins.compose.compiler) // Compose 编译器插件
+    alias(libs.plugins.jetbrains.kotlin.kapt) //  Hilt 编译器插件
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -120,4 +123,7 @@ dependencies {
     implementation(libs.numberpicker)
 
     implementation(libs.accompanist.systemuicontroller)
+
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 }
