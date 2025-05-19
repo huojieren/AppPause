@@ -1,6 +1,5 @@
 package com.huojieren.apppause.managers
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
@@ -11,26 +10,16 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.net.toUri
 import com.huojieren.apppause.utils.LogUtil
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PermissionManager private constructor(private val context: Context) {
+@Singleton // 单例
+class PermissionManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     private val tag = "PermissionManager"
-
-    companion object {
-        @SuppressLint("StaticFieldLeak") // 忽略 Lint 内存泄漏警告
-        @Volatile
-        private var instance: PermissionManager? = null
-
-        fun init(context: Context) {
-            instance ?: synchronized(this) {
-                instance ?: PermissionManager(context.applicationContext).also { instance = it }
-            }
-        }
-
-        fun get(): PermissionManager {
-            return instance ?: throw IllegalStateException("PermissionManager未初始化")
-        }
-    }
 
     // 检查悬浮窗权限是否已授权
     fun checkOverlayPermission(): Boolean {

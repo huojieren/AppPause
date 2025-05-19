@@ -2,8 +2,6 @@ package com.huojieren.apppause.ui.screens
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,23 +20,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.activities.MonitoredAppsActivity
 import com.huojieren.apppause.ui.components.MonitorControlButton
 import com.huojieren.apppause.ui.components.MyFilledTonalButton
 import com.huojieren.apppause.ui.components.PermissionButton
-import com.huojieren.apppause.ui.state.AppState
+import com.huojieren.apppause.ui.viewmodel.MainViewModel
 import com.huojieren.apppause.utils.LogUtil
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(context: Context, appState: AppState, tag: String) {
+fun MainScreen(context: Context, viewModel: MainViewModel) {
+    val state by viewModel.appState.collectAsStateWithLifecycle()
+    val logTag = "MainScreen"
     Scaffold(
         topBar = {
             TopAppBar(
@@ -87,19 +89,25 @@ fun MainScreen(context: Context, appState: AppState, tag: String) {
                             .padding(horizontal = 12.dp)
                     )
                     PermissionButton(
-                        type = "overlay",
                         label = "悬浮窗权限",
-                        appState = appState
+                        hasPermission = state.hasOverlay,
+                        onRequest = {
+                            viewModel.refreshAll()
+                        }
                     )
                     PermissionButton(
-                        type = "notification",
                         label = "通知权限",
-                        appState = appState
+                        hasPermission = state.hasNotification,
+                        onRequest = {
+                            viewModel.refreshAll()
+                        }
                     )
                     PermissionButton(
-                        type = "usageStats",
                         label = "使用情况权限",
-                        appState = appState
+                        hasPermission = state.hasUsageStats,
+                        onRequest = {
+                            viewModel.refreshAll()
+                        }
                     )
                 }
             }
@@ -153,7 +161,7 @@ fun MainScreen(context: Context, appState: AppState, tag: String) {
                         MyFilledTonalButton(
                             text = "清空缓存日志",
                             onClick = {
-                                LogUtil(context).log(tag, "[DEBUG] 清除日志")
+                                LogUtil(context).log(logTag, "[DEBUG] 清除日志")
                                 LogUtil(context).clearLog()
                             },
                             enabled = true,
@@ -166,7 +174,7 @@ fun MainScreen(context: Context, appState: AppState, tag: String) {
                         MyFilledTonalButton(
                             text = "保存缓存日志",
                             onClick = {
-                                LogUtil(context).log(tag, "[DEBUG] 保存日志")
+                                LogUtil(context).log(logTag, "[DEBUG] 保存日志")
                                 LogUtil(context).saveLog()
                             },
                             enabled = true,
@@ -192,7 +200,10 @@ fun MainScreen(context: Context, appState: AppState, tag: String) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    MonitorControlButton(appState = appState)
+                    MonitorControlButton(
+                        state = state,
+                        onToggle = { viewModel.toggleMonitoring() }
+                    )
                 }
             }
 
