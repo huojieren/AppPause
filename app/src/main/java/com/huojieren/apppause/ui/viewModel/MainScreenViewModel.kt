@@ -81,7 +81,7 @@ class MainScreenViewModel @Inject constructor(
 
     fun saveLog() {
         when (logRepository.saveLog()) {
-            0 -> showToast(context, "日志已保存到：Download/App Pause/app_logs.txt")
+            0 -> showToast(context, "日志已保存到：Download/App Pause/app_logs.zip")
             1 -> showToast(context, "没有日志可保存")
             -1 -> showToast(context, "保存日志失败")
         }

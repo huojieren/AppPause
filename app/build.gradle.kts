@@ -128,6 +128,9 @@ dependencies {
     // ===== Material Design =====
     implementation(libs.material)
 
+    // ===== Timber =====
+    implementation(libs.timber)
+
     // ===== 测试 =====
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

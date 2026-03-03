@@ -18,6 +18,10 @@ class AppPauseAccessibilityService : AccessibilityService() {
     lateinit var statusManager: StatusManager
     private val tag = "AppPauseAccessibilityService"
 
+    private var lastLogTime = 0L
+    private var lastLogPackage: String? = null
+    private val logIntervalMs = 5000L
+
     companion object {
         @SuppressLint("StaticFieldLeak")
         private var instance: AppPauseAccessibilityService? = null
@@ -56,26 +60,40 @@ class AppPauseAccessibilityService : AccessibilityService() {
         statusManager.setHasAccessibility(false)
     }
 
-    @Deprecated("监听事件会频繁监听到系统隐藏组件比如的变化，影响判断，使用")
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        val currentTime = System.currentTimeMillis()
+        val hasExceededLogInterval = currentTime - lastLogTime > logIntervalMs
+
         if (!statusManager.isMonitoring.value) {
-            logRepository.log(tag, "onAccessibilityEvent: isMonitoring: false")
+            if (hasExceededLogInterval
+
+            ) {
+                lastLogTime = currentTime
+                logRepository.log(tag, "onAccessibilityEvent: isMonitoring: false")
+            }
             return
         }
         if (event == null) {
-            logRepository.log(tag, "onAccessibilityEvent: event is null")
+            if (hasExceededLogInterval
+
+            ) {
+                lastLogTime = currentTime
+                logRepository.log(tag, "onAccessibilityEvent: event is null")
+            }
             return
         }
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
             event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
         ) {
-            event.packageName?.toString()
-            // TODO 2025/12/12 14:00 配置 debug 版本日志输出
-//            eventPackage?.let {
-//                logRepository.log(tag, "onAccessibilityEvent: ${event.eventType} $event Package")
-//            }
             val topPackage = instance?.rootInActiveWindow?.packageName?.toString()
-            logRepository.log(tag, "onAccessibilityEvent: topPackage $topPackage")
+            if (topPackage != null && (topPackage != lastLogPackage || hasExceededLogInterval
+
+                        )
+            ) {
+                lastLogPackage = topPackage
+                lastLogTime = currentTime
+                logRepository.log(tag, "onAccessibilityEvent: topPackage $topPackage")
+            }
             topPackage?.let { onAppChangedListener?.invoke(topPackage) }
         }
     }
