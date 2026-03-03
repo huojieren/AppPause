@@ -19,4 +19,5 @@
     <string name="for_appName">为 %s </string>
     <string name="set_time">设置使用时长</string>
     <string name="monitored_apps">监控的应用</string>
+    <string name="a11y_desc">本应用无障碍服务仅用于监控应用使用情况</string>
 </resources>

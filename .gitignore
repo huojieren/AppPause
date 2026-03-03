@@ -17,7 +17,8 @@ Thumbs.db
 *.ntvs*  
 *.njsproj  
 *.sln  
-*.sw?  
+*.sw?
+local.properties
   
 # 忽略依赖包目录  
 node_modules/  
@@ -74,12 +75,20 @@ public/
 # 忽略IDE临时文件  
 .idea/  
 .vscode/  
-  
+
+# 忽略Eclipse项目文件  
+.project  
+.settings/  
+.classpath  
+
 # Linux系统文件  
 *~  
-  
+
 # 忽略临时文件和备份文件  
 *.bak  
 *.tmp  
 *.swp  
-*.swo
+*.swo  
+
+# 忽略Windows命令错误输出文件
+nul

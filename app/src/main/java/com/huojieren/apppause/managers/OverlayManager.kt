@@ -1,135 +1,204 @@
 package com.huojieren.apppause.managers
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
-import com.huojieren.apppause.BuildConfig
-import com.huojieren.apppause.ui.components.FloatingWindow
-import com.huojieren.apppause.ui.components.TimeoutOverlay
-import com.huojieren.apppause.ui.theme.AppTheme
-import com.huojieren.apppause.utils.LogUtil
+import com.huojieren.apppause.ui.FloatingWindowLifecycleOwner
 
-/**
- * 悬浮窗管理类，负责：
- * 1. 显示时间选择悬浮窗
- * 2. 显示超时锁定覆盖层
- * 3. 管理悬浮窗生命周期
- */
-class OverlayManager(private val context: Context) {
-    // region 成员变量
-    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+class OverlayManager(
+    private val context: Context,
+) {
     private val tag = "OverlayManager"
-    private var lifecycleOwner: MyComposeViewLifecycleOwner? = null
-    // endregion
+    private var lifecycleOwner: FloatingWindowLifecycleOwner? = null
+    private var windowManager: WindowManager? = null
+    private var composeView: ComposeView? = null
 
-    fun showFloatingWindow(
-        onDisMiss: () -> Unit,
-        onTimeSelected: (Int) -> Unit,
-        onExtendTime: (Int) -> Unit,
-        appName: String
-    ) {
-        val composeView = ComposeView(context).apply {
-            setContent {
-                AppTheme {
-                    FloatingWindow(
-                        appName = appName,
-                        timeUnitDesc = BuildConfig.TIME_DESC,
-                        onConfirm = { time ->
-                            onTimeSelected(time)
-                            removeViewSafely(this)
-                        },
-                        onCancel = {
-                            onDisMiss()
-                            removeViewSafely(this)
-                        },
-                        onExtend = { units ->
-                            onExtendTime(units)
-                            removeViewSafely(this)
-                        }
-                    )
-                }
-            }
-        }
+    fun showOverlay(content: @Composable () -> Unit) {
+        if (composeView != null) return
 
         val layoutParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            TYPE_APPLICATION_OVERLAY,
             FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.CENTER
         }
 
-        lifecycleOwner = MyComposeViewLifecycleOwner().also {
-            it.attachToDecorView(composeView)
-            it.onCreate()
+        // 创建并设置生命周期
+        lifecycleOwner = FloatingWindowLifecycleOwner().also {
+            it.initialize()
         }
 
-        windowManager.addView(composeView, layoutParams)
+        composeView = ComposeView(context).apply {
+            setContent { content() }
+        }
+
+        // 设置 LifecycleOwner 到 ComposeView
+        composeView?.let { view ->
+            lifecycleOwner?.attachToComposeView(view)
+        }
+        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager?.addView(composeView, layoutParams)
     }
 
-    fun showTimeoutOverlay(appName: String) {
-        // 创建 ComposeView 容器
+    fun removeOverlay() {
+        composeView?.let {
+            windowManager?.removeView(it)
+            composeView = null
+        }
+
+        // 清理生命周期
+        lifecycleOwner?.destroy()
+        lifecycleOwner = null
+    }
+
+    /**
+     * 显示时间选择悬浮窗
+     */
+    /*fun showFloatingWindow(
+        onDisMiss: () -> Unit,
+        onTimeSelected: (Int) -> Unit,
+        onExtendTime: (Int) -> Unit,
+    ) {
+        // 如果已有悬浮窗显示，先移除
+        hideCurrentOverlay()
+
         val composeView = ComposeView(context).apply {
             setContent {
-                AppTheme { // 使用项目主题
-                    TimeoutOverlay(
-                        appName = appName,
-                        onCloseRequest = {
-                            // 返回桌面操作
-                            Intent(Intent.ACTION_MAIN).apply {
-                                addCategory(Intent.CATEGORY_HOME)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                context.startActivity(this)
-                            }
-                            // TODO: 修改removeViewSafely函数为传递composeView
-                            // 移除视图
-                            windowManager.removeViewImmediate(this)
-                            lifecycleOwner?.onDestroy()
-                            lifecycleOwner = null
+                AppTheme {
+                    TimerScreen(
+                        // FIXME: 2025/10/18 21:13 viewModel没有默认构造方法，导致preview渲染错误
+                        onExtend5Clicked = {
+                            val currentTime = 5 * 60 // 5分钟
+                            onExtendTime(currentTime)
+                            hideCurrentOverlay()
+                        },
+                        onExtend10Clicked = {
+                            val currentTime = 10 * 60 // 10分钟
+                            onExtendTime(currentTime)
+                            hideCurrentOverlay()
+                        },
+                        onCancelButtonClicked = {
+                            onDisMiss()
+                            hideCurrentOverlay()
+                        },
+                        onConfirmButtonClicked = { time ->
+                            onTimeSelected(time)
+                            hideCurrentOverlay()
                         }
                     )
                 }
             }
         }
 
-        // 窗口参数配置
+        currentComposeView = composeView
+
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            TYPE_APPLICATION_OVERLAY,
             FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
-        )
-
-        lifecycleOwner = MyComposeViewLifecycleOwner().also {
-            it.attachToDecorView(composeView)
-            it.onCreate()
+        ).apply {
+            gravity = Gravity.CENTER
         }
 
-        // 添加视图到窗口
-        windowManager.addView(composeView, layoutParams)
-    }
-    // endregion
+        lifecycleOwner = FloatingWindowLifecycleOwner().also {
+            it.initialize()
+            it.attachToComposeView(composeView)
+        }
 
-    // region 工具方法
+        try {
+            windowManager.addView(composeView, layoutParams)
+        } catch (e: Exception) {
+            LogRepository(context).log(tag, "[ERROR] 添加悬浮窗失败: ${e.message}")
+        }
+    }*/
+
+    /**
+     * 显示超时覆盖层
+     */
+    /* fun showTimeoutOverlay(
+         appInfo: AppInfo
+     ) {
+         // 如果已有悬浮窗显示，先移除
+         hideCurrentOverlay()
+
+         // 创建 ComposeView 容器
+         val composeView = ComposeView(context).apply {
+             setContent {
+                 AppTheme {
+                     TimeOutScreen(
+                         appInfo = appInfo,
+                         onReturnToHomeScreenClicked = {
+                             hideCurrentOverlay()
+                         }
+                     )
+                 }
+             }
+         }
+
+         currentComposeView = composeView
+
+         // 窗口参数配置
+         val layoutParams = WindowManager.LayoutParams(
+             WindowManager.LayoutParams.MATCH_PARENT,
+             WindowManager.LayoutParams.MATCH_PARENT,
+             TYPE_APPLICATION_OVERLAY,
+             FLAG_LAYOUT_NO_LIMITS,
+             PixelFormat.TRANSLUCENT
+         )
+
+        lifecycleOwner = FloatingWindowLifecycleOwner().also {
+            it.attachToComposeView(composeView)
+             it.onCreate()
+         }
+
+         // 添加视图到窗口
+         try {
+             windowManager.addView(composeView, layoutParams)
+         } catch (e: Exception) {
+             LogRepository(context).log(tag, "[ERROR] 添加超时覆盖层失败: ${e.message}")
+         }
+     }*/
+
+    /**
+     * 隐藏当前显示的悬浮窗
+     */
+    /* fun hideCurrentOverlay() {
+         currentComposeView?.let { view ->
+             try {
+                 if (view.isAttachedToWindow) {
+                     windowManager.removeView(view)
+                 }
+             } catch (e: Exception) {
+                 LogRepository(context).log(tag, "[ERROR] 移除悬浮窗失败: ${e.message}")
+             }
+         }
+
+        lifecycleOwner?.destroy()
+        lifecycleOwner = null
+         currentComposeView = null
+     }*/
+
     /**
      * 安全移除视图，避免重复移除导致的异常
      */
-    @SuppressLint("NewApi")
-    private fun removeViewSafely(view: android.view.View) {
-        try {
-            if (view.isAttachedToWindow) {
-                windowManager.removeView(view)
+    /*    @SuppressLint("NewApi")
+        private fun removeViewSafely(view: View) {
+            try {
+                if (view.isAttachedToWindow) {
+                    windowManager.removeView(view)
+                }
+            } catch (e: Exception) {
+                LogRepository(context).log(tag, "[ERROR] 移除悬浮窗失败: ${e.message}")
             }
-        } catch (e: Exception) {
-            LogUtil(context).log(tag, "[ERROR] 移除悬浮窗失败: ${e.message}")
-        }
-    }
+        }*/
 }
