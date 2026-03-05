@@ -28,10 +28,6 @@ class MonitorManager(
     private var monitoredApps = setOf<AppInfo>()
     private var currentApp: AppInfo? = null
     private var onAppChanged: ((AppInfo?) -> Unit)? = null
-    private var lastLoggedApp: String? = null // 上次记录的应用
-    private var lastLogTime: Long? = null // 上次日志时间
-    private var lastInvalidLogTime: Long? = null // 上次无效应用日志时间
-    private val logCooldownMs = 1000L // 冷却时间：1秒内同一应用不重复日志
 
     fun setOnAppChangedListener(listener: (AppInfo?) -> Unit) {
         logRepository.log(tag, "set on app changed listener")
@@ -75,49 +71,45 @@ class MonitorManager(
     }
 
     fun handleAppChange(app: AppInfo?) {
-        val packageName = app?.packageName ?: "no app info"
-        val currentTime = System.currentTimeMillis()
+        val packageName = app?.packageName
 
-        // 防重复日志
-        if (packageName != lastLoggedApp ||
-            (currentTime - (lastLogTime ?: 0) > logCooldownMs)
-        ) {
-            logRepository.log(tag, app?.let { "change to app: ${it.name}" } ?: "no app info")
-            lastLoggedApp = packageName
-            lastLogTime = currentTime
+        // 同一应用且非首次调用，不做任何处理
+        if (packageName == currentApp?.packageName) {
+            return
         }
 
-        // 防重复日志
+        val previousApp = currentApp
+        currentApp = app
+
+        // 日志输出
+        logRepository.log(tag, "app changed: ${previousApp?.name} -> ${app?.name ?: "null"}")
+
+        // 切换到无效应用时，暂停上一个被监控应用的计时器
         if (!isValidApp(app)) {
-            if (packageName != lastLoggedApp ||
-                (currentTime - (lastInvalidLogTime ?: 0) > logCooldownMs)
-            ) {
-                logRepository.log(tag, "invalid app")
-                lastInvalidLogTime = currentTime
+            logRepository.log(tag, "invalid app: ${packageName ?: "null"}, paused timer")
+            previousApp?.let {
+                timerManager.pause(it.packageName)
             }
             return
         }
 
-        // 检查是否是同一个应用
-        if (currentApp?.packageName != app?.packageName) {
-            // 切换到不同应用时，暂停上一个
-            currentApp?.let { timerManager.pause(it.packageName) }
-        }
-        currentApp = app!!
+        val validApp = app!!
 
-        val remaining = timerManager.getRemainingTime(app)
+        // 切换到不同应用时，暂停上一个
+        previousApp?.let {
+            timerManager.pause(it.packageName)
+        }
+
+        val remaining = timerManager.getRemainingTime(validApp)
         if (remaining > 0) {
-            logRepository.log(tag, "${app.packageName} continue counting")
-            // 检查计时器是否正在运行，如果没有则重新启动
-            // 这样可以避免刚设置的倒计时被意外暂停
             logRepository.log(
                 tag,
-                "[MONITOR] Continuing existing timer for ${app.packageName}, remaining: ${remaining}ms"
+                "${validApp.packageName} continue counting, remaining: ${remaining}ms"
             )
+            timerManager.start(validApp)
         } else {
-            // 通知外部监听器，开始新的倒计时
-            logRepository.log(tag, "${app.packageName} start new counting")
-            onAppChanged?.invoke(app)
+            logRepository.log(tag, "${validApp.packageName} start new counting")
+            onAppChanged?.invoke(validApp)
         }
     }
 
