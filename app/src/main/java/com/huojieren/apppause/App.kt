@@ -1,7 +1,9 @@
 package com.huojieren.apppause
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
+import androidx.core.content.edit
 import com.huojieren.apppause.managers.ListenerManager
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -20,7 +22,17 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        checkPreviousExit()
         initTimber()
+    }
+
+    private fun checkPreviousExit() {
+        val prefs = getSharedPreferences("app_status", MODE_PRIVATE)
+        val normalExit = prefs.getBoolean("normal_exit", true)
+        if (!normalExit) {
+            Timber.tag("App").w("App was killed unexpectedly last time")
+        }
+        prefs.edit { putBoolean("normal_exit", false) }
     }
 
     private fun initTimber() {
@@ -40,6 +52,7 @@ class App : Application() {
 
         private val logFile: File = File(cacheDir, LOG_FILE_NAME)
 
+        @SuppressLint("LogNotTimber")
         override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
             try {
                 checkRotation()

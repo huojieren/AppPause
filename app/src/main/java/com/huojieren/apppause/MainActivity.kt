@@ -17,4 +17,10 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        getSharedPreferences("app_status", MODE_PRIVATE)
+            .edit().putBoolean("normal_exit", true).apply()
+    }
 }
