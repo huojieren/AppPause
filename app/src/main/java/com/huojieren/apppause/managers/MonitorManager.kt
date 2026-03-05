@@ -39,7 +39,7 @@ class MonitorManager(
 
         // 检查无障碍服务是否初始化
         if (!AppPauseAccessibilityService.isInitialized()) {
-            throw IllegalStateException("无障碍服务未初始化，请先开启无障碍服务权限")
+            throw IllegalStateException("Accessibility service not initialized, please enable it first")
         }
 
         scope.launch {
@@ -56,7 +56,7 @@ class MonitorManager(
             ContextCompat.startForegroundService(context, intent)
         } catch (e: Exception) {
             logRepository.log(tag, "Failed to start MonitorService: ${e.message}")
-            throw IllegalStateException("启动监控服务失败：${e.message}", e)
+            throw IllegalStateException("Failed to start MonitorService：${e.message}", e)
         }
     }
 
@@ -82,11 +82,11 @@ class MonitorManager(
         currentApp = app
 
         // 日志输出
-        logRepository.log(tag, "app changed: ${previousApp?.name} -> ${app?.name ?: "null"}")
+        logRepository.log(tag, "app changed: [${previousApp?.name}] -> [${app?.name ?: "null"}]")
 
         // 切换到无效应用时，暂停上一个被监控应用的计时器
         if (!isValidApp(app)) {
-            logRepository.log(tag, "invalid app: ${packageName ?: "null"}, paused timer")
+            logRepository.log(tag, "invalid app: [${packageName ?: "null"}], paused timer")
             previousApp?.let {
                 timerManager.pause(it.packageName)
             }
@@ -104,11 +104,11 @@ class MonitorManager(
         if (remaining > 0) {
             logRepository.log(
                 tag,
-                "${validApp.packageName} continue counting, remaining: ${remaining}ms"
+                "[${validApp.packageName}] continue counting, remaining: ${remaining / 1000}s"
             )
             timerManager.start(validApp)
         } else {
-            logRepository.log(tag, "${validApp.packageName} start new counting")
+            logRepository.log(tag, "[${validApp.packageName}] start new counting")
             onAppChanged?.invoke(validApp)
         }
     }

@@ -62,7 +62,7 @@ class TimerManager(
         if (targetTimeMs <= 0) {
             logRepository.log(
                 tag,
-                "[TIMER] No valid time for $packageName, aborting start",
+                "No valid time for [$packageName], aborting start",
                 Log.ERROR
             )
             return
@@ -78,8 +78,8 @@ class TimerManager(
 
         logRepository.log(tag, "--------------------")
         logRepository.log(tag, "Starting timer")
-        logRepository.log(tag, "app: ${app.name}")
-        logRepository.log(tag, "targetTimeMs: $targetTimeMs")
+        logRepository.log(tag, "app: [${app.name}]")
+        logRepository.log(tag, "targetTime: ${targetTimeMs / 1000}s")
         logRepository.log(tag, "--------------------")
 
         // 启动倒计时
@@ -95,10 +95,10 @@ class TimerManager(
             state.isRunning = false
             logRepository.log(
                 tag,
-                "[TIMER] Stopped timer for $packageName, remaining: ${state.remainingTime}ms"
+                "Stopped timer for [$packageName], remaining: ${state.remainingTime / 1000}s"
             )
         } else {
-            logRepository.log(tag, "[TIMER] No active timer to stop for $packageName")
+            logRepository.log(tag, "No active timer to stop for [$packageName]")
         }
     }
 
@@ -116,7 +116,7 @@ class TimerManager(
                 if (!state.isRunning) {
                     logRepository.log(
                         tag,
-                        "[TIMER] Timer not running, stopping countdown for $packageName"
+                        "Timer not running, stopping countdown for [$packageName]"
                     )
                     return
                 }
@@ -130,7 +130,7 @@ class TimerManager(
                     if (logCounter % logInterval == 0) {
                         logRepository.log(
                             tag,
-                            "[TIMER] $packageName remaining: ${state.remainingTime}ms (${state.remainingTime / 1000}s)"
+                            "[$packageName] remaining: ${state.remainingTime / 1000}s"
                         )
                     }
 
@@ -143,7 +143,7 @@ class TimerManager(
                     timerStateMap.remove(packageName)
                     logCounter = 0
 
-                    logRepository.log(tag, "[TIMER] $packageName timer finished")
+                    logRepository.log(tag, "[$packageName] timer finished")
                     onTimeOut?.invoke(true)
                 }
             }
@@ -152,7 +152,7 @@ class TimerManager(
         handler.post(runnable)
         logRepository.log(
             tag,
-            "[TIMER] Countdown started for $packageName, next tick in 1000ms"
+            "Countdown started for $packageName, next tick in 1s"
         )
     }
 }

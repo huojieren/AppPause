@@ -35,7 +35,7 @@ class SelectAppViewModel @Inject constructor(
     }
 
     fun addApp(appInfoUi: AppInfoUi) {
-        logRepository.log(tag, "添加应用: ${appInfoUi.name}")
+        logRepository.log(tag, "Add app: ${appInfoUi.name}")
         if (!_uiState.value.monitoredApps.any { it.packageName == appInfoUi.packageName }) {
             dataStoreRepository.addAppToMonitored(appInfoUi.toEntity())
             _uiState.update { currentState ->
@@ -47,7 +47,7 @@ class SelectAppViewModel @Inject constructor(
     }
 
     fun removeApp(appInfoUi: AppInfoUi) {
-        logRepository.log(tag, "移除应用: ${appInfoUi.name}")
+        logRepository.log(tag, "Remove app: ${appInfoUi.name}")
         dataStoreRepository.removeAppFromMonitor(appInfoUi.toEntity())
         _uiState.update { currentState ->
             currentState.copy(
@@ -57,21 +57,21 @@ class SelectAppViewModel @Inject constructor(
     }
 
     fun refreshMonitoredApps() {
-        logRepository.log(tag, "刷新已监控应用")
+        logRepository.log(tag, "Refresh monitored apps")
         viewModelScope.launch {
             val appInfoList = dataStoreRepository.getMonitoredApps().first()
-            logRepository.log(tag, "已监控应用: $appInfoList")
+            logRepository.log(tag, "Monitored apps: $appInfoList")
             val appInfoUiList = appManager.toUiList(appInfoList)
             _uiState.update { it.copy(monitoredApps = appInfoUiList) }
         }
     }
 
     fun refreshAllApps() {
-        logRepository.log(tag, "刷新所有应用")
+        logRepository.log(tag, "Refresh all apps")
         viewModelScope.launch {
             val appInfoList = appManager.loadInstalledApps()
             dataStoreRepository.saveAllApps(appInfoList)
-            logRepository.log(tag, "所有应用: $appInfoList")
+            logRepository.log(tag, "All apps: $appInfoList")
             val appsUiList = appManager.toUiList(appInfoList)
             _uiState.update { it.copy(allApps = appsUiList) }
         }

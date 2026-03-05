@@ -31,10 +31,10 @@ class UsageStatsMonitor(
             logRepository.log(tag, "start monitor foreground app")
             while (isActive) {
                 val currentApp = getForegroundApp()
-                logRepository.log(tag, "current app: $currentApp, last app: $lastApp")
+                logRepository.log(tag, "current app: [$currentApp], last app: [$lastApp]")
                 if (currentApp != lastApp) {
                     lastApp = currentApp
-                    logRepository.log(tag, "app changed: $currentApp")
+                    logRepository.log(tag, "app changed: [$currentApp]")
                     onAppChanged(currentApp)
                 }
                 delay(1000)

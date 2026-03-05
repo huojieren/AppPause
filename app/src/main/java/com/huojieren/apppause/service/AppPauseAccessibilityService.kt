@@ -92,7 +92,7 @@ class AppPauseAccessibilityService : AccessibilityService() {
             ) {
                 lastLogPackage = topPackage
                 lastLogTime = currentTime
-                logRepository.log(tag, "onAccessibilityEvent: topPackage $topPackage")
+                logRepository.log(tag, "onAccessibilityEvent: topPackage [$topPackage]")
             }
             topPackage?.let { onAppChangedListener?.invoke(topPackage) }
         }

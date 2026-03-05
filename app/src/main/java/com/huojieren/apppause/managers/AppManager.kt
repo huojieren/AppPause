@@ -74,7 +74,7 @@ class AppManager(
                 packageName = packageName,
             )
         } catch (e: Exception) {
-            logRepository.log("AppManager", "[ERROR] 获取应用信息失败: ${e.message}")
+            logRepository.log("AppManager", "Failed to get app info: ${e.message}", Log.ERROR)
             // 返回默认的 AppInfo
             AppInfo(
                 name = packageName,
@@ -110,7 +110,7 @@ class AppManager(
                 cache.put(packageName, painter)
                 painter
             } catch (e: Exception) {
-                logRepository.log("AppManager", "[ERROR] 加载图标失败: ${e.message}", Log.ERROR)
+                logRepository.log("AppManager", "Failed to load icon: ${e.message}", Log.ERROR)
                 getPlaceholderIcon()
             }
         }

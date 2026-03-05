@@ -54,7 +54,7 @@ class ListenerManager @Inject constructor(
     private fun showTimeSelectionOverlay(appInfo: AppInfo) {
         logRepository.log(tag, "--------------------")
         logRepository.log(tag, "Showing time selection overlay")
-        logRepository.log(tag, "app: ${appInfo.packageName}")
+        logRepository.log(tag, "app: [${appInfo.packageName}]")
         logRepository.log(tag, "--------------------")
         CoroutineScope(Dispatchers.Main).launch {
             val icon = appManager.loadIcon(appInfo.packageName)
@@ -84,8 +84,11 @@ class ListenerManager @Inject constructor(
                         logRepository.log(tag, "--------------------")
                         logRepository.log(tag, "Confirm button clicked!")
                         logRepository.log(tag, "Stop last app and start current app.")
-                        logRepository.log(tag, "last app: ${currentApp?.packageName ?: "null"}")
-                        logRepository.log(tag, "current app: ${currentApp?.packageName ?: "null"}")
+                        logRepository.log(tag, "last app: [${currentApp?.packageName ?: "null"}]")
+                        logRepository.log(
+                            tag,
+                            "current app: [${currentApp?.packageName ?: "null"}]"
+                        )
                         logRepository.log(tag, "second: $second")
                         logRepository.log(tag, "--------------------")
                         currentApp?.let { app ->

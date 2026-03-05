@@ -69,7 +69,7 @@ class MonitorService : Service() {
 
         // 读取监控策略
         val strategy = intent?.getStringExtra("strategy")
-        logRepository.log(tag, "get strategy: $strategy")
+        logRepository.log(tag, "get strategy: [$strategy]")
 
         val strategyName = when (monitor) {
             is UsageStatsMonitor -> "应用使用情况"
