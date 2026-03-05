@@ -42,7 +42,7 @@ fun TimeSelectionScreen(
 ) {
     val timeValues = remember { (1..60).map { it.toString() } }
     val valuesPickerState = rememberPickerState()
-    val units = remember { listOf("秒钟", "分钟", "小时") }
+    val units = remember { listOf("分钟", "小时", "秒钟") }
     val unitsPickerState = rememberPickerState()
 
     // 使用derivedStateOf创建派生状态，当Picker状态变化时自动重新计算
@@ -69,7 +69,7 @@ fun TimeSelectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
-                modifier = modifier
+                modifier = Modifier
                     .width(300.dp)
             ) {
                 Column(
@@ -82,12 +82,13 @@ fun TimeSelectionScreen(
                         contentDescription = null,
                         modifier = Modifier.size(64.dp)
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                     // TODO 2025/11/7 23:05 根据 text 动态设置行数
                     Text(
                         text = "为 ${appInfoUi.name} 设置使用时长",
                         style = MaterialTheme.typography.titleLarge,
                     )
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
                             .width(150.dp)
@@ -108,6 +109,7 @@ fun TimeSelectionScreen(
                             textModifier = Modifier.padding(8.dp),
                         )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row {
                         FilledTonalButton(
                             modifier = Modifier.weight(1f),
@@ -155,6 +157,7 @@ fun TimeSelectionCardPreView() {
 
     AppTheme {
         TimeSelectionScreen(
+            modifier = Modifier.fillMaxSize(),
             appInfoUi = mockAppInfo,
             onExtend5Clicked = {},
             onExtend10Clicked = {},
@@ -218,6 +221,7 @@ fun TimeOutScreenPreview() {
 
     AppTheme {
         TimeOutScreen(
+            modifier = Modifier.fillMaxSize(),
             appInfoUi = mockAppInfoUi,
             onReturnToHomeScreenClicked = {}
         )
