@@ -71,24 +71,6 @@ class MonitorService : Service() {
         val strategy = intent?.getStringExtra("strategy")
         logRepository.log(tag, "get strategy: [$strategy]")
 
-        val strategyName = when (monitor) {
-            is UsageStatsMonitor -> "应用使用情况"
-            is AccessibilityMonitor -> "无障碍服务"
-            else -> "Unknown"
-        }
-
-        // 启动前台通知
-        startForeground(
-            notificationId,
-            NotificationCompat.Builder(this, channelId)
-                .setContentTitle("应用使用监控中")
-                .setContentText("正在使用${strategyName}监控已选应用")
-                .setSmallIcon(R.drawable.ic_notification)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setOngoing(true)
-                .build()
-        )
-
         // 创建检测器
         monitor = when (strategy) {
             MonitorStrategy.ACCESSIBILITY.name -> {
@@ -135,6 +117,24 @@ class MonitorService : Service() {
                 logRepository
             )
         }
+
+        val strategyName = when (monitor) {
+            is UsageStatsMonitor -> "应用使用情况"
+            is AccessibilityMonitor -> "无障碍服务"
+            else -> "Unknown"
+        }
+
+        // 启动前台通知
+        startForeground(
+            notificationId,
+            NotificationCompat.Builder(this, channelId)
+                .setContentTitle("应用使用监控中")
+                .setContentText("正在使用${strategyName}监控已选应用")
+                .setSmallIcon(R.drawable.ic_notification)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .build()
+        )
 
         // 启动检测器：回调会进入主线程
         monitor?.start { appInfo ->
