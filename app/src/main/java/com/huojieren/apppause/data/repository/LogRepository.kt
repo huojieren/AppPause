@@ -1,16 +1,22 @@
 package com.huojieren.apppause.data.repository
 
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
+import androidx.annotation.RequiresApi
 import timber.log.Timber
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class LogRepository(
-    context: Context
+    private val context: Context
 ) {
 
     companion object {
@@ -44,35 +50,69 @@ class LogRepository(
             }
             true
         } catch (e: Exception) {
-            log("LogUtil", "清空日志失败: ${e.message}", Log.ERROR)
+            log("LogUtil", "Clear log failed: ${e.message}", Log.ERROR)
             false
         }
     }
 
     fun saveLog(): Int {
+        val logFiles = getAllLogFiles()
+        if (logFiles.isEmpty()) {
+            return 1
+        }
+
         return try {
-            val downloadsDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val saveDir = File(downloadsDir, "App Pause").apply { mkdirs() }
+            val zipFileName = "app_logs.zip"
 
-            val zipFile = File(saveDir, "app_logs.zip")
-            val logFiles = getAllLogFiles()
-
-            if (logFiles.isEmpty()) {
-                return 1
-            }
-
-            ZipOutputStream(FileOutputStream(zipFile)).use { zipOut ->
-                logFiles.forEach { file ->
-                    zipOut.putNextEntry(ZipEntry(file.name))
-                    file.inputStream().use { it.copyTo(zipOut) }
-                    zipOut.closeEntry()
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                saveWithMediaStore(zipFileName, logFiles)
+            } else {
+                saveWithLegacyApi(zipFileName, logFiles)
             }
             0
         } catch (e: Exception) {
-            log("LogUtil", "保存日志失败: ${e.message}", Log.ERROR)
+            log("LogUtil", "Save log failed: ${e.message}", Log.ERROR)
             -1
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveWithMediaStore(fileName: String, logFiles: List<File>) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+            put(MediaStore.Downloads.MIME_TYPE, "application/zip")
+            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/AppPause")
+        }
+
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            ?: throw IllegalStateException("Cannot create file in Downloads")
+
+        resolver.openOutputStream(uri)?.use { outputStream ->
+            createZipOutputStream(outputStream, logFiles)
+        }
+    }
+
+    private fun saveWithLegacyApi(fileName: String, logFiles: List<File>) {
+        val downloadsDir =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val appDir = File(downloadsDir, "AppPause").apply { mkdirs() }
+        val zipFile = File(appDir, fileName)
+
+        FileOutputStream(zipFile).use { outputStream ->
+            createZipOutputStream(outputStream, logFiles)
+        }
+    }
+
+    private fun createZipOutputStream(outputStream: OutputStream, logFiles: List<File>) {
+        ZipOutputStream(outputStream).use { zipOut ->
+            logFiles.forEach { file ->
+                zipOut.putNextEntry(ZipEntry(file.name))
+                FileInputStream(file).use { inputStream ->
+                    inputStream.copyTo(zipOut)
+                }
+                zipOut.closeEntry()
+            }
         }
     }
 
