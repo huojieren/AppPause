@@ -94,10 +94,12 @@ object ManagerModule {
     @Provides
     @Singleton
     fun provideStausManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        logRepository: LogRepository
     ): StatusManager {
         return StatusManager(
-            context
+            context,
+            logRepository
         )
     }
 

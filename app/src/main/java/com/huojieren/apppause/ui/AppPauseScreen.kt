@@ -119,7 +119,7 @@ fun AppPauseApp() {
                 MainScreen(
                     uiState = mainScreenUiState.value,
                     onLifecycleChange = {
-                        mainScreenViewModel.refreshPermission()
+                        mainScreenViewModel.refreshState()
                     },
                     onOverlayButtonClicked = {
                         mainScreenViewModel.requestPermission(Permissions.Overlay)

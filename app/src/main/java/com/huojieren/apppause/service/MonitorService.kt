@@ -147,8 +147,7 @@ class MonitorService : Service() {
                 val currentTime = System.currentTimeMillis()
                 logRepository.log(tag, "heartbeat: $currentTime")
                 // 更新心跳时间戳用于检测服务异常
-                statusManager.updateServiceHeartbeat()
-                // TODO 2026/1/25 17:00 配置 debug 和 release 不同的心跳时间
+                statusManager.setServiceHeartbeat()
                 delay(10_000) // 10s 心跳时间
             }
         }

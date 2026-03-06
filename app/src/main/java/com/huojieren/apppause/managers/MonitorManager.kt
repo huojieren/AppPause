@@ -35,7 +35,7 @@ class MonitorManager(
     }
 
     fun startMonitor() {
-        logRepository.log(tag, "start monitor")
+        logRepository.log(tag, "startMonitor called")
 
         // 检查无障碍服务是否初始化
         if (!AppPauseAccessibilityService.isInitialized()) {
@@ -49,11 +49,14 @@ class MonitorManager(
         try {
             // 设置监控开始时间
             statusManager.setMonitorStartTime()
+            statusManager.setIsMonitoring(true)
+            logRepository.log(tag, "startMonitor: setIsMonitoring(true)")
 
             val intent = Intent(context, MonitorService::class.java)
             // TODO 2025/11/30 21:55 监控策略切换
             intent.putExtra("strategy", MonitorStrategy.ACCESSIBILITY.name)
             ContextCompat.startForegroundService(context, intent)
+            logRepository.log(tag, "startMonitor: foreground service started")
         } catch (e: Exception) {
             logRepository.log(tag, "Failed to start MonitorService: ${e.message}")
             throw IllegalStateException("Failed to start MonitorService：${e.message}", e)
@@ -61,13 +64,15 @@ class MonitorManager(
     }
 
     fun stopMonitor() {
-        logRepository.log(tag, "stop monitor")
+        logRepository.log(tag, "stopMonitor called")
         context.stopService(
             Intent(context, MonitorService::class.java)
         )
         currentApp = null
         // 清除监控开始时间（正常停止）
         statusManager.clearMonitorStartTime()
+        statusManager.setIsMonitoring(false)
+        logRepository.log(tag, "stopMonitor: setIsMonitoring(false)")
     }
 
     fun handleAppChange(app: AppInfo?) {

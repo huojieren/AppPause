@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.huojieren.apppause.data.repository.LogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,23 +22,24 @@ val Context.statusDataStore: DataStore<Preferences> by preferencesDataStore(name
 
 @Singleton
 class StatusManager(
-    context: Context
+    context: Context,
+    private val logRepository: LogRepository
 ) {
     private val dataStore: DataStore<Preferences> = context.statusDataStore
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val tag = "StatusManager"
 
-    // DataStore keys
+    /**
+     * 状态数据
+     * isMonitoring - 启动时从持久化数据中恢复上次状态;
+     * 权限状态 - 每次启动从系统检查;
+     */
     companion object {
         val IS_MONITORING = booleanPreferencesKey("is_monitoring")
-        val HAS_OVERLAY = booleanPreferencesKey("has_overlay")
-        val HAS_NOTIFICATION = booleanPreferencesKey("has_notification")
-        val HAS_USAGE_STATS = booleanPreferencesKey("has_usage_stats")
-        val HAS_ACCESSIBILITY = booleanPreferencesKey("has_accessibility")
         val SERVICE_HEARTBEAT = longPreferencesKey("service_heartbeat")
         val MONITOR_START_TIME = longPreferencesKey("monitor_start_time")
     }
 
-    // In-memory state flows
     private val _isMonitoring = MutableStateFlow(false)
     val isMonitoring: StateFlow<Boolean> = _isMonitoring.asStateFlow()
 
@@ -54,70 +56,41 @@ class StatusManager(
     val hasAccessibility: StateFlow<Boolean> = _hasAccessibility.asStateFlow()
 
     init {
+        // 首次启动时从 DataStore 恢复 isMonitoring 状态
         scope.launch {
-            dataStore.data.collect { preferences ->
-                _isMonitoring.value = preferences[IS_MONITORING] ?: false
-                _hasOverlay.value = preferences[HAS_OVERLAY] ?: false
-                _hasNotification.value = preferences[HAS_NOTIFICATION] ?: false
-                _hasUsageStats.value = preferences[HAS_USAGE_STATS] ?: false
-                _hasAccessibility.value = preferences[HAS_ACCESSIBILITY] ?: false
-            }
+            val stored = dataStore.data.first()[IS_MONITORING] ?: false
+            _isMonitoring.value = stored
+            logRepository?.log(tag, "init: restored isMonitoring=$stored from DataStore")
         }
     }
 
-    // TODO 2025/12/12 14:14 检查状态管理
-
-    suspend fun getIsMonitoringValue(): Boolean {
-        return dataStore.data.first()[IS_MONITORING] ?: false
-    }
-
     fun setIsMonitoring(value: Boolean) {
+        _isMonitoring.value = value
         scope.launch {
             dataStore.edit { preferences ->
                 preferences[IS_MONITORING] = value
             }
-            _isMonitoring.value = value
+            logRepository?.log(tag, "setIsMonitoring: $value")
         }
     }
 
     fun setHasOverlay(value: Boolean) {
-        scope.launch {
-            dataStore.edit { preferences ->
-                preferences[HAS_OVERLAY] = value
-            }
-            _hasOverlay.value = value
-        }
+        _hasOverlay.value = value
     }
 
     fun setHasNotification(value: Boolean) {
-        scope.launch {
-            dataStore.edit { preferences ->
-                preferences[HAS_NOTIFICATION] = value
-            }
-            _hasNotification.value = value
-        }
+        _hasNotification.value = value
     }
 
     fun setHasUsageStats(value: Boolean) {
-        scope.launch {
-            dataStore.edit { preferences ->
-                preferences[HAS_USAGE_STATS] = value
-            }
-            _hasUsageStats.value = value
-        }
+        _hasUsageStats.value = value
     }
 
     fun setHasAccessibility(value: Boolean) {
-        scope.launch {
-            dataStore.edit { preferences ->
-                preferences[HAS_ACCESSIBILITY] = value
-            }
-            _hasAccessibility.value = value
-        }
+        _hasAccessibility.value = value
     }
 
-    // 更新服务心跳时间戳
-    fun updateServiceHeartbeat() {
+    fun setServiceHeartbeat() {
         scope.launch {
             dataStore.edit { preferences ->
                 preferences[SERVICE_HEARTBEAT] = System.currentTimeMillis()
@@ -125,7 +98,6 @@ class StatusManager(
         }
     }
 
-    // 设置监控开始时间
     fun setMonitorStartTime() {
         scope.launch {
             dataStore.edit { preferences ->
@@ -134,7 +106,6 @@ class StatusManager(
         }
     }
 
-    // 清除监控开始时间
     fun clearMonitorStartTime() {
         scope.launch {
             dataStore.edit { preferences ->
@@ -143,38 +114,54 @@ class StatusManager(
         }
     }
 
-    // 检查服务是否正常运行（通过心跳机制）
     suspend fun isServiceRunningNormally(): Boolean {
-        val preferences = dataStore.data.first()
-        val lastHeartbeat = preferences[SERVICE_HEARTBEAT] ?: 0
+        val lastHeartbeat = dataStore.data.first()[SERVICE_HEARTBEAT] ?: 0
         val currentTime = System.currentTimeMillis()
-        // 如果最后一次心跳超过15秒，认为服务已异常停止
-        return currentTime - lastHeartbeat < 15_000
+        val isNormal = currentTime - lastHeartbeat < 15_000
+        logRepository.log(
+            tag,
+            "isServiceRunningNormally: heartbeat=$lastHeartbeat, now=$currentTime, isNormal=$isNormal"
+        )
+        return isNormal
     }
 
-    // 检查并修复监控状态
     suspend fun validateAndFixMonitoringStatus() {
-        val isMonitoring = dataStore.data.first()[IS_MONITORING] ?: false
-        if (isMonitoring) {
+        val storedIsMonitoring = dataStore.data.first()[IS_MONITORING] ?: false
+        logRepository.log(
+            tag,
+            "validateAndFixMonitoringStatus: storedIsMonitoring=$storedIsMonitoring"
+        )
+
+        if (storedIsMonitoring) {
             val serviceRunningNormally = isServiceRunningNormally()
+            logRepository.log(
+                tag,
+                "validateAndFixMonitoringStatus: serviceRunningNormally=$serviceRunningNormally"
+            )
+
             if (!serviceRunningNormally) {
-                // 服务异常停止，重置监控状态
-                dataStore.edit { preferences ->
-                    preferences[IS_MONITORING] = false
-                    preferences.remove(SERVICE_HEARTBEAT)
-                    preferences.remove(MONITOR_START_TIME)
-                }
-                _isMonitoring.value = false
+                setIsMonitoring(false)
+                logRepository.log(
+                    tag,
+                    "validateAndFixMonitoringStatus: service abnormal, reset to false"
+                )
+            } else {
+                _isMonitoring.value = true
             }
         } else {
-            // 检查是否有异常情况：监控状态为false但服务仍在运行
             val heartbeatRecent = isServiceRunningNormally()
+            logRepository.log(
+                tag,
+                "validateAndFixMonitoringStatus: heartbeatRecent=$heartbeatRecent"
+            )
+
             if (heartbeatRecent) {
-                // 如果心跳正常但状态为false，可能是状态同步问题，更新状态
-                dataStore.edit { preferences ->
-                    preferences[IS_MONITORING] = true
-                }
-                _isMonitoring.value = true
+                // 服务在运行但状态为 false，恢复状态
+                setIsMonitoring(true)
+                logRepository.log(
+                    tag,
+                    "validateAndFixMonitoringStatus: service running but state false, recover to true"
+                )
             }
         }
     }

@@ -45,20 +45,12 @@ class MainScreenViewModel @Inject constructor(
 
     init {
         logRepository.log(tag, "MainScreenViewModel init")
-        viewModelScope.launch {
-            // 检查并修复监控状态（处理应用崩溃的情况）
-            statusManager.validateAndFixMonitoringStatus()
-            // 然后刷新权限状态
-            refreshPermission()
-        }
     }
 
-    fun refreshPermission() {
-        logRepository.log(tag, "refreshPermission")
+    fun refreshState() {
+        logRepository.log(tag, "refreshState")
         viewModelScope.launch {
-            // 检查并修复监控状态（每次回到前台时检查）
             statusManager.validateAndFixMonitoringStatus()
-
             statusManager.setHasOverlay(permissionManager.refreshPermission(Permissions.Overlay))
             statusManager.setHasNotification(permissionManager.refreshPermission(Permissions.Notification))
             statusManager.setHasUsageStats(permissionManager.refreshPermission(Permissions.UsageStats))
@@ -102,12 +94,11 @@ class MainScreenViewModel @Inject constructor(
                 try {
                     monitorManager.startMonitor()
                     showToast(appContext, "已开始监控")
-                    statusManager.setIsMonitoring(true)
                 } catch (e: Exception) {
                     logRepository.log(tag, "Failed to start monitoring: ${e.message}")
                     showToast(appContext, "启动监控失败：${e.message}")
                     // 刷新权限状态
-                    refreshPermission()
+                    refreshState()
                 }
             } else {
                 when {

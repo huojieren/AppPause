@@ -1,6 +1,5 @@
 package com.huojieren.apppause.ui.viewModel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.huojieren.apppause.data.models.AppInfoUi
@@ -29,7 +28,7 @@ class SelectAppViewModel @Inject constructor(
     val uiState: StateFlow<SelectAppUiState> = _uiState.asStateFlow()
 
     init {
-        logRepository.log(tag, "SelectAppViewModel init", Log.DEBUG)
+        logRepository.log(tag, "SelectAppViewModel init")
         refreshAllApps()
         refreshMonitoredApps()
     }
