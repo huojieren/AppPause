@@ -55,6 +55,16 @@ class SelectAppViewModel @Inject constructor(
         }
     }
 
+    fun toggleApp(appInfoUi: AppInfoUi) {
+        val isMonitored =
+            _uiState.value.monitoredApps.any { it.packageName == appInfoUi.packageName }
+        if (isMonitored) {
+            removeApp(appInfoUi)
+        } else {
+            addApp(appInfoUi)
+        }
+    }
+
     fun refreshMonitoredApps() {
         logRepository.log(tag, "Refresh monitored apps")
         viewModelScope.launch {

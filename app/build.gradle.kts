@@ -125,6 +125,9 @@ dependencies {
     // ===== Timber =====
     implementation(libs.timber)
 
+    // ===== Pinyin4j =====
+    implementation(libs.pinyin4j)
+
     // ===== 测试 =====
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

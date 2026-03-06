@@ -1,7 +1,5 @@
 package com.huojieren.apppause.managers
 
-//import com.github.promeg.pinyinhelper.Pinyin
-//import com.github.promeg.tinypinyin.lexicons.android.cncity.CnCityDict
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -21,6 +19,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import net.sourceforge.pinyin4j.PinyinHelper
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType
+import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType
 
 class AppManager(
     private val context: Context,
@@ -34,10 +37,11 @@ class AppManager(
     // 内存缓存：key = packageName，value = ImageBitmap
     private val cache = LruCache<String, Painter>(maxEntries)
 
-// TODO: 拼音排序
-    /*    init {
-            Pinyin.init(Pinyin.newConfig().with(CnCityDict.getInstance(context)))
-        }*/
+    private val pinyinFormat = HanyuPinyinOutputFormat().apply {
+        caseType = HanyuPinyinCaseType.UPPERCASE
+        toneType = HanyuPinyinToneType.WITHOUT_TONE
+        vCharType = HanyuPinyinVCharType.WITH_V
+    }
 
     /**
      * 获取已安装的应用列表
@@ -47,7 +51,7 @@ class AppManager(
             // 排除系统应用
             .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 }
             .filter { !it.packageName.startsWith("com.huojieren.apppause") }
-//            .sortedWith(pinyinComparator())
+            .sortedWith(pinyinComparator())
             .map {
                 AppInfo(
                     name = pm.getApplicationLabel(it).toString(),
@@ -56,11 +60,24 @@ class AppManager(
             }
     }
 
-    /*    private fun pinyinComparator() = Comparator<ApplicationInfo> { a, b ->
-            val nameA = pm.getApplicationLabel(a).toString()
-            val nameB = pm.getApplicationLabel(b).toString()
-            Pinyin.toPinyin(nameA, "").compareTo(Pinyin.toPinyin(nameB, ""))
-        }*/
+    private fun pinyinComparator() = Comparator<ApplicationInfo> { a, b ->
+        val nameA = pm.getApplicationLabel(a).toString()
+        val nameB = pm.getApplicationLabel(b).toString()
+        getPinyin(nameA).compareTo(getPinyin(nameB))
+    }
+
+    private fun getPinyin(name: String): String {
+        val sb = StringBuilder()
+        for (char in name) {
+            val pinyinArray = PinyinHelper.toHanyuPinyinStringArray(char, pinyinFormat)
+            if (pinyinArray != null && pinyinArray.isNotEmpty()) {
+                sb.append(pinyinArray[0])
+            } else {
+                sb.append(char)
+            }
+        }
+        return sb.toString()
+    }
 
     /**
      * 根据包名获取应用信息

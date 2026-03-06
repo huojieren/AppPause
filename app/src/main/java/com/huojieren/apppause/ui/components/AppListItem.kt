@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -18,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,12 +27,15 @@ import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.ui.theme.AppTheme
 
+private val ICON_SIZE = 40.dp
+private val ICON_CORNER_RADIUS = 8.dp
+
 @Composable
 fun AppListItem(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
-    onAddApp: (() -> Unit)? = null,
-    onDeleteApp: (() -> Unit)? = null,
+    isMonitored: Boolean = false,
+    onToggle: ((AppInfoUi) -> Unit),
 ) {
     Card(
         modifier = modifier
@@ -44,7 +49,9 @@ fun AppListItem(
             Image(
                 painter = appInfoUi.icon,
                 contentDescription = null,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier
+                    .size(ICON_SIZE)
+                    .clip(RoundedCornerShape(ICON_CORNER_RADIUS))
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -54,39 +61,22 @@ fun AppListItem(
                 style = MaterialTheme.typography.titleLarge
             )
 
-            // 根据传入的参数显示删除或添加按钮
-            when {
-                onDeleteApp != null -> {
-                    IconButton(
-                        onClick = onDeleteApp
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "删除应用",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                onAddApp != null -> {
-                    IconButton(
-                        onClick = onAddApp
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "添加应用",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+            IconButton(
+                onClick = { onToggle(appInfoUi) }
+            ) {
+                Icon(
+                    imageVector = if (isMonitored) Icons.Default.Delete else Icons.Default.Add,
+                    contentDescription = if (isMonitored) "删除应用" else "添加应用",
+                    tint = if (isMonitored) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
 }
 
-@Preview("App List Item")
+@Preview("App List Item - Not Monitored")
 @Composable
-fun AppListItemPreview() {
+fun AppListItemNotMonitoredPreview() {
     val mockApp = AppInfoUi(
         name = "App Name",
         packageName = "com.example.app",
@@ -95,13 +85,15 @@ fun AppListItemPreview() {
     AppTheme {
         AppListItem(
             appInfoUi = mockApp,
+            isMonitored = false,
+            onToggle = {}
         )
     }
 }
 
-@Preview("App List Item with Delete")
+@Preview("App List Item - Monitored")
 @Composable
-fun AppListItemWithDeletePreview() {
+fun AppListItemMonitoredPreview() {
     val mockApp = AppInfoUi(
         name = "App Name",
         packageName = "com.example.app",
@@ -110,23 +102,8 @@ fun AppListItemWithDeletePreview() {
     AppTheme {
         AppListItem(
             appInfoUi = mockApp,
-            onDeleteApp = {}
-        )
-    }
-}
-
-@Preview("App List Item with Add")
-@Composable
-fun AppListItemWithAddPreview() {
-    val mockApp = AppInfoUi(
-        name = "App Name",
-        packageName = "com.example.app",
-        icon = painterResource(id = R.drawable.ic_launcher_foreground)
-    )
-    AppTheme {
-        AppListItem(
-            appInfoUi = mockApp,
-            onAddApp = {}
+            isMonitored = true,
+            onToggle = {}
         )
     }
 }

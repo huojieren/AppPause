@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
@@ -46,7 +48,7 @@ fun MainScreen(
 
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.addObserver(
-            LifecycleEventObserver { _, event ->
+            LazyColumnEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) {
                     onLifecycleChange()
                 }
@@ -54,30 +56,48 @@ fun MainScreen(
         )
     }
 
-    Column(
+    LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
     ) {
-        PermissionCard(
-            uiState = uiState,
-            onOverlayButtonClicked = onOverlayButtonClicked,
-            onNotificationButtonClicked = onNotificationButtonClicked,
-            onUsageStatsButtonClicked = onUsageStatsButtonClicked,
-            onAccessibilityButtonClicked = onAccessibilityButtonClicked,
-        )
-        MonitoredAppCard(
-            onMonitoredAppButtonClicked = onMonitoredAppButtonClicked
-        )
-        LogCard(
-            onClearLogButtonClicked = onClearLogButtonClicked,
-            onSaveLogButtonClicked = onSaveLogButtonClicked
-        )
-        MonitoredStatusCard(
-            uiState = uiState,
-            onToggleMonitoring = onToggleMonitoring,
-        )
-        VersionText()
+        item {
+            PermissionCard(
+                uiState = uiState,
+                onOverlayButtonClicked = onOverlayButtonClicked,
+                onNotificationButtonClicked = onNotificationButtonClicked,
+                onUsageStatsButtonClicked = onUsageStatsButtonClicked,
+                onAccessibilityButtonClicked = onAccessibilityButtonClicked,
+            )
+        }
+        item {
+            MonitoredAppCard(
+                onMonitoredAppButtonClicked = onMonitoredAppButtonClicked
+            )
+        }
+        item {
+            LogCard(
+                onClearLogButtonClicked = onClearLogButtonClicked,
+                onSaveLogButtonClicked = onSaveLogButtonClicked
+            )
+        }
+        item {
+            MonitoredStatusCard(
+                uiState = uiState,
+                onToggleMonitoring = onToggleMonitoring,
+            )
+        }
+        item {
+            VersionText()
+        }
+    }
+}
+
+private class LazyColumnEventObserver(
+    private val onEvent: (LifecycleOwner, Lifecycle.Event) -> Unit
+) : LifecycleEventObserver {
+    override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+        onEvent(source, event)
     }
 }
 
