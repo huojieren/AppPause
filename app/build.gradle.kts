@@ -31,12 +31,8 @@ android {
     }
 
     buildTypes {
-        // TODO: 构建变体：https://developer.android.google.cn/build/gradle-build-overview?hl=zh-cn
         debug {
-            applicationIdSuffix = ".debug"
             isMinifyEnabled = false
-            buildConfigField("String", "APP_NAME", "\"AppPause Debug\"")
-            resValue("string", "app_name", "AppPause Debug")
         }
         release {
             isMinifyEnabled = false
@@ -44,8 +40,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "APP_NAME", "\"AppPause\"")
-            resValue("string", "app_name", "AppPause")
             signingConfig = signingConfigs.getByName("debug")
         }
     }
