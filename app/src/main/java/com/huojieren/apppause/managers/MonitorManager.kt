@@ -47,8 +47,6 @@ class MonitorManager(
         }
 
         try {
-            // 设置监控开始时间
-            statusManager.setMonitorStartTime()
             statusManager.setIsMonitoring(true)
             logRepository.log(tag, "startMonitor: setIsMonitoring(true)")
 
@@ -69,8 +67,6 @@ class MonitorManager(
             Intent(context, MonitorService::class.java)
         )
         currentApp = null
-        // 清除监控开始时间（正常停止）
-        statusManager.clearMonitorStartTime()
         statusManager.setIsMonitoring(false)
         logRepository.log(tag, "stopMonitor: setIsMonitoring(false)")
     }

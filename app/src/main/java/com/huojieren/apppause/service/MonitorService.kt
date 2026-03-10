@@ -141,17 +141,6 @@ class MonitorService : Service() {
             monitorManager.handleAppChange(appInfo)
         }
 
-        // 心跳日志，排查是否被系统暂停进程
-        serviceScope.launch {
-            while (isActive) {
-                val currentTime = System.currentTimeMillis()
-                logRepository.log(tag, "heartbeat: $currentTime")
-                // 更新心跳时间戳用于检测服务异常
-                statusManager.setServiceHeartbeat()
-                delay(10_000) // 10s 心跳时间
-            }
-        }
-
         // 返回 START_STICKY 以保持服务
         return START_STICKY
     }
@@ -171,10 +160,9 @@ class MonitorService : Service() {
             stopForeground(true)
         }
 
-        // 清除监控状态和心跳数据
+        // 清除监控状态
         statusManager.setIsMonitoring(false)
-        statusManager.clearMonitorStartTime()
-        
+
         super.onDestroy()
     }
 

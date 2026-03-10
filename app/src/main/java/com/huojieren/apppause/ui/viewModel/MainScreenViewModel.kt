@@ -50,7 +50,6 @@ class MainScreenViewModel @Inject constructor(
     fun refreshState() {
         logRepository.log(tag, "refreshState")
         viewModelScope.launch {
-            statusManager.validateAndFixMonitoringStatus()
             statusManager.setHasOverlay(permissionManager.refreshPermission(Permissions.Overlay))
             statusManager.setHasNotification(permissionManager.refreshPermission(Permissions.Notification))
             statusManager.setHasUsageStats(permissionManager.refreshPermission(Permissions.UsageStats))
