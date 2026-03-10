@@ -22,7 +22,7 @@ class TimerManager(
     private val _currentTimerState = MutableStateFlow<TimerDisplayState?>(null)
     val currentTimerState: StateFlow<TimerDisplayState?> = _currentTimerState.asStateFlow()
 
-    private var onTimeOut: ((Boolean) -> Unit)? = null
+    private var onTimeOut: ((AppInfo) -> Unit)? = null
 
     // 日志控制
     private var logCounter = 0
@@ -44,7 +44,8 @@ class TimerManager(
     data class TimerState(
         var remainingTime: Long,
         var isRunning: Boolean = false,
-        var startTime: Long = 0
+        var startTime: Long = 0,
+        var appInfo: AppInfo? = null
     )
 
     /**
@@ -58,7 +59,7 @@ class TimerManager(
     /**
      * 设置超时监听器
      */
-    fun setOnTimeOutListener(listener: (Boolean) -> Unit) {
+    fun setOnTimeOutListener(listener: (AppInfo) -> Unit) {
         onTimeOut = listener
     }
 
@@ -89,7 +90,8 @@ class TimerManager(
         val state = TimerState(
             remainingTime = targetTimeMs,
             isRunning = true,
-            startTime = System.currentTimeMillis()
+            startTime = System.currentTimeMillis(),
+            appInfo = app
         )
         timerStateMap[packageName] = state
 
@@ -188,6 +190,7 @@ class TimerManager(
                     // 倒计时结束
                     state.remainingTime = 0
                     state.isRunning = false
+                    val finishedAppInfo = state.appInfo
                     timerStateMap.remove(packageName)
                     logCounter = 0
 
@@ -197,7 +200,7 @@ class TimerManager(
                     }
 
                     logRepository.log(tag, "[$packageName] timer finished")
-                    onTimeOut?.invoke(true)
+                    finishedAppInfo?.let { onTimeOut?.invoke(it) }
                 }
             }
         }

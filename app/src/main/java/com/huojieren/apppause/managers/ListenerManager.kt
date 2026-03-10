@@ -42,12 +42,8 @@ class ListenerManager @Inject constructor(
             }
         }
 
-        timerManager.setOnTimeOutListener { isTimeOut ->
-            if (isTimeOut) {
-                currentApp?.let {
-                    showTimeOutOverlay(it)
-                }
-            }
+        timerManager.setOnTimeOutListener { appInfo ->
+            showTimeOutOverlay(appInfo)
         }
     }
 
