@@ -13,6 +13,7 @@ import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.StatusManager
+import com.huojieren.apppause.managers.TimerManager
 import com.huojieren.apppause.monitor.AccessibilityMonitor
 import com.huojieren.apppause.monitor.ForegroundAppMonitor
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
@@ -40,6 +41,9 @@ class MonitorService : Service() {
     @Inject
     lateinit var statusManager: StatusManager
 
+    @Inject
+    lateinit var timerManager: TimerManager
+
     private val tag = "MonitorService"
 
     // 唤醒锁
@@ -48,6 +52,7 @@ class MonitorService : Service() {
     // 前台通知
     private val channelId = "monitor_channel"
     private val notificationId = 1
+    private lateinit var notificationManager: NotificationManager
 
     // 与 Service 生命周期绑定的协程作用域
     private val serviceScope = CoroutineScope(Dispatchers.Default)
@@ -60,6 +65,7 @@ class MonitorService : Service() {
     override fun onCreate() {
         super.onCreate()
         logRepository.log(tag, "create notification")
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         acquireWakeLock()
     }
@@ -141,6 +147,24 @@ class MonitorService : Service() {
             monitorManager.handleAppChange(appInfo)
         }
 
+        // 收集倒计时状态并更新通知
+        serviceScope.launch {
+            timerManager.currentTimerState.collect { timerState ->
+                if (timerState != null) {
+                    // 根据 isRunning 判断是正在计时还是暂停
+                    updateNotification(
+                        timerState.appName,
+                        timerState.remainingTimeMs,
+                        timerState.isRunning
+                    )
+                } else {
+                    // 没有正在计时的应用（倒计时结束），显示初始状态
+                    logRepository.log(tag, "Timer finished, showing initial notification")
+                    showInitialNotification()
+                }
+            }
+        }
+
         // 返回 START_STICKY 以保持服务
         return START_STICKY
     }
@@ -208,5 +232,49 @@ class MonitorService : Service() {
         } catch (e: Exception) {
             logRepository.log(tag, "releaseWakeLock error: ${e.message}")
         }
+    }
+
+    private fun updateNotification(appName: String, remainingTimeMs: Long, isValid: Boolean) {
+        val remainingSeconds = remainingTimeMs / 1000
+        val minutes = remainingSeconds / 60
+        val seconds = remainingSeconds % 60
+        val timeText = if (minutes > 0) {
+            "${minutes}分${seconds}秒"
+        } else {
+            "${seconds}秒"
+        }
+
+        val contentText = if (isValid) {
+            "$appName 剩余 $timeText"
+        } else {
+            "$appName 已暂停，剩余 $timeText"
+        }
+
+        logRepository.log(
+            tag,
+            "updateNotification: appName=$appName, remaining=$remainingTimeMs, isValid=$isValid, content=$contentText"
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("应用使用监控中")
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+
+    private fun showInitialNotification() {
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("应用使用监控中")
+            .setContentText("暂无检测到的应用")
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
     }
 }

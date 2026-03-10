@@ -2,6 +2,7 @@ package com.huojieren.apppause.managers
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.DataStoreRepository
@@ -11,6 +12,9 @@ import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
@@ -28,6 +32,23 @@ class MonitorManager(
     private var monitoredApps = setOf<AppInfo>()
     private var currentApp: AppInfo? = null
     private var onAppChanged: ((AppInfo?) -> Unit)? = null
+
+    // 最后一次有效应用（用于通知显示）
+    private var lastValidApp: AppInfo? = null
+    private var lastRemainingTime: Long = 0
+
+    // 通知显示状态
+    private val _notificationState = MutableStateFlow(NotificationDisplayState())
+    val notificationState: StateFlow<NotificationDisplayState> = _notificationState.asStateFlow()
+
+    /**
+     * 通知显示状态
+     */
+    data class NotificationDisplayState(
+        val appName: String? = null,
+        val remainingTimeMs: Long = 0,
+        val isValid: Boolean = false  // 当前是否有效应用
+    )
 
     fun setOnAppChangedListener(listener: (AppInfo?) -> Unit) {
         logRepository.log(tag, "set on app changed listener")
@@ -89,7 +110,21 @@ class MonitorManager(
         if (!isValidApp(app)) {
             logRepository.log(tag, "invalid app: [${packageName ?: "null"}], paused timer")
             previousApp?.let {
+                logRepository.log(
+                    tag,
+                    "pause timer for [${it.packageName}], current remaining: ${
+                        timerManager.getRemainingTime(it)
+                    }ms"
+                )
                 timerManager.pause(it.packageName)
+                // 保存最后一次有效应用信息用于通知显示
+                lastValidApp = it
+                lastRemainingTime = timerManager.getRemainingTime(it)
+                logRepository.log(
+                    tag,
+                    "saved last valid app: [${it.name}], remaining: ${lastRemainingTime}ms"
+                )
+                updateNotificationState(it.name, lastRemainingTime, false)
             }
             return
         }
@@ -98,6 +133,12 @@ class MonitorManager(
 
         // 切换到不同应用时，暂停上一个
         previousApp?.let {
+            logRepository.log(
+                tag,
+                "pause timer for [${it.packageName}], current remaining: ${
+                    timerManager.getRemainingTime(it)
+                }ms"
+            )
             timerManager.pause(it.packageName)
         }
 
@@ -108,10 +149,31 @@ class MonitorManager(
                 "[${validApp.packageName}] continue counting, remaining: ${remaining / 1000}s"
             )
             timerManager.start(validApp)
+            showResumeTimerToast(validApp, remaining)
+            // 更新通知状态为有效
+            lastValidApp = validApp
+            lastRemainingTime = remaining
+            logRepository.log(
+                tag,
+                "resume timer, app: [${validApp.name}], remaining: ${remaining}ms"
+            )
+            updateNotificationState(validApp.name, remaining, true)
         } else {
             logRepository.log(tag, "[${validApp.packageName}] start new counting")
             onAppChanged?.invoke(validApp)
+            // 更新通知状态为有效
+            lastValidApp = validApp
+            logRepository.log(tag, "start new timer, app: [${validApp.name}]")
+            updateNotificationState(validApp.name, 0, true)
         }
+    }
+
+    private fun updateNotificationState(appName: String, remainingMs: Long, isValid: Boolean) {
+        _notificationState.value = NotificationDisplayState(
+            appName = appName,
+            remainingTimeMs = remainingMs,
+            isValid = isValid
+        )
     }
 
     private fun isValidApp(app: AppInfo?): Boolean {
@@ -119,5 +181,18 @@ class MonitorManager(
                 app.packageName.isNotEmpty() &&
                 !app.packageName.startsWith("com.huojieren.apppause") &&
                 monitoredApps.contains(app)
+    }
+
+    private fun showResumeTimerToast(app: AppInfo, remainingMs: Long) {
+        val remainingSeconds = remainingMs / 1000
+        val minutes = remainingSeconds / 60
+        val seconds = remainingSeconds % 60
+        val timeText = if (minutes > 0) {
+            "${minutes}分${seconds}秒"
+        } else {
+            "${seconds}秒"
+        }
+        val message = "${app.name} 继续计时，剩余 $timeText"
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 }

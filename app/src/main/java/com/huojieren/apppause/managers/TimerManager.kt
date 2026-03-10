@@ -5,6 +5,9 @@ import android.os.Looper
 import android.util.Log
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.LogRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class TimerManager(
     private val logRepository: LogRepository
@@ -15,11 +18,25 @@ class TimerManager(
     // 使用可变Map来存储倒计时状态
     private val timerStateMap = mutableMapOf<String, TimerState>()
 
+    // 当前正在计时的应用及剩余时间
+    private val _currentTimerState = MutableStateFlow<TimerDisplayState?>(null)
+    val currentTimerState: StateFlow<TimerDisplayState?> = _currentTimerState.asStateFlow()
+
     private var onTimeOut: ((Boolean) -> Unit)? = null
 
     // 日志控制
     private var logCounter = 0
     private val logInterval = 5 // 每5次倒计时间隔输出一次日志
+
+    /**
+     * 倒计时显示状态
+     */
+    data class TimerDisplayState(
+        val packageName: String,
+        val appName: String,
+        val remainingTimeMs: Long,
+        val isRunning: Boolean
+    )
 
     /**
      * 倒计时状态
@@ -76,6 +93,14 @@ class TimerManager(
         )
         timerStateMap[packageName] = state
 
+        // 更新 StateFlow - 正在运行
+        _currentTimerState.value = TimerDisplayState(
+            packageName = packageName,
+            appName = app.name,
+            remainingTimeMs = targetTimeMs,
+            isRunning = true
+        )
+
         logRepository.log(tag, "--------------------")
         logRepository.log(tag, "Starting timer")
         logRepository.log(tag, "app: [${app.name}]")
@@ -93,6 +118,21 @@ class TimerManager(
         val state = timerStateMap[packageName]
         if (state?.isRunning == true) {
             state.isRunning = false
+
+            // 保留 StateFlow 但标记为暂停状态
+            if (_currentTimerState.value?.packageName == packageName) {
+                _currentTimerState.value = TimerDisplayState(
+                    packageName = packageName,
+                    appName = _currentTimerState.value?.appName ?: "",
+                    remainingTimeMs = state.remainingTime,
+                    isRunning = false
+                )
+                logRepository.log(
+                    tag,
+                    "Paused timer for [$packageName], remaining: ${state.remainingTime}ms, updated StateFlow to paused"
+                )
+            }
+
             logRepository.log(
                 tag,
                 "Stopped timer for [$packageName], remaining: ${state.remainingTime / 1000}s"
@@ -125,6 +165,14 @@ class TimerManager(
                     // 减少剩余时间 - 固定使用1秒递减间隔
                     state.remainingTime -= 1000L
 
+                    // 更新 StateFlow
+                    _currentTimerState.value?.let {
+                        if (it.packageName == packageName) {
+                            _currentTimerState.value =
+                                it.copy(remainingTimeMs = state.remainingTime)
+                        }
+                    }
+
                     // 定期输出日志
                     logCounter++
                     if (logCounter % logInterval == 0) {
@@ -142,6 +190,11 @@ class TimerManager(
                     state.isRunning = false
                     timerStateMap.remove(packageName)
                     logCounter = 0
+
+                    // 清除 StateFlow
+                    if (_currentTimerState.value?.packageName == packageName) {
+                        _currentTimerState.value = null
+                    }
 
                     logRepository.log(tag, "[$packageName] timer finished")
                     onTimeOut?.invoke(true)
