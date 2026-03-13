@@ -55,9 +55,11 @@ object ManagerModule {
     @Singleton
     fun provideOverlayManager(
         @ApplicationContext context: Context,
+        logRepository: LogRepository
     ): OverlayManager {
         return OverlayManager(
-            context
+            context,
+            logRepository
         )
     }
 

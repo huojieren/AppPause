@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -30,6 +34,9 @@ import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.ui.components.Picker
 import com.huojieren.apppause.ui.state.rememberPickerState
 import com.huojieren.apppause.ui.theme.AppTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun TimeSelectionScreen(
@@ -45,18 +52,19 @@ fun TimeSelectionScreen(
     val units = remember { listOf("分钟", "小时", "秒钟") }
     val unitsPickerState = rememberPickerState()
 
-    // 使用derivedStateOf创建派生状态，当Picker状态变化时自动重新计算
-    val selectedTimeInSeconds = remember {
-        derivedStateOf {
-            val value = valuesPickerState.selectedItem.toIntOrNull() ?: 1
-            val unit = unitsPickerState.selectedItem
+    // 使用 remember 创建派生状态
+    val selectedTimeInSeconds = remember(
+        valuesPickerState.selectedItem,
+        unitsPickerState.selectedItem
+    ) {
+        val value = valuesPickerState.selectedItem.toIntOrNull() ?: 1
+        val unit = unitsPickerState.selectedItem
 
-            when (unit) {
-                "秒钟" -> value
-                "分钟" -> value * 60
-                "小时" -> value * 3600
-                else -> value
-            }
+        when (unit) {
+            "秒钟" -> value
+            "分钟" -> value * 60
+            "小时" -> value * 3600
+            else -> value
         }
     }
 
@@ -135,7 +143,7 @@ fun TimeSelectionScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             modifier = Modifier.weight(1f),
-                            onClick = { onConfirmButtonClicked(selectedTimeInSeconds.value) }
+                            onClick = { onConfirmButtonClicked(selectedTimeInSeconds) }
                         ) {
                             Text(text = "确定")
                         }
@@ -171,8 +179,24 @@ fun TimeSelectionCardPreView() {
 fun TimeOutScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
+    fadeInCompleteEvent: SharedFlow<Unit>,
     onReturnToHomeScreenClicked: () -> Unit,
 ) {
+    var countDown by remember { mutableIntStateOf(5) }
+    val canClick = countDown <= 0
+
+    LaunchedEffect(fadeInCompleteEvent) {
+        // 等待淡入完成事件
+        fadeInCompleteEvent.first()
+        // 等待 500 毫秒，调整视觉
+        delay(1000)
+        // 开始倒计时
+        while (countDown > 0) {
+            delay(1000)
+            countDown--
+        }
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
         modifier = modifier
@@ -199,10 +223,15 @@ fun TimeOutScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = onReturnToHomeScreenClicked
+                onClick = onReturnToHomeScreenClicked,
+                enabled = canClick,
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             ) {
                 Text(
-                    text = "返回桌面"
+                    text = if (canClick) "返回桌面" else "返回桌面 ($countDown)"
                 )
             }
         }
@@ -219,11 +248,14 @@ fun TimeOutScreenPreview() {
         icon = painterResource(id = R.drawable.ic_launcher_foreground)
     )
 
+    val mockFlow = remember { kotlinx.coroutines.flow.MutableSharedFlow<Unit>() }
+
     AppTheme {
         TimeOutScreen(
             modifier = Modifier.fillMaxSize(),
             appInfoUi = mockAppInfoUi,
-            onReturnToHomeScreenClicked = {}
+            onReturnToHomeScreenClicked = {},
+            fadeInCompleteEvent = mockFlow
         )
     }
 }
