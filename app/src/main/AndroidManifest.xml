@@ -1,25 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.huojieren.apppause">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 监听通知权限-->
+    <!-- 显示悬浮窗权限，用于在其他应用上层显示内容 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- 监听通知权限-->
+
+    <!-- 发送通知权限，允许应用发布通知 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- 监听应用权限-->
+
+    <!-- 查询应用使用情况统计权限，用于获取应用使用历史数据 -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
-    <!-- 监听所有应用权限-->
+
+    <!-- 查询设备上所有已安装应用信息的权限 -->
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- 前台服务权限，Android 9.0+必须声明才能使用前台服务 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- 防止设备进入休眠状态，保持 CPU 运行为应用执行任务提供保障 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 特殊用途前台服务权限，适用于特定类型的前台服务 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- 关闭后台应用权限-->
+
+    <!-- 终止后台进程权限，可用于关闭其他应用程序的后台运行 -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+
+    <!-- 数据同步类型前台服务权限 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- 忽略电池优化选项权限，使应用能在后台持续运行不受限制 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".App"
@@ -33,7 +48,7 @@
         android:theme="@style/Theme.AppPause.Comp">
 
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             tools:targetApi="33">
             <intent-filter>
@@ -41,16 +56,32 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.MonitoredAppsActivity" />
-        <activity android:name=".activities.AppSelectionActivity" />
 
+        <!-- 监听应用运行状态服务 -->
         <service
             android:name=".service.MonitorService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse"
-            android:stopWithTask="true"
+            android:foregroundServiceType="dataSync"
+            android:stopWithTask="false"
             tools:targetApi="34" />
+        <!-- android:stopWithTask="false" 任务结束不直接停止服务 -->
+
+        <!-- 无障碍服务 -->
+        <service
+            android:name=".service.AppPauseAccessibilityService"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            tools:ignore="AccessibilityPolicy">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_config" />
+        </service>
+
 
     </application>
 </manifest>

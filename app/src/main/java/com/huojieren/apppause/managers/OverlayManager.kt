@@ -1,135 +1,163 @@
 package com.huojieren.apppause.managers
 
-import android.annotation.SuppressLint
+import android.animation.ValueAnimator
 import android.content.Context
-import android.content.Intent
 import android.graphics.PixelFormat
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
-import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import android.view.animation.DecelerateInterpolator
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
-import com.huojieren.apppause.BuildConfig
-import com.huojieren.apppause.ui.components.FloatingWindow
-import com.huojieren.apppause.ui.components.TimeoutOverlay
-import com.huojieren.apppause.ui.theme.AppTheme
-import com.huojieren.apppause.utils.LogUtil
+import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.ui.FloatingWindowLifecycleOwner
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
-/**
- * 悬浮窗管理类，负责：
- * 1. 显示时间选择悬浮窗
- * 2. 显示超时锁定覆盖层
- * 3. 管理悬浮窗生命周期
- */
-class OverlayManager(private val context: Context) {
-    // region 成员变量
-    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+class OverlayManager(
+    private val context: Context,
+    private val logRepository: LogRepository
+) {
+    companion object {
+        private const val FADE_IN_DURATION_FAST = 300L
+        private const val FADE_IN_DURATION_SLOW = 2000L
+        private const val FADE_OUT_DURATION = 200L
+    }
+
     private val tag = "OverlayManager"
-    private var lifecycleOwner: MyComposeViewLifecycleOwner? = null
-    // endregion
+    private var lifecycleOwner: FloatingWindowLifecycleOwner? = null
+    private var windowManager: WindowManager? = null
+    private var composeView: ComposeView? = null
 
-    fun showFloatingWindow(
-        onDisMiss: () -> Unit,
-        onTimeSelected: (Int) -> Unit,
-        onExtendTime: (Int) -> Unit,
-        appName: String
+    private val _fadeInCompleteEvent = MutableSharedFlow<Unit>(replay = 1)
+    val fadeInCompleteEvent: SharedFlow<Unit> = _fadeInCompleteEvent.asSharedFlow()
+
+    fun showOverlay(
+        isSlowFadeIn: Boolean = false,
+        content: @Composable () -> Unit
     ) {
-        val composeView = ComposeView(context).apply {
-            setContent {
-                AppTheme {
-                    FloatingWindow(
-                        appName = appName,
-                        timeUnitDesc = BuildConfig.TIME_DESC,
-                        onConfirm = { time ->
-                            onTimeSelected(time)
-                            removeViewSafely(this)
-                        },
-                        onCancel = {
-                            onDisMiss()
-                            removeViewSafely(this)
-                        },
-                        onExtend = { units ->
-                            onExtendTime(units)
-                            removeViewSafely(this)
-                        }
-                    )
-                }
-            }
+        if (composeView != null) {
+            logRepository.log(tag, "showOverlay: already showing, skip")
+            return
         }
 
+        val statusBarHeight = getStatusBarHeight()
+        val screenHeight = getScreenHeight()
+        val duration = if (isSlowFadeIn) FADE_IN_DURATION_SLOW else FADE_IN_DURATION_FAST
+
+        logRepository.log(
+            tag,
+            "showOverlay: starting, isSlowFadeIn=$isSlowFadeIn, duration=${duration}ms"
+        )
+
         val layoutParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            screenHeight + statusBarHeight,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.CENTER
+            alpha = 0f
         }
 
-        lifecycleOwner = MyComposeViewLifecycleOwner().also {
-            it.attachToDecorView(composeView)
-            it.onCreate()
+        lifecycleOwner = FloatingWindowLifecycleOwner().also {
+            it.initialize()
         }
 
-        windowManager.addView(composeView, layoutParams)
-    }
-
-    fun showTimeoutOverlay(appName: String) {
-        // 创建 ComposeView 容器
-        val composeView = ComposeView(context).apply {
+        composeView = ComposeView(context).apply {
             setContent {
-                AppTheme { // 使用项目主题
-                    TimeoutOverlay(
-                        appName = appName,
-                        onCloseRequest = {
-                            // 返回桌面操作
-                            Intent(Intent.ACTION_MAIN).apply {
-                                addCategory(Intent.CATEGORY_HOME)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                context.startActivity(this)
-                            }
-                            // TODO: 修改removeViewSafely函数为传递composeView
-                            // 移除视图
-                            windowManager.removeViewImmediate(this)
-                            lifecycleOwner?.onDestroy()
-                            lifecycleOwner = null
-                        }
-                    )
-                }
+                content()
             }
         }
 
-        // 窗口参数配置
-        val layoutParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT
-        )
-
-        lifecycleOwner = MyComposeViewLifecycleOwner().also {
-            it.attachToDecorView(composeView)
-            it.onCreate()
+        composeView?.let { view ->
+            lifecycleOwner?.attachToComposeView(view)
         }
 
-        // 添加视图到窗口
-        windowManager.addView(composeView, layoutParams)
+        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager?.addView(composeView, layoutParams)
+
+        fadeIn(layoutParams, isSlowFadeIn)
     }
-    // endregion
 
-    // region 工具方法
-    /**
-     * 安全移除视图，避免重复移除导致的异常
-     */
-    @SuppressLint("NewApi")
-    private fun removeViewSafely(view: android.view.View) {
-        try {
-            if (view.isAttachedToWindow) {
-                windowManager.removeView(view)
+    private fun fadeIn(
+        layoutParams: WindowManager.LayoutParams,
+        isSlowFadeIn: Boolean
+    ) {
+        val duration = if (isSlowFadeIn) FADE_IN_DURATION_SLOW else FADE_IN_DURATION_FAST
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            this.duration = duration
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animator ->
+                layoutParams.alpha = animator.animatedValue as Float
+                windowManager?.updateViewLayout(composeView, layoutParams)
             }
-        } catch (e: Exception) {
-            LogUtil(context).log(tag, "[ERROR] 移除悬浮窗失败: ${e.message}")
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: android.animation.Animator) {
+                    logRepository.log(tag, "fadeIn: started, duration=${duration}ms")
+                }
+
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    logRepository.log(tag, "fadeIn: completed, emitting fadeInCompleteEvent")
+                    _fadeInCompleteEvent.tryEmit(Unit)
+                }
+            })
+            start()
         }
+    }
+
+    fun removeOverlay() {
+        if (composeView == null) {
+            logRepository.log(tag, "removeOverlay: not showing, skip")
+            return
+        }
+
+        logRepository.log(tag, "removeOverlay: starting fade out")
+        val view = composeView ?: return
+        val params = view.layoutParams as? WindowManager.LayoutParams ?: return
+
+        ValueAnimator.ofFloat(1f, 0f).apply {
+            duration = FADE_OUT_DURATION
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animator ->
+                params.alpha = animator.animatedValue as Float
+                windowManager?.updateViewLayout(view, params)
+            }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    logRepository.log(tag, "fadeOut: completed, cleaning up")
+                    cleanup()
+                }
+            })
+            start()
+        }
+    }
+
+    private fun cleanup() {
+        composeView?.let {
+            try {
+                windowManager?.removeView(it)
+            } catch (e: Exception) {
+                // View 可能已经被移除
+                logRepository.log(tag, "Error removing overlay: ${e.message}", Log.ERROR, e)
+            }
+            composeView = null
+        }
+        lifecycleOwner?.destroy()
+        lifecycleOwner = null
+    }
+
+    private fun getStatusBarHeight(): Int {
+        val resources = context.resources
+        return resources.getDimensionPixelSize(
+            resources.getIdentifier("status_bar_height", "dimen", "android")
+        )
+    }
+
+    private fun getScreenHeight(): Int {
+        val displayMetrics = context.resources.displayMetrics
+        return displayMetrics.heightPixels
     }
 }

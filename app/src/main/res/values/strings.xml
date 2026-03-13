@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">${appName}</string>
+    <string name="app_name">App Pause</string>
     <string name="return_to_home">返回桌面</string>
     <string name="app_time_out">使用时间已到</string>
     <string name="request_overlay">授予悬浮窗权限</string>
@@ -19,4 +19,5 @@
     <string name="for_appName">为 %s </string>
     <string name="set_time">设置使用时长</string>
     <string name="monitored_apps">监控的应用</string>
+    <string name="a11y_desc">本应用无障碍服务仅用于监控应用使用情况</string>
 </resources>

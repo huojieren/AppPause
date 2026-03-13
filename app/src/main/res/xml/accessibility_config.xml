@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/a11y_desc"
+    android:notificationTimeout="100" />
+
+    <!--
+    accessibilityEventTypes：监听的事件类型，有如下几种：
+        typeWindowStateChanged：窗口状态改变
+        typeWindowContentChanged：窗口内容改变
+    packageNames：监听的包名，多个包名用英文逗号隔开，不填则监听所有包名下的应用，留空则不会监听任何应用
+    accessibilityFeedbackType：反馈类型，有如下几种：
+        feedbackGeneric：通用反馈
+    canRetrieveWindowContent：是否可以获取窗口内容，true表示可以获取，false表示不可以获取
+    description：描述
+    notificationTimeout：通知超时时间，单位毫秒
+    -->
