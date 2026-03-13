@@ -1,15 +1,18 @@
 package com.huojieren.apppause.managers
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.utils.showToast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class TimerManager(
+    private val context: Context,
     private val logRepository: LogRepository
 ) {
     private val tag = "TimerManager"
@@ -71,6 +74,10 @@ class TimerManager(
     fun start(app: AppInfo, timeMs: Long? = null) {
         val packageName = app.packageName
 
+        // 判断是否是继续倒计时（有暂停的倒计时）
+        val previousState = timerStateMap[packageName]
+        val isContinueTimer = previousState != null
+
         // 先停止现有倒计时
         stop(packageName)
 
@@ -109,8 +116,32 @@ class TimerManager(
         logRepository.log(tag, "targetTime: ${targetTimeMs / 1000}s")
         logRepository.log(tag, "--------------------")
 
+        // 显示 Toast
+        showStartedToast(app, isContinueTimer, targetTimeMs)
+
         // 启动倒计时
         startCountdown(packageName, state)
+    }
+
+    private fun showStartedToast(app: AppInfo, isContinueTimer: Boolean, targetTimeMs: Long) {
+        val message = if (isContinueTimer) {
+            val remainingSeconds = targetTimeMs / 1000
+            val hours = remainingSeconds / 3600
+            val minutes = (remainingSeconds % 3600) / 60
+            val seconds = remainingSeconds % 60
+
+            val timeText = if (hours > 0) {
+                "${hours}时${minutes}分${seconds}秒"
+            } else if (minutes > 0) {
+                "${minutes}分${seconds}秒"
+            } else {
+                "${seconds}秒"
+            }
+            "${app.name} 继续计时，剩余 $timeText"
+        } else {
+            "${app.name} 开始倒计时"
+        }
+        showToast(context, message)
     }
 
     /**
@@ -152,6 +183,14 @@ class TimerManager(
         timerStateMap.clear()
         _currentTimerState.value = null
         logRepository.log(tag, "All timers cleared")
+    }
+
+    /**
+     * 检查指定应用的倒计时是否正在运行
+     */
+    fun isTimerRunning(packageName: String): Boolean {
+        val state = timerStateMap[packageName]
+        return state?.isRunning == true
     }
 
     /**
@@ -215,7 +254,7 @@ class TimerManager(
             }
         }
 
-        handler.post(runnable)
+        handler.postDelayed(runnable, 800L)
         logRepository.log(
             tag,
             "Countdown started for $packageName, next tick in 1s"

@@ -86,9 +86,11 @@ object ManagerModule {
     @Provides
     @Singleton
     fun provideTimerManager(
+        @ApplicationContext context: Context,
         logRepository: LogRepository
     ): TimerManager {
         return TimerManager(
+            context,
             logRepository
         )
     }

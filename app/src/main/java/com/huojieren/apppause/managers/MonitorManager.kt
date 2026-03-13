@@ -9,7 +9,6 @@ import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
-import com.huojieren.apppause.utils.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -151,12 +150,19 @@ class MonitorManager(
 
         val remaining = timerManager.getRemainingTime(validApp)
         if (remaining > 0) {
+            // 检查是否已经在运行，避免重复开始
+            if (timerManager.isTimerRunning(validApp.packageName)) {
+                logRepository.log(
+                    tag,
+                    "[${validApp.packageName}] timer already running, skipping"
+                )
+                return
+            }
             logRepository.log(
                 tag,
                 "[${validApp.packageName}] continue counting, remaining: ${remaining / 1000}s"
             )
             timerManager.start(validApp)
-            showResumeTimerToast(validApp, remaining)
             // 更新通知状态为有效
             lastValidApp = validApp
             lastRemainingTime = remaining
@@ -188,17 +194,5 @@ class MonitorManager(
                 app.packageName.isNotEmpty() &&
                 !app.packageName.startsWith("com.huojieren.apppause") &&
                 monitoredApps.contains(app)
-    }
-
-    private fun showResumeTimerToast(app: AppInfo, remainingMs: Long) {
-        val remainingSeconds = remainingMs / 1000
-        val minutes = remainingSeconds / 60
-        val seconds = remainingSeconds % 60
-        val timeText = if (minutes > 0) {
-            "${minutes}分${seconds}秒"
-        } else {
-            "${seconds}秒"
-        }
-        showToast(context, "${app.name} 继续计时，剩余 $timeText")
     }
 }
