@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AppPause</string>
+    <string name="app_name">App Pause</string>
     <string name="return_to_home">返回桌面</string>
     <string name="app_time_out">使用时间已到</string>
     <string name="request_overlay">授予悬浮窗权限</string>

@@ -145,6 +145,16 @@ class TimerManager(
     }
 
     /**
+     * 清空所有倒计时
+     */
+    fun clearAllTimers() {
+        logRepository.log(tag, "Clearing all timers, count: ${timerStateMap.size}")
+        timerStateMap.clear()
+        _currentTimerState.value = null
+        logRepository.log(tag, "All timers cleared")
+    }
+
+    /**
      * 暂停倒计时（与停止相同，但语义更明确）
      */
     fun pause(packageName: String) = stop(packageName)

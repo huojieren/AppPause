@@ -2,7 +2,6 @@ package com.huojieren.apppause.managers
 
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.DataStoreRepository
@@ -10,6 +9,7 @@ import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
+import com.huojieren.apppause.utils.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +63,9 @@ class MonitorManager(
             throw IllegalStateException("Accessibility service not initialized, please enable it first")
         }
 
+        // 清空所有倒计时，保证新的监控周期
+        timerManager.clearAllTimers()
+
         scope.launch {
             monitoredApps = dataStoreRepository.getMonitoredApps().first().toSet()
         }
@@ -84,6 +87,10 @@ class MonitorManager(
 
     fun stopMonitor() {
         logRepository.log(tag, "stopMonitor called")
+
+        // 清空所有倒计时
+        timerManager.clearAllTimers()
+        
         context.stopService(
             Intent(context, MonitorService::class.java)
         )
@@ -192,7 +199,6 @@ class MonitorManager(
         } else {
             "${seconds}秒"
         }
-        val message = "${app.name} 继续计时，剩余 $timeText"
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        showToast(context, "${app.name} 继续计时，剩余 $timeText")
     }
 }
