@@ -2,6 +2,7 @@ package com.huojieren.apppause.managers
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.util.Log
 import android.view.Gravity
@@ -11,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.ui.FloatingWindowLifecycleOwner
+import com.huojieren.apppause.ui.theme.AppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -46,9 +48,13 @@ class OverlayManager(
         val screenHeight = getScreenHeight()
         val duration = if (isSlowFadeIn) FADE_IN_DURATION_SLOW else FADE_IN_DURATION_FAST
 
+        // 检测系统深色模式
+        val isDarkTheme = (context.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
         logRepository.log(
             tag,
-            "showOverlay: starting, isSlowFadeIn=$isSlowFadeIn, duration=${duration}ms"
+            "showOverlay: starting, isSlowFadeIn=$isSlowFadeIn, duration=${duration}ms, isDarkTheme=$isDarkTheme"
         )
 
         val layoutParams = WindowManager.LayoutParams(
@@ -68,7 +74,9 @@ class OverlayManager(
 
         composeView = ComposeView(context).apply {
             setContent {
-                content()
+                AppTheme(darkTheme = isDarkTheme) {
+                    content()
+                }
             }
         }
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -71,6 +72,7 @@ fun TimeSelectionScreen(
     Surface(
         modifier = modifier
             .fillMaxSize(),
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -78,7 +80,10 @@ fun TimeSelectionScreen(
         ) {
             Card(
                 modifier = Modifier
-                    .width(300.dp)
+                    .width(300.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -154,7 +159,8 @@ fun TimeSelectionScreen(
     }
 }
 
-@Preview
+@Preview("Light Theme")
+@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun TimeSelectionCardPreView() {
     val mockAppInfo = AppInfoUi(
@@ -198,7 +204,7 @@ fun TimeOutScreen(
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+        color = MaterialTheme.colorScheme.surface,
         modifier = modifier
             .fillMaxSize(),
     ) {
@@ -212,26 +218,31 @@ fun TimeOutScreen(
                 contentDescription = null,
                 modifier = Modifier.size(120.dp)
             )
+            Spacer(modifier = Modifier.height(16.dp))
             // TODO 2025/11/7 23:05 根据 text 动态设置行数
             Text(
                 text = appInfoUi.name,
-                style = MaterialTheme.typography.displaySmall
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "使用时间已到",
-                style = MaterialTheme.typography.displaySmall
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.error
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = onReturnToHomeScreenClicked,
                 enabled = canClick,
                 colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
                 Text(
-                    text = if (canClick) "返回桌面" else "返回桌面 ($countDown)"
+                    text = if (canClick) "返回桌面" else "返回桌面 ($countDown)",
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
