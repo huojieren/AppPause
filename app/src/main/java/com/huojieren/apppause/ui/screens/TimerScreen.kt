@@ -159,7 +159,7 @@ fun TimeSelectionScreen(
     }
 }
 
-@Preview("Light Theme")
+//@Preview("Light Theme")
 @Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun TimeSelectionCardPreView() {

@@ -3,7 +3,8 @@
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.6.1-blue.svg)](https://developer.android.com/jetpack/compose)
 ![MainScreen](./docs/asset/MainScreen.png)
 ![SelectAppScreen](./docs/asset/SelectAppScreen.png)
-![SelectTime&timeOut](docs/asset/SelectTime&timeOut.png)
+![SelectTimeScreen](docs/asset/SelectTimeScreen.png)
+![TimeOutScreen](docs/asset/TimeOutScreen.png)
 
 ## **简介**
 
