@@ -124,9 +124,16 @@ class ListenerManager @Inject constructor(
                         modifier = Modifier.fillMaxSize(),
                         appInfoUi = appInfo.toUI(icon),
                         fadeInCompleteEvent = overlayManager.fadeInCompleteEvent,
-                        onReturnToHomeScreenClicked = {
+                        onClickReturnToHome = {
                             logRepository.log(tag, "Clicked return to home")
                             overlayManager.removeOverlay()
+                            context.startActivity(Intent(Intent.ACTION_MAIN).apply {
+                                addCategory(Intent.CATEGORY_HOME)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            })
+                        },
+                        onAutoReturnToHome = {
+                            logRepository.log(tag, "Auto returning to home after countdown")
                             context.startActivity(Intent(Intent.ACTION_MAIN).apply {
                                 addCategory(Intent.CATEGORY_HOME)
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK

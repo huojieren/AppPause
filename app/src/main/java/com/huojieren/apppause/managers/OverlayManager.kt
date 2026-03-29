@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.ComposeView
 import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.ui.FloatingWindowLifecycleOwner
 import com.huojieren.apppause.ui.theme.AppTheme
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -35,6 +36,7 @@ class OverlayManager(
     private val _fadeInCompleteEvent = MutableSharedFlow<Unit>(replay = 1)
     val fadeInCompleteEvent: SharedFlow<Unit> = _fadeInCompleteEvent.asSharedFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun showOverlay(
         isSlowFadeIn: Boolean = false,
         content: @Composable () -> Unit
@@ -43,6 +45,9 @@ class OverlayManager(
             logRepository.log(tag, "showOverlay: already showing, skip")
             return
         }
+
+        logRepository.log(tag, "showOverlay: reset replay cache")
+        _fadeInCompleteEvent.resetReplayCache()
 
         val statusBarHeight = getStatusBarHeight()
         val screenHeight = getScreenHeight()
@@ -62,7 +67,7 @@ class OverlayManager(
             screenHeight + statusBarHeight,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
+            PixelFormat.OPAQUE
         ).apply {
             gravity = Gravity.CENTER
             alpha = 0f

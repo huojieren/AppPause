@@ -38,6 +38,7 @@ import com.huojieren.apppause.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
+import timber.log.Timber
 
 @Composable
 fun TimeSelectionScreen(
@@ -181,25 +182,30 @@ fun TimeSelectionCardPreView() {
     }
 }
 
+private const val TAG = "TimeOutScreen"
+
 @Composable
 fun TimeOutScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
     fadeInCompleteEvent: SharedFlow<Unit>,
-    onReturnToHomeScreenClicked: () -> Unit,
+    onClickReturnToHome: () -> Unit,
+    onAutoReturnToHome: () -> Unit = {},
 ) {
     var countDown by remember { mutableIntStateOf(5) }
     val canClick = countDown <= 0
 
     LaunchedEffect(fadeInCompleteEvent) {
-        // 等待淡入完成事件
+        Timber.tag(TAG).d("Waiting for fadeInCompleteEvent...")
         fadeInCompleteEvent.first()
-        // 等待 500 毫秒，调整视觉
-        delay(1000)
-        // 开始倒计时
+        Timber.tag(TAG).d("FadeInCompleteEvent received")
+        Timber.tag(TAG).d("Auto returning to home")
+        onAutoReturnToHome()
+        Timber.tag(TAG).d("Starting countdown")
         while (countDown > 0) {
             delay(1000)
             countDown--
+            Timber.tag(TAG).d("countDown: $countDown")
         }
     }
 
@@ -233,7 +239,7 @@ fun TimeOutScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
-                onClick = onReturnToHomeScreenClicked,
+                onClick = onClickReturnToHome,
                 enabled = canClick,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -265,7 +271,7 @@ fun TimeOutScreenPreview() {
         TimeOutScreen(
             modifier = Modifier.fillMaxSize(),
             appInfoUi = mockAppInfoUi,
-            onReturnToHomeScreenClicked = {},
+            onClickReturnToHome = {},
             fadeInCompleteEvent = mockFlow
         )
     }
