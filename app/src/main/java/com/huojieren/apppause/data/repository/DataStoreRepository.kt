@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import com.huojieren.apppause.data.DataStoreKeys
 import com.huojieren.apppause.data.appDataStore
 import com.huojieren.apppause.data.models.AppInfo
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,8 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 class DataStoreRepository(
-    context: Context,
-    private val logRepository: LogRepository
+    context: Context
 ) {
     private val dataStore: DataStore<Preferences> = context.appDataStore
     private val json = Json { ignoreUnknownKeys = true }
@@ -59,7 +59,7 @@ class DataStoreRepository(
                 try {
                     appsJson.map { json.decodeFromString<AppInfo>(it) }
                 } catch (e: Exception) {
-                    logRepository.log(
+                    logger(
                         "DataStoreRepository",
                         "Error decoding appsJson: $e"
                     )

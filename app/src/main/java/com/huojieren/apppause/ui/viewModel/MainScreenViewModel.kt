@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.huojieren.apppause.data.Permissions
 import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
@@ -44,11 +45,11 @@ class MainScreenViewModel @Inject constructor(
     }
 
     init {
-        logRepository.log(tag, "MainScreenViewModel init")
+        logger(tag, "MainScreenViewModel init")
     }
 
     fun refreshState() {
-        logRepository.log(tag, "refreshState")
+        logger(tag, "refreshState")
         viewModelScope.launch {
             statusManager.setHasOverlay(permissionManager.refreshPermission(Permissions.Overlay))
             statusManager.setHasNotification(permissionManager.refreshPermission(Permissions.Notification))
@@ -58,7 +59,7 @@ class MainScreenViewModel @Inject constructor(
     }
 
     fun requestPermission(permission: Permissions) {
-        logRepository.log(tag, "requestPermission $permission")
+        logger(tag, "requestPermission $permission")
         permissionManager.requestPermission(permission)
     }
 
@@ -79,7 +80,7 @@ class MainScreenViewModel @Inject constructor(
     }
 
     fun toggleMonitoring() {
-        logRepository.log(tag, "toggleMonitoring")
+        logger(tag, "toggleMonitoring")
         viewModelScope.launch {
             if (statusManager.isMonitoring.value) {
                 monitorManager.stopMonitor()
@@ -94,7 +95,7 @@ class MainScreenViewModel @Inject constructor(
                     monitorManager.startMonitor()
                     showToast(appContext, "已开始监控")
                 } catch (e: Exception) {
-                    logRepository.log(tag, "Failed to start monitoring: ${e.message}")
+                    logger(tag, "Failed to start monitoring: ${e.message}")
                     showToast(appContext, "启动监控失败：${e.message}")
                     // 刷新权限状态
                     refreshState()

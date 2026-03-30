@@ -18,22 +18,26 @@ import java.util.zip.ZipOutputStream
 class LogRepository(
     private val context: Context
 ) {
+    private val cacheDir = context.cacheDir
+    private val internalLogFile: File = File(cacheDir, LOG_FILE_NAME)
 
     companion object {
         private const val LOG_FILE_NAME = "app_logs.log"
         private const val MAX_BACKUP_FILES = 5
-    }
 
-    private val cacheDir = context.cacheDir
-    private val internalLogFile: File = File(cacheDir, LOG_FILE_NAME)
-
-    fun log(tag: String, message: String, level: Int = Log.DEBUG, throwable: Throwable? = null) {
-        when (level) {
-            Log.DEBUG -> Timber.tag(tag).d(throwable, message)
-            Log.INFO -> Timber.tag(tag).i(throwable, message)
-            Log.WARN -> Timber.tag(tag).w(throwable, message)
-            Log.ERROR -> Timber.tag(tag).e(throwable, message)
-            else -> Timber.tag(tag).v(message)
+        fun logger(
+            tag: String,
+            message: String,
+            level: Int = Log.DEBUG,
+            throwable: Throwable? = null
+        ) {
+            when (level) {
+                Log.DEBUG -> Timber.tag(tag).d(throwable, message)
+                Log.INFO -> Timber.tag(tag).i(throwable, message)
+                Log.WARN -> Timber.tag(tag).w(throwable, message)
+                Log.ERROR -> Timber.tag(tag).e(throwable, message)
+                else -> Timber.tag(tag).v(message)
+            }
         }
     }
 
@@ -50,7 +54,7 @@ class LogRepository(
             }
             true
         } catch (e: Exception) {
-            log("LogUtil", "Clear log failed: ${e.message}", Log.ERROR)
+            logger("LogUtil", "Clear log failed: ${e.message}", Log.ERROR)
             false
         }
     }
@@ -71,7 +75,7 @@ class LogRepository(
             }
             0
         } catch (e: Exception) {
-            log("LogUtil", "Save log failed: ${e.message}", Log.ERROR)
+            logger("LogUtil", "Save log failed: ${e.message}", Log.ERROR)
             -1
         }
     }

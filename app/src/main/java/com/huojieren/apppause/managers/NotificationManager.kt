@@ -5,13 +5,11 @@ import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
-
 import com.huojieren.apppause.R
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 
 class NotificationManager(
-    private val context: Context,
-    private val logRepository: LogRepository
+    private val context: Context
 ) {
     private val timeDesc = "秒"
     private val tag = "NotificationManager"
@@ -44,7 +42,7 @@ class NotificationManager(
 
             notificationManager.notify(NOTIFICATION_ID, notification)
         } catch (e: Exception) {
-            logRepository.log(tag, "Failed to show notification: ${e.message}", Log.ERROR)
+            logger(tag, "Failed to show notification: ${e.message}", Log.ERROR)
         }
     }
 
@@ -57,7 +55,7 @@ class NotificationManager(
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancel(NOTIFICATION_ID)
         } catch (e: Exception) {
-            logRepository.log(tag, "Failed to hide notification: ${e.message}", Log.ERROR)
+            logger(tag, "Failed to hide notification: ${e.message}", Log.ERROR)
         }
     }
 

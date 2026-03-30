@@ -32,13 +32,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.ui.components.Picker
 import com.huojieren.apppause.ui.state.rememberPickerState
 import com.huojieren.apppause.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
-import timber.log.Timber
 
 @Composable
 fun TimeSelectionScreen(
@@ -196,16 +196,16 @@ fun TimeOutScreen(
     val canClick = countDown <= 0
 
     LaunchedEffect(fadeInCompleteEvent) {
-        Timber.tag(TAG).d("Waiting for fadeInCompleteEvent...")
+        logger(TAG, "Waiting for fadeInCompleteEvent...")
         fadeInCompleteEvent.first()
-        Timber.tag(TAG).d("FadeInCompleteEvent received")
-        Timber.tag(TAG).d("Auto returning to home")
+        logger(TAG, "FadeInCompleteEvent received")
+        logger(TAG, "Auto returning to home")
         onAutoReturnToHome()
-        Timber.tag(TAG).d("Starting countdown")
+        logger(TAG, "Starting countdown")
         while (countDown > 0) {
             delay(1000)
             countDown--
-            Timber.tag(TAG).d("countDown: $countDown")
+            logger(TAG, "countDown: $countDown")
         }
     }
 

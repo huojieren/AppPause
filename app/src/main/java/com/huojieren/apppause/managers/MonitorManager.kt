@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.DataStoreRepository
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
@@ -22,7 +22,6 @@ import javax.inject.Singleton
 class MonitorManager(
     private val context: Context,
     private val dataStoreRepository: DataStoreRepository,
-    private val logRepository: LogRepository,
     private val timerManager: TimerManager,
     private val statusManager: StatusManager
 ) {
@@ -50,12 +49,12 @@ class MonitorManager(
     )
 
     fun setOnAppChangedListener(listener: (AppInfo?) -> Unit) {
-        logRepository.log(tag, "set on app changed listener")
+        logger(tag, "set on app changed listener")
         onAppChanged = listener
     }
 
     fun startMonitor() {
-        logRepository.log(tag, "startMonitor called")
+        logger(tag, "startMonitor called")
 
         // 检查无障碍服务是否初始化
         if (!AppPauseAccessibilityService.isInitialized()) {
@@ -71,21 +70,21 @@ class MonitorManager(
 
         try {
             statusManager.setIsMonitoring(true)
-            logRepository.log(tag, "startMonitor: setIsMonitoring(true)")
+            logger(tag, "startMonitor: setIsMonitoring(true)")
 
             val intent = Intent(context, MonitorService::class.java)
             // TODO 2025/11/30 21:55 监控策略切换
             intent.putExtra("strategy", MonitorStrategy.ACCESSIBILITY.name)
             ContextCompat.startForegroundService(context, intent)
-            logRepository.log(tag, "startMonitor: foreground service started")
+            logger(tag, "startMonitor: foreground service started")
         } catch (e: Exception) {
-            logRepository.log(tag, "Failed to start MonitorService: ${e.message}")
+            logger(tag, "Failed to start MonitorService: ${e.message}")
             throw IllegalStateException("Failed to start MonitorService：${e.message}", e)
         }
     }
 
     fun stopMonitor() {
-        logRepository.log(tag, "stopMonitor called")
+        logger(tag, "stopMonitor called")
 
         // 清空所有倒计时
         timerManager.clearAllTimers()
@@ -95,7 +94,7 @@ class MonitorManager(
         )
         currentApp = null
         statusManager.setIsMonitoring(false)
-        logRepository.log(tag, "stopMonitor: setIsMonitoring(false)")
+        logger(tag, "stopMonitor: setIsMonitoring(false)")
     }
 
     fun handleAppChange(app: AppInfo?) {
@@ -110,13 +109,13 @@ class MonitorManager(
         currentApp = app
 
         // 日志输出
-        logRepository.log(tag, "app changed: [${previousApp?.name}] -> [${app?.name ?: "null"}]")
+        logger(tag, "app changed: [${previousApp?.name}] -> [${app?.name ?: "null"}]")
 
         // 切换到无效应用时，暂停上一个被监控应用的计时器
         if (!isValidApp(app)) {
-            logRepository.log(tag, "invalid app: [${packageName ?: "null"}], paused timer")
+            logger(tag, "invalid app: [${packageName ?: "null"}], paused timer")
             previousApp?.let {
-                logRepository.log(
+                logger(
                     tag,
                     "pause timer for [${it.packageName}], current remaining: ${
                         timerManager.getRemainingTime(it)
@@ -126,7 +125,7 @@ class MonitorManager(
                 // 保存最后一次有效应用信息用于通知显示
                 lastValidApp = it
                 lastRemainingTime = timerManager.getRemainingTime(it)
-                logRepository.log(
+                logger(
                     tag,
                     "saved last valid app: [${it.name}], remaining: ${lastRemainingTime}ms"
                 )
@@ -139,7 +138,7 @@ class MonitorManager(
 
         // 切换到不同应用时，暂停上一个
         previousApp?.let {
-            logRepository.log(
+            logger(
                 tag,
                 "pause timer for [${it.packageName}], current remaining: ${
                     timerManager.getRemainingTime(it)
@@ -152,13 +151,13 @@ class MonitorManager(
         if (remaining > 0) {
             // 检查是否已经在运行，避免重复开始
             if (timerManager.isTimerRunning(validApp.packageName)) {
-                logRepository.log(
+                logger(
                     tag,
                     "[${validApp.packageName}] timer already running, skipping"
                 )
                 return
             }
-            logRepository.log(
+            logger(
                 tag,
                 "[${validApp.packageName}] continue counting, remaining: ${remaining / 1000}s"
             )
@@ -166,17 +165,17 @@ class MonitorManager(
             // 更新通知状态为有效
             lastValidApp = validApp
             lastRemainingTime = remaining
-            logRepository.log(
+            logger(
                 tag,
                 "resume timer, app: [${validApp.name}], remaining: ${remaining}ms"
             )
             updateNotificationState(validApp.name, remaining, true)
         } else {
-            logRepository.log(tag, "[${validApp.packageName}] start new counting")
+            logger(tag, "[${validApp.packageName}] start new counting")
             onAppChanged?.invoke(validApp)
             // 更新通知状态为有效
             lastValidApp = validApp
-            logRepository.log(tag, "start new timer, app: [${validApp.name}]")
+            logger(tag, "start new timer, app: [${validApp.name}]")
             updateNotificationState(validApp.name, 0, true)
         }
     }

@@ -2,7 +2,6 @@ package com.huojieren.apppause.di
 
 import android.content.Context
 import com.huojieren.apppause.data.repository.DataStoreRepository
-import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.ListenerManager
 import com.huojieren.apppause.managers.MonitorManager
@@ -24,13 +23,9 @@ object ManagerModule {
     @Provides
     @Singleton
     fun provideAppManager(
-        @ApplicationContext context: Context,
-        logRepository: LogRepository
+        @ApplicationContext context: Context
     ): AppManager {
-        return AppManager(
-            context,
-            logRepository
-        )
+        return AppManager(context)
     }
 
     @Provides
@@ -38,14 +33,12 @@ object ManagerModule {
     fun provideMonitorManager(
         @ApplicationContext context: Context,
         dataStoreRepository: DataStoreRepository,
-        logRepository: LogRepository,
         timerManager: TimerManager,
         statusManager: StatusManager
     ): MonitorManager {
         return MonitorManager(
             context,
             dataStoreRepository,
-            logRepository,
             timerManager,
             statusManager
         )
@@ -54,25 +47,17 @@ object ManagerModule {
     @Provides
     @Singleton
     fun provideOverlayManager(
-        @ApplicationContext context: Context,
-        logRepository: LogRepository
+        @ApplicationContext context: Context
     ): OverlayManager {
-        return OverlayManager(
-            context,
-            logRepository
-        )
+        return OverlayManager(context)
     }
 
     @Provides
     @Singleton
     fun provideNotificationManager(
-        @ApplicationContext context: Context,
-        logRepository: LogRepository
+        @ApplicationContext context: Context
     ): NotificationManager {
-        return NotificationManager(
-            context,
-            logRepository
-        )
+        return NotificationManager(context)
     }
 
     @Provides
@@ -86,21 +71,15 @@ object ManagerModule {
     @Provides
     @Singleton
     fun provideTimerManager(
-        @ApplicationContext context: Context,
-        logRepository: LogRepository
+        @ApplicationContext context: Context
     ): TimerManager {
-        return TimerManager(
-            context,
-            logRepository
-        )
+        return TimerManager(context)
     }
 
     @Provides
     @Singleton
-    fun provideStausManager(
-        logRepository: LogRepository
-    ): StatusManager {
-        return StatusManager(logRepository)
+    fun provideStausManager(): StatusManager {
+        return StatusManager()
     }
 
     @Provides
@@ -110,16 +89,14 @@ object ManagerModule {
         appManager: AppManager,
         monitorManager: MonitorManager,
         overlayManager: OverlayManager,
-        timerManager: TimerManager,
-        logRepository: LogRepository
+        timerManager: TimerManager
     ): ListenerManager {
         return ListenerManager(
             context,
             monitorManager,
             overlayManager,
             timerManager,
-            appManager,
-            logRepository
+            appManager
         )
     }
 }

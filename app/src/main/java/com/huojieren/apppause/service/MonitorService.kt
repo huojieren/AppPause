@@ -9,7 +9,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.huojieren.apppause.R
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.StatusManager
@@ -28,9 +28,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MonitorService : Service() {
-
-    @Inject
-    lateinit var logRepository: LogRepository
 
     @Inject
     lateinit var monitorManager: MonitorManager
@@ -64,63 +61,56 @@ class MonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        logRepository.log(tag, "create notification")
+        logger(tag, "create notification")
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         acquireWakeLock()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        logRepository.log(tag, "start notification")
+        logger(tag, "start notification")
 
         // 读取监控策略
         val strategy = intent?.getStringExtra("strategy")
-        logRepository.log(tag, "get strategy: [$strategy]")
+        logger(tag, "get strategy: [$strategy]")
 
         // 创建检测器
         monitor = when (strategy) {
             MonitorStrategy.ACCESSIBILITY.name -> {
                 if (AppPauseAccessibilityService.isInitialized()) {
-                    logRepository.log(tag, "Creating AccessibilityMonitor")
+                    logger(tag, "Creating AccessibilityMonitor")
                     try {
-                        AccessibilityMonitor(
-                            appManager,
-                            logRepository
-                        )
+                        AccessibilityMonitor(appManager)
                     } catch (e: Exception) {
-                        logRepository.log(
+                        logger(
                             tag,
                             "Failed to create AccessibilityMonitor, falling back to UsageStats: ${e.message}"
                         )
                         UsageStatsMonitor(
                             this,
-                            appManager,
-                            logRepository
+                            appManager
                         )
                     }
                 } else {
-                    logRepository.log(
+                    logger(
                         tag,
                         "Accessibility service not initialized, falling back to UsageStats"
                     )
                     UsageStatsMonitor(
                         this,
-                        appManager,
-                        logRepository
+                        appManager
                     )
                 }
             }
 
             MonitorStrategy.USAGE_STATS.name -> UsageStatsMonitor(
                 this,
-                appManager,
-                logRepository
+                appManager
             )
 
             else -> UsageStatsMonitor(
                 this,
-                appManager,
-                logRepository
+                appManager
             )
         }
 
@@ -159,7 +149,7 @@ class MonitorService : Service() {
                     )
                 } else {
                     // 没有正在计时的应用（倒计时结束），显示初始状态
-                    logRepository.log(tag, "Timer finished, showing initial notification")
+                    logger(tag, "Timer finished, showing initial notification")
                     showInitialNotification()
                 }
             }
@@ -170,7 +160,7 @@ class MonitorService : Service() {
     }
 
     override fun onDestroy() {
-        logRepository.log(tag, "destroy notification")
+        logger(tag, "destroy notification")
         // 停止检测器
         monitor?.stop()
         monitor = null
@@ -218,7 +208,7 @@ class MonitorService : Service() {
                     }
                     wakeLock.acquire(10 * 60 * 1000L)
                 } catch (e: Exception) {
-                    logRepository.log(tag, "wakelock refresh failed: ${e.message}")
+                    logger(tag, "wakelock refresh failed: ${e.message}")
                 }
             }
         }
@@ -230,7 +220,7 @@ class MonitorService : Service() {
                 wakeLock.release()
             }
         } catch (e: Exception) {
-            logRepository.log(tag, "releaseWakeLock error: ${e.message}")
+            logger(tag, "releaseWakeLock error: ${e.message}")
         }
     }
 
@@ -250,7 +240,7 @@ class MonitorService : Service() {
             "$appName 已暂停，剩余 $timeText"
         }
 
-        logRepository.log(
+        logger(
             tag,
             "updateNotification: appName=$appName, remaining=$remainingTimeMs, isValid=$isValid, content=$contentText"
         )

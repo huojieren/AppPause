@@ -10,7 +10,7 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.ui.FloatingWindowLifecycleOwner
 import com.huojieren.apppause.ui.theme.AppTheme
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,8 +19,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 class OverlayManager(
-    private val context: Context,
-    private val logRepository: LogRepository
+    private val context: Context
 ) {
     companion object {
         private const val FADE_IN_DURATION_FAST = 300L
@@ -42,11 +41,11 @@ class OverlayManager(
         content: @Composable () -> Unit
     ) {
         if (composeView != null) {
-            logRepository.log(tag, "showOverlay: already showing, skip")
+            logger(tag, "showOverlay: already showing, skip")
             return
         }
 
-        logRepository.log(tag, "showOverlay: reset replay cache")
+        logger(tag, "showOverlay: reset replay cache")
         _fadeInCompleteEvent.resetReplayCache()
 
         val statusBarHeight = getStatusBarHeight()
@@ -57,7 +56,7 @@ class OverlayManager(
         val isDarkTheme = (context.resources.configuration.uiMode and
                 Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
-        logRepository.log(
+        logger(
             tag,
             "showOverlay: starting, isSlowFadeIn=$isSlowFadeIn, duration=${duration}ms, isDarkTheme=$isDarkTheme"
         )
@@ -109,11 +108,11 @@ class OverlayManager(
             }
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationStart(animation: android.animation.Animator) {
-                    logRepository.log(tag, "fadeIn: started, duration=${duration}ms")
+                    logger(tag, "fadeIn: started, duration=${duration}ms")
                 }
 
                 override fun onAnimationEnd(animation: android.animation.Animator) {
-                    logRepository.log(tag, "fadeIn: completed, emitting fadeInCompleteEvent")
+                    logger(tag, "fadeIn: completed, emitting fadeInCompleteEvent")
                     _fadeInCompleteEvent.tryEmit(Unit)
                 }
             })
@@ -123,11 +122,11 @@ class OverlayManager(
 
     fun removeOverlay() {
         if (composeView == null) {
-            logRepository.log(tag, "removeOverlay: not showing, skip")
+            logger(tag, "removeOverlay: not showing, skip")
             return
         }
 
-        logRepository.log(tag, "removeOverlay: starting fade out")
+        logger(tag, "removeOverlay: starting fade out")
         val view = composeView ?: return
         val params = view.layoutParams as? WindowManager.LayoutParams ?: return
 
@@ -140,7 +139,7 @@ class OverlayManager(
             }
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
-                    logRepository.log(tag, "fadeOut: completed, cleaning up")
+                    logger(tag, "fadeOut: completed, cleaning up")
                     cleanup()
                 }
             })
@@ -154,7 +153,7 @@ class OverlayManager(
                 windowManager?.removeView(it)
             } catch (e: Exception) {
                 // View 可能已经被移除
-                logRepository.log(tag, "Error removing overlay: ${e.message}", Log.ERROR, e)
+                logger(tag, "Error removing overlay: ${e.message}", Log.ERROR, e)
             }
             composeView = null
         }

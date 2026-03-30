@@ -3,7 +3,7 @@ package com.huojieren.apppause.service
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.view.accessibility.AccessibilityEvent
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.StatusManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -11,8 +11,6 @@ import javax.inject.Inject
 @SuppressLint("AccessibilityPolicy")// 忽略无障碍服务隐私警告
 @AndroidEntryPoint
 class AppPauseAccessibilityService : AccessibilityService() {
-    @Inject
-    lateinit var logRepository: LogRepository
 
     @Inject
     lateinit var statusManager: StatusManager
@@ -48,14 +46,14 @@ class AppPauseAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        logRepository.log(tag, "AccessibilityService connected")
+        logger(tag, "AccessibilityService connected")
         instance = this
         statusManager.setHasAccessibility(true)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        logRepository.log(tag, "AccessibilityService destroyed")
+        logger(tag, "AccessibilityService destroyed")
         instance = null
         statusManager.setHasAccessibility(false)
     }
@@ -69,7 +67,7 @@ class AppPauseAccessibilityService : AccessibilityService() {
 
             ) {
                 lastLogTime = currentTime
-                logRepository.log(tag, "onAccessibilityEvent: isMonitoring: false")
+                logger(tag, "onAccessibilityEvent: isMonitoring: false")
             }
             return
         }
@@ -78,7 +76,7 @@ class AppPauseAccessibilityService : AccessibilityService() {
 
             ) {
                 lastLogTime = currentTime
-                logRepository.log(tag, "onAccessibilityEvent: event is null")
+                logger(tag, "onAccessibilityEvent: event is null")
             }
             return
         }
@@ -92,14 +90,14 @@ class AppPauseAccessibilityService : AccessibilityService() {
             ) {
                 lastLogPackage = topPackage
                 lastLogTime = currentTime
-                logRepository.log(tag, "onAccessibilityEvent: topPackage [$topPackage]")
+                logger(tag, "onAccessibilityEvent: topPackage [$topPackage]")
             }
             topPackage?.let { onAppChangedListener?.invoke(topPackage) }
         }
     }
 
     override fun onInterrupt() {
-        logRepository.log(tag, "AccessibilityService interrupted")
+        logger(tag, "AccessibilityService interrupted")
         statusManager.setHasAccessibility(false)
     }
 }

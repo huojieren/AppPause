@@ -1,15 +1,13 @@
 package com.huojieren.apppause.managers
 
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Singleton
 
 @Singleton
-class StatusManager(
-    private val logRepository: LogRepository
-) {
+class StatusManager {
     private val tag = "StatusManager"
 
     /**
@@ -35,7 +33,7 @@ class StatusManager(
 
     fun setIsMonitoring(value: Boolean) {
         _isMonitoring.value = value
-        logRepository.log(tag, "setIsMonitoring: $value")
+        logger(tag, "setIsMonitoring: $value")
     }
 
     fun setHasOverlay(value: Boolean) {

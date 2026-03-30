@@ -4,7 +4,7 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import com.huojieren.apppause.data.models.AppInfo
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.AppManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +15,7 @@ import kotlinx.coroutines.launch
 
 class UsageStatsMonitor(
     context: Context,
-    private val appManager: AppManager,
-    private val logRepository: LogRepository
+    private val appManager: AppManager
 ) : ForegroundAppMonitor {
     private val tag = "UsageStatsMonitor"
     private var lastApp: AppInfo? = null
@@ -28,13 +27,13 @@ class UsageStatsMonitor(
     override fun start(onAppChanged: (AppInfo?) -> Unit) {
         stop()
         monitoringJob = CoroutineScope(Dispatchers.Default).launch {
-            logRepository.log(tag, "start monitor foreground app")
+            logger(tag, "start monitor foreground app")
             while (isActive) {
                 val currentApp = getForegroundApp()
-                logRepository.log(tag, "current app: [$currentApp], last app: [$lastApp]")
+                logger(tag, "current app: [$currentApp], last app: [$lastApp]")
                 if (currentApp != lastApp) {
                     lastApp = currentApp
-                    logRepository.log(tag, "app changed: [$currentApp]")
+                    logger(tag, "app changed: [$currentApp]")
                     onAppChanged(currentApp)
                 }
                 delay(1000)
@@ -43,7 +42,7 @@ class UsageStatsMonitor(
     }
 
     override fun stop() {
-        logRepository.log(tag, "stop monitor foreground app")
+        logger(tag, "stop monitor foreground app")
         monitoringJob?.cancel()
         lastApp = null
     }
@@ -64,7 +63,7 @@ class UsageStatsMonitor(
             event = UsageEvents.Event()
             events.getNextEvent(event)
 
-            logRepository.log(
+            logger(
                 tag,
                 "event: pkg=${event.packageName}, type=${event.eventType}, time=${event.timeStamp}"
             )

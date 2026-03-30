@@ -16,13 +16,9 @@ object DataModule {
     @Provides
     @Singleton
     fun provideDataStoreRepository(
-        @ApplicationContext context: Context,
-        logRepository: LogRepository
+        @ApplicationContext context: Context
     ): DataStoreRepository {
-        return DataStoreRepository(
-            context,
-            logRepository
-        )
+        return DataStoreRepository(context)
     }
 
     @Provides

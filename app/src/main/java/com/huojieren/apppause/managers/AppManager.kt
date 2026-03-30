@@ -13,7 +13,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.AppInfoUi
-import com.huojieren.apppause.data.repository.LogRepository
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -26,8 +26,7 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinToneType
 import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType
 
 class AppManager(
-    private val context: Context,
-    private val logRepository: LogRepository
+    private val context: Context
 ) {
     private val pm = context.packageManager
 
@@ -91,7 +90,7 @@ class AppManager(
                 packageName = packageName,
             )
         } catch (e: Exception) {
-            logRepository.log("AppManager", "Failed to get app info: ${e.message}", Log.ERROR)
+            logger("AppManager", "Failed to get app info: ${e.message}", Log.ERROR)
             // 返回默认的 AppInfo
             AppInfo(
                 name = packageName,
@@ -127,7 +126,7 @@ class AppManager(
                 cache.put(packageName, painter)
                 painter
             } catch (e: Exception) {
-                logRepository.log("AppManager", "Failed to load icon: ${e.message}", Log.ERROR)
+                logger("AppManager", "Failed to load icon: ${e.message}", Log.ERROR)
                 getPlaceholderIcon()
             }
         }
