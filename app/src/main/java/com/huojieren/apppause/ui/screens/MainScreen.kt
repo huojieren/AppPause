@@ -39,7 +39,6 @@ fun MainScreen(
     onNotificationButtonClicked: () -> Unit,
     onUsageStatsButtonClicked: () -> Unit,
     onAccessibilityButtonClicked: () -> Unit,
-    onMonitoredAppButtonClicked: () -> Unit,
     onClearLogButtonClicked: () -> Unit,
     onSaveLogButtonClicked: () -> Unit,
     onToggleMonitoring: () -> Unit,
@@ -68,11 +67,6 @@ fun MainScreen(
                 onNotificationButtonClicked = onNotificationButtonClicked,
                 onUsageStatsButtonClicked = onUsageStatsButtonClicked,
                 onAccessibilityButtonClicked = onAccessibilityButtonClicked,
-            )
-        }
-        item {
-            MonitoredAppCard(
-                onMonitoredAppButtonClicked = onMonitoredAppButtonClicked
             )
         }
         item {
@@ -119,7 +113,6 @@ fun MainScreenPreview() {
             onNotificationButtonClicked = {},
             onUsageStatsButtonClicked = {},
             onAccessibilityButtonClicked = {},
-            onMonitoredAppButtonClicked = {},
             onClearLogButtonClicked = {},
             onSaveLogButtonClicked = {},
             onToggleMonitoring = {},
@@ -195,42 +188,6 @@ fun PermissionCard(
                 val buttonText =
                     if (uiState.hasAccessibility) "已获得无障碍服务权限" else "申请无障碍服务权限"
                 Text(text = buttonText)
-            }
-        }
-    }
-}
-
-@Composable
-fun MonitoredAppCard(
-    modifier: Modifier = Modifier,
-    onMonitoredAppButtonClicked: () -> Unit,
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "应用管理",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-            FilledTonalButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                onClick = onMonitoredAppButtonClicked
-            ) {
-                Text(text = "应用监控列表")
             }
         }
     }
