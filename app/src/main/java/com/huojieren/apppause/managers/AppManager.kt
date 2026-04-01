@@ -13,6 +13,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -36,10 +37,35 @@ class AppManager(
     // 内存缓存：key = packageName，value = ImageBitmap
     private val cache = LruCache<String, Painter>(maxEntries)
 
-    private val pinyinFormat = HanyuPinyinOutputFormat().apply {
-        caseType = HanyuPinyinCaseType.UPPERCASE
-        toneType = HanyuPinyinToneType.WITHOUT_TONE
-        vCharType = HanyuPinyinVCharType.WITH_V
+    companion object {
+        private val pinyinFormat = HanyuPinyinOutputFormat().apply {
+            caseType = HanyuPinyinCaseType.UPPERCASE
+            toneType = HanyuPinyinToneType.WITHOUT_TONE
+            vCharType = HanyuPinyinVCharType.WITH_V
+        }
+
+        fun getFirstLetter(name: String): String {
+            if (name.isEmpty()) return "#"
+            val firstChar = name.first()
+            val pinyinArray = PinyinHelper.toHanyuPinyinStringArray(firstChar, pinyinFormat)
+            return if (pinyinArray != null && pinyinArray.isNotEmpty()) {
+                pinyinArray[0].first().uppercaseChar().toString()
+            } else {
+                val upper = firstChar.uppercaseChar()
+                if (upper in 'A'..'Z') upper.toString() else "#"
+            }
+        }
+    }
+
+    /**
+     * 获取已安装的应用列表（按拼音字母分组）
+     */
+    fun loadInstalledAppsGrouped(): List<AppLetterGroup<AppInfo>> {
+        val apps = loadInstalledApps()
+        return apps.groupBy { getFirstLetter(it.name) }
+            .entries
+            .sortedBy { it.key }
+            .map { AppLetterGroup(it.key, it.value) }
     }
 
     /**
@@ -136,7 +162,6 @@ class AppManager(
      * 从缓存中查找图标
      */
     fun getCachedIcon(packageName: String): Painter? = cache[packageName]
-
 
     fun getPlaceholderIcon(): Painter {
         return BitmapPainter(

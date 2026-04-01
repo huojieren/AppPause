@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.Permissions
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
 import com.huojieren.apppause.ui.state.MainScreenUiState
@@ -31,7 +32,7 @@ import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.ui.viewModel.MainScreenViewModel
 import com.huojieren.apppause.ui.viewModel.SelectAppViewModel
 
-enum class AppPauseScreen() {
+enum class AppPauseScreen {
     MainScreen,
     SelectApp,
 }
@@ -134,6 +135,9 @@ fun AppPauseApp() {
                     uiState = selectAppUiState.value,
                     onToggleApp = { app ->
                         selectAppViewModel.toggleApp(app)
+                    },
+                    getLetterPosition = { letter ->
+                        selectAppViewModel.getLetterPosition(letter)
                     }
                 )
             }
@@ -211,9 +215,10 @@ fun SelectAppScreenEmptyListPreview() {
                     SelectAppScreen(
                         uiState = SelectAppUiState(
                             monitoredApps = emptyList(),
-                            allApps = emptyList()
+                            allAppsGrouped = emptyList()
                         ),
-                        onToggleApp = {}
+                        onToggleApp = {},
+                        getLetterPosition = { 0 }
                     )
                 }
             }
@@ -239,21 +244,29 @@ fun SelectAppScreenPreview() {
                 icon = painterResource(id = R.drawable.ic_launcher_foreground)
             )
         ),
-        allApps = listOf(
-            AppInfoUi(
-                name = "App 3",
-                packageName = "com.example.app3",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
+        allAppsGrouped = listOf(
+            AppLetterGroup(
+                "A", listOf(
+                    AppInfoUi(
+                        name = "App 3",
+                        packageName = "com.example.app3",
+                        icon = painterResource(id = R.drawable.ic_launcher_foreground)
+                    )
+                )
             ),
-            AppInfoUi(
-                name = "App 4",
-                packageName = "com.example.app4",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
-            ),
-            AppInfoUi(
-                name = "App 5",
-                packageName = "com.example.app5",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
+            AppLetterGroup(
+                "B", listOf(
+                    AppInfoUi(
+                        name = "App 4",
+                        packageName = "com.example.app4",
+                        icon = painterResource(id = R.drawable.ic_launcher_foreground)
+                    ),
+                    AppInfoUi(
+                        name = "App 5",
+                        packageName = "com.example.app5",
+                        icon = painterResource(id = R.drawable.ic_launcher_foreground)
+                    )
+                )
             )
         )
     )
@@ -275,7 +288,8 @@ fun SelectAppScreenPreview() {
                 composable(AppPauseScreen.SelectApp.name) {
                     SelectAppScreen(
                         uiState = mockState,
-                        onToggleApp = {}
+                        onToggleApp = {},
+                        getLetterPosition = { 0 }
                     )
                 }
             }

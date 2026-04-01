@@ -3,6 +3,7 @@ package com.huojieren.apppause.ui.screens
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,8 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -28,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.data.models.AppLetterGroup
+import com.huojieren.apppause.ui.components.AlphabetIndexBar
 import com.huojieren.apppause.ui.components.AppListItem
 import com.huojieren.apppause.ui.state.SelectAppUiState
 import com.huojieren.apppause.ui.theme.AppTheme
@@ -39,15 +44,24 @@ fun SelectAppScreen(
     uiState: SelectAppUiState,
     modifier: Modifier = Modifier,
     onToggleApp: (AppInfoUi) -> Unit,
+    getLetterPosition: (String) -> Int?,
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    val enableFab = false // 是否启用 Fab
     val showFab by remember {
-        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 100 }
+        derivedStateOf {
+            if (!enableFab) false
+            else listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 100
+        }
     }
+
     val monitoredPackages = remember(uiState.monitoredApps) {
         uiState.monitoredApps.map { it.packageName }.toSet()
     }
+
+    var touchedLetter by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         modifier = modifier,
@@ -56,7 +70,7 @@ fun SelectAppScreen(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            listState.animateScrollToItem(0)
+                            listState.scrollToItem(0)
                         }
                     }
                 ) {
@@ -72,62 +86,97 @@ fun SelectAppScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    Text(
-                        text = "已监控应用",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
-                if (uiState.monitoredApps.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     item {
                         Text(
-                            text = "没有已监控的应用",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "已监控应用",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
                         )
                     }
-                } else {
-                    items(uiState.monitoredApps, key = { "monitored_${it.packageName}" }) { app ->
-                        AppListItem(
-                            appInfoUi = app,
-                            isMonitored = true,
-                            onToggle = onToggleApp
-                        )
+                    if (uiState.monitoredApps.isEmpty()) {
+                        item {
+                            Text(
+                                text = "没有已监控的应用",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    } else {
+                        items(
+                            uiState.monitoredApps,
+                            key = { "monitored_${it.packageName}" }) { app ->
+                            AppListItem(
+                                appInfoUi = app,
+                                isMonitored = true,
+                                onToggle = onToggleApp
+                            )
+                        }
                     }
-                }
-                item {
-                    Text(
-                        text = "所有应用",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
-                if (uiState.allApps.isEmpty()) {
                     item {
                         Text(
-                            text = "未获取到应用列表",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "所有应用",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
                         )
                     }
-                } else {
-                    items(uiState.allApps, key = { "all_${it.packageName}" }) { app ->
-                        val isMonitored = app.packageName in monitoredPackages
-                        AppListItem(
-                            appInfoUi = app,
-                            isMonitored = isMonitored,
-                            onToggle = onToggleApp
-                        )
+                    if (uiState.allAppsGrouped.isEmpty()) {
+                        item {
+                            Text(
+                                text = "未获取到应用列表",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    } else {
+                        uiState.allAppsGrouped.forEach { group ->
+                            item(key = "header_${group.letter}") {
+                                Text(
+                                    text = group.letter,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                )
+                            }
+                            items(
+                                items = group.items,
+                                key = { "all_${it.packageName}" }
+                            ) { app ->
+                                val isMonitored = app.packageName in monitoredPackages
+                                AppListItem(
+                                    appInfoUi = app,
+                                    isMonitored = isMonitored,
+                                    onToggle = onToggleApp
+                                )
+                            }
+                        }
                     }
                 }
+
+                AlphabetIndexBar(
+                    displayLetter = touchedLetter,
+                    onLetterSelected = { letter ->
+                        if (letter.isNotEmpty()) {
+                            touchedLetter = letter
+                            getLetterPosition(letter).let { index ->
+                                coroutineScope.launch {
+                                    index?.let { listState.scrollToItem(it) }
+                                }
+                            }
+                        } else {
+                            touchedLetter = null
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                )
             }
         }
     }
@@ -139,12 +188,13 @@ fun SelectAppScreen(
 fun SelectAppScreenEmptyListPreview() {
     val mockState = SelectAppUiState(
         monitoredApps = emptyList(),
-        allApps = emptyList()
+        allAppsGrouped = emptyList()
     )
     AppTheme {
         SelectAppScreen(
             uiState = mockState,
-            onToggleApp = {}
+            onToggleApp = {},
+            getLetterPosition = { 0 }
         )
     }
 }
@@ -153,41 +203,49 @@ fun SelectAppScreenEmptyListPreview() {
 @Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SelectAppScreenPreview() {
-    val mockState = SelectAppUiState(
-        monitoredApps = listOf(
-            AppInfoUi(
-                name = "App 1",
-                packageName = "com.example.app1",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
-            ),
-            AppInfoUi(
-                name = "App 2",
-                packageName = "com.example.app2",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
-            )
+    val mockMonitoredApps = listOf(
+        AppInfoUi(
+            name = "App 1",
+            packageName = "com.example.app1",
+            icon = painterResource(id = R.drawable.ic_launcher_foreground)
         ),
-        allApps = listOf(
-            AppInfoUi(
-                name = "App 3",
-                packageName = "com.example.app3",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
-            ),
-            AppInfoUi(
-                name = "App 4",
-                packageName = "com.example.app4",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
-            ),
-            AppInfoUi(
-                name = "App 5",
-                packageName = "com.example.app5",
-                icon = painterResource(id = R.drawable.ic_launcher_foreground)
-            )
+        AppInfoUi(
+            name = "App 2",
+            packageName = "com.example.app2",
+            icon = painterResource(id = R.drawable.ic_launcher_foreground)
         )
+    )
+    val mockAllApps = listOf(
+        AppInfoUi(
+            name = "App Pause",
+            packageName = "com.example.appA",
+            icon = painterResource(id = R.drawable.ic_launcher_foreground)
+        ),
+        AppInfoUi(
+            name = "哔哩哔哩",
+            packageName = "com.example.appB",
+            icon = painterResource(id = R.drawable.ic_launcher_foreground)
+        ),
+        AppInfoUi(
+            name = "抖音",
+            packageName = "com.example.douyin",
+            icon = painterResource(id = R.drawable.ic_launcher_foreground)
+        )
+    )
+    val mockGroupedApps = listOf(
+        AppLetterGroup("A", mockAllApps.filter { it.name.startsWith("App Pause") }),
+        AppLetterGroup("B", mockAllApps.filter { it.name.startsWith("哔哩哔哩") }),
+        AppLetterGroup("D", mockAllApps.filter { it.name == "抖音" })
+    )
+    val mockState = SelectAppUiState(
+        monitoredApps = mockMonitoredApps,
+        allAppsGrouped = mockGroupedApps
     )
     AppTheme {
         SelectAppScreen(
             uiState = mockState,
-            onToggleApp = {}
+            onToggleApp = {},
+            getLetterPosition = { 0 }
         )
     }
 }
