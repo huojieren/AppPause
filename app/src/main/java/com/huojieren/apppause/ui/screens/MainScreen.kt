@@ -1,13 +1,16 @@
 package com.huojieren.apppause.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,12 +58,18 @@ fun MainScreen(
         )
     }
 
-    LazyColumn(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        item {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        ) {
             PermissionCard(
                 uiState = uiState,
                 onOverlayButtonClicked = onOverlayButtonClicked,
@@ -68,20 +77,14 @@ fun MainScreen(
                 onUsageStatsButtonClicked = onUsageStatsButtonClicked,
                 onAccessibilityButtonClicked = onAccessibilityButtonClicked,
             )
-        }
-        item {
             LogCard(
                 onClearLogButtonClicked = onClearLogButtonClicked,
                 onSaveLogButtonClicked = onSaveLogButtonClicked
             )
-        }
-        item {
             MonitoredStatusCard(
                 uiState = uiState,
                 onToggleMonitoring = onToggleMonitoring,
             )
-        }
-        item {
             VersionText()
         }
     }
