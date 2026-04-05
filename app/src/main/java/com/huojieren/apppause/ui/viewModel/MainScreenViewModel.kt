@@ -46,6 +46,7 @@ class MainScreenViewModel @Inject constructor(
 
     init {
         logger(tag, "MainScreenViewModel init")
+        refreshState()
     }
 
     fun refreshState() {
