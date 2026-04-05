@@ -1,6 +1,8 @@
 package com.huojieren.apppause.ui
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -11,7 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -36,12 +38,23 @@ enum class AppPauseScreen(val route: String, val title: String, val icon: ImageV
     AppManager("app_manager", "应用管理", Icons.AutoMirrored.Filled.List),
 }
 
-private fun Modifier.navHostPadding(innerPadding: PaddingValues) = this.then(
+private fun Modifier.navHostPadding(
+    innerPadding: PaddingValues,
+    currentRoute: String?,
+) = this.then(
     Modifier.padding(
-        top = innerPadding.calculateTopPadding() + 20.dp,
-        bottom = innerPadding.calculateBottomPadding() + 20.dp,
-        start = 16.dp,
-        end = 16.dp
+        top =
+            if (currentRoute == AppPauseScreen.MainScreen.route)
+                innerPadding.calculateTopPadding() + 20.dp
+            else
+                innerPadding.calculateTopPadding(),
+        bottom =
+            if (currentRoute == AppPauseScreen.MainScreen.route)
+                innerPadding.calculateBottomPadding() + 20.dp
+            else
+                innerPadding.calculateBottomPadding(),
+        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr) + 16.dp,
+        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr) + 16.dp
     )
 )
 
@@ -81,7 +94,7 @@ fun AppPauseApp(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.navHostPadding(innerPadding)
+            modifier = Modifier.navHostPadding(innerPadding, currentRoute)
         ) {
             composable(AppPauseScreen.MainScreen.route) {
                 MainScreen(
@@ -128,8 +141,8 @@ fun AppPauseApp(
     }
 }
 
-@Preview("Light Theme")
-//@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightThemePreview
+//@DarkThemePreview
 @Composable
 fun MainScreenPreview() {
     AppTheme {
@@ -147,8 +160,8 @@ fun MainScreenPreview() {
     }
 }
 
-@Preview("Light Theme")
-//@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightThemePreview
+//@DarkThemePreview
 @Composable
 fun SelectAppScreenEmptyListPreview() {
     AppTheme {
@@ -163,8 +176,8 @@ fun SelectAppScreenEmptyListPreview() {
     }
 }
 
-@Preview("Light Theme")
-//@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightThemePreview
+//@DarkThemePreview
 @Composable
 fun SelectAppScreenPreview() {
     AppTheme {
