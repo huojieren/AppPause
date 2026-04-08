@@ -1,8 +1,11 @@
 package com.huojieren.apppause.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -65,6 +68,13 @@ fun AppPauseApp(
     val actualSelectAppUiState =
         selectAppUiState ?: selectAppViewModel!!.uiState.collectAsState().value
 
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        composable(AppPauseScreen.MainScreen.route) { }
+        composable(AppPauseScreen.AppManager.route) { }
+    }
 
     Scaffold(
         bottomBar = {
@@ -78,70 +88,76 @@ fun AppPauseApp(
         }
     ) { innerPadding ->
 
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = Modifier.padding(
-                top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
-            ),
-            enterTransition = { fadeIn(animationSpec = tween(400)) },
-            exitTransition = { fadeOut(animationSpec = tween(400)) }
-        ) {
-            composable(AppPauseScreen.MainScreen.route) {
-                MainScreen(
-                    uiState = actualMainScreenUiState,
-                    onLifecycleChange = {
-                        mainScreenViewModel?.refreshState()
-                    },
-                    onOverlayButtonClicked = {
-                        mainScreenViewModel?.requestPermission(Permissions.Overlay)
-                    },
-                    onNotificationButtonClicked = {
-                        mainScreenViewModel?.requestPermission(Permissions.Notification)
-                    },
-                    onUsageStatsButtonClicked = {
-                        mainScreenViewModel?.requestPermission(Permissions.UsageStats)
-                    },
-                    onAccessibilityButtonClicked = {
-                        mainScreenViewModel?.requestPermission(Permissions.Accessibility)
-                    },
-                    onClearLogButtonClicked = {
-                        mainScreenViewModel?.clearLog()
-                    },
-                    onSaveLogButtonClicked = {
-                        mainScreenViewModel?.saveLog()
-                    },
-                    onToggleMonitoring = {
-                        mainScreenViewModel?.toggleMonitoring()
-                    },
-                    modifier = Modifier.padding(
-                        vertical = 20.dp,
-                        horizontal = 16.dp
-                    )
+        AnimatedContent(
+            targetState = currentRoute,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(200)) togetherWith
+                        fadeOut(animationSpec = tween(200))
+            },
+            label = "screen_transition",
+            modifier = Modifier
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
                 )
-            }
+                .fillMaxSize()
+        ) { route ->
+            when (route) {
+                AppPauseScreen.MainScreen.route -> {
+                    MainScreen(
+                        uiState = actualMainScreenUiState,
+                        onLifecycleChange = {
+                            mainScreenViewModel?.refreshState()
+                        },
+                        onOverlayButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.Overlay)
+                        },
+                        onNotificationButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.Notification)
+                        },
+                        onUsageStatsButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.UsageStats)
+                        },
+                        onAccessibilityButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.Accessibility)
+                        },
+                        onClearLogButtonClicked = {
+                            mainScreenViewModel?.clearLog()
+                        },
+                        onSaveLogButtonClicked = {
+                            mainScreenViewModel?.saveLog()
+                        },
+                        onToggleMonitoring = {
+                            mainScreenViewModel?.toggleMonitoring()
+                        },
+                        modifier = Modifier.padding(
+                            vertical = 20.dp,
+                            horizontal = 16.dp
+                        )
+                    )
+                }
 
-            composable(AppPauseScreen.AppManager.route) {
-                SelectAppScreen(
-                    uiState = actualSelectAppUiState,
-                    onToggleApp = { app ->
-                        selectAppViewModel?.toggleApp(app)
-                    },
-                    getLetterPosition = { letter ->
-                        selectAppViewModel?.getLetterPosition(letter)
-                    },
-                    modifier = Modifier.padding(
-                        horizontal = 16.dp
+                AppPauseScreen.AppManager.route, null -> {
+                    SelectAppScreen(
+                        uiState = actualSelectAppUiState,
+                        onToggleApp = { app ->
+                            selectAppViewModel?.toggleApp(app)
+                        },
+                        getLetterPosition = { letter ->
+                            selectAppViewModel?.getLetterPosition(letter)
+                        },
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp
+                        )
                     )
-                )
+                }
             }
         }
     }
 }
 
-@LightThemePreview
-//@DarkThemePreview
+@LightAppPreview
+@DarkAppPreview
 @Composable
 fun MainScreenPreview() {
     AppTheme {
@@ -159,8 +175,8 @@ fun MainScreenPreview() {
     }
 }
 
-@LightThemePreview
-//@DarkThemePreview
+@LightAppPreview
+@DarkAppPreview
 @Composable
 fun SelectAppScreenEmptyListPreview() {
     AppTheme {
@@ -175,8 +191,8 @@ fun SelectAppScreenEmptyListPreview() {
     }
 }
 
-@LightThemePreview
-//@DarkThemePreview
+@LightAppPreview
+@DarkAppPreview
 @Composable
 fun SelectAppScreenPreview() {
     AppTheme {
@@ -189,7 +205,7 @@ fun SelectAppScreenPreview() {
 }
 
 @Composable
-private fun mockSelectAppUiState(): SelectAppUiState {
+fun mockSelectAppUiState(): SelectAppUiState {
     return SelectAppUiState(
         monitoredApps = listOf(
             AppInfoUi(

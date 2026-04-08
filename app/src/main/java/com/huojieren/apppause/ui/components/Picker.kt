@@ -35,9 +35,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.state.PickerState
 import com.huojieren.apppause.ui.state.rememberPickerState
 import com.huojieren.apppause.ui.theme.AppTheme
@@ -161,7 +161,7 @@ private fun Modifier.fadingEdge(brush: Brush) = this
 private fun pixelsToDp(pixels: Int) = with(LocalDensity.current) { pixels.toDp() }
 
 
-@Preview
+@LightComponentPreview
 @Composable
 fun PickerExample() {
     AppTheme {

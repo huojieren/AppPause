@@ -1,6 +1,5 @@
 package com.huojieren.apppause.ui.components
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,10 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.ui.DarkComponentPreview
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.theme.AppTheme
 
 private val ALPHABET = listOf(
@@ -115,8 +115,8 @@ fun AlphabetIndexBar(
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightComponentPreview
+@DarkComponentPreview
 @Composable
 fun AlphabetIndexBarPreview() {
     AppTheme {

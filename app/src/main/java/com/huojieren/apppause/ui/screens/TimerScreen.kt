@@ -1,6 +1,5 @@
 package com.huojieren.apppause.ui.screens
 
-import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,11 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.components.Picker
 import com.huojieren.apppause.ui.state.rememberPickerState
 import com.huojieren.apppause.ui.theme.AppTheme
@@ -71,8 +70,7 @@ fun TimeSelectionScreen(
     }
 
     Surface(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier,
         color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
@@ -160,8 +158,8 @@ fun TimeSelectionScreen(
     }
 }
 
-//@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightComponentPreview
+//@DarkComponentPreview
 @Composable
 fun TimeSelectionCardPreView() {
     val mockAppInfo = AppInfoUi(
@@ -211,8 +209,7 @@ fun TimeOutScreen(
 
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier,
     ) {
         Column(
             modifier = Modifier,
@@ -255,8 +252,8 @@ fun TimeOutScreen(
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightComponentPreview
+//@DarkComponentPreview
 @Composable
 fun TimeOutScreenPreview() {
     val mockAppInfoUi = AppInfoUi(

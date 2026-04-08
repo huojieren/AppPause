@@ -1,11 +1,11 @@
 package com.huojieren.apppause.ui.screens
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -26,14 +26,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
-import com.huojieren.apppause.data.models.AppLetterGroup
+import com.huojieren.apppause.ui.DarkComponentPreview
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.components.AlphabetIndexBar
 import com.huojieren.apppause.ui.components.AppListItem
+import com.huojieren.apppause.ui.mockSelectAppUiState
 import com.huojieren.apppause.ui.state.SelectAppUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 import kotlinx.coroutines.launch
@@ -100,6 +99,7 @@ fun SelectAppScreen(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(top = 16.dp)
                         )
                     }
                     if (uiState.monitoredApps.isEmpty()) {
@@ -182,8 +182,8 @@ fun SelectAppScreen(
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightComponentPreview
+@DarkComponentPreview
 @Composable
 fun SelectAppScreenEmptyListPreview() {
     val mockState = SelectAppUiState(
@@ -199,51 +199,13 @@ fun SelectAppScreenEmptyListPreview() {
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightComponentPreview
+@DarkComponentPreview
 @Composable
 fun SelectAppScreenPreview() {
-    val mockMonitoredApps = listOf(
-        AppInfoUi(
-            name = "App 1",
-            packageName = "com.example.app1",
-            icon = painterResource(id = R.drawable.ic_launcher_foreground)
-        ),
-        AppInfoUi(
-            name = "App 2",
-            packageName = "com.example.app2",
-            icon = painterResource(id = R.drawable.ic_launcher_foreground)
-        )
-    )
-    val mockAllApps = listOf(
-        AppInfoUi(
-            name = "App Pause",
-            packageName = "com.example.appA",
-            icon = painterResource(id = R.drawable.ic_launcher_foreground)
-        ),
-        AppInfoUi(
-            name = "哔哩哔哩",
-            packageName = "com.example.appB",
-            icon = painterResource(id = R.drawable.ic_launcher_foreground)
-        ),
-        AppInfoUi(
-            name = "抖音",
-            packageName = "com.example.douyin",
-            icon = painterResource(id = R.drawable.ic_launcher_foreground)
-        )
-    )
-    val mockGroupedApps = listOf(
-        AppLetterGroup("A", mockAllApps.filter { it.name.startsWith("App Pause") }),
-        AppLetterGroup("B", mockAllApps.filter { it.name.startsWith("哔哩哔哩") }),
-        AppLetterGroup("D", mockAllApps.filter { it.name == "抖音" })
-    )
-    val mockState = SelectAppUiState(
-        monitoredApps = mockMonitoredApps,
-        allAppsGrouped = mockGroupedApps
-    )
     AppTheme {
         SelectAppScreen(
-            uiState = mockState,
+            uiState = mockSelectAppUiState(),
             onToggleApp = {},
             getLetterPosition = { 0 }
         )

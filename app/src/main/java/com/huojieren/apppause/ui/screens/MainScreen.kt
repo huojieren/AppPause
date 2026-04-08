@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -22,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -30,6 +28,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.state.MainScreenUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 
@@ -59,7 +58,7 @@ fun MainScreen(
     }
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -68,7 +67,6 @@ fun MainScreen(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
         ) {
             PermissionCard(
                 uiState = uiState,
@@ -98,7 +96,7 @@ private class LazyColumnEventObserver(
     }
 }
 
-@Preview
+@LightComponentPreview
 @Composable
 fun MainScreenPreview() {
     val mockState = MainScreenUiState(
