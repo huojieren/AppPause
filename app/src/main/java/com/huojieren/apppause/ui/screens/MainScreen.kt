@@ -1,13 +1,15 @@
 package com.huojieren.apppause.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -19,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -27,6 +28,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.state.MainScreenUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 
@@ -39,7 +41,6 @@ fun MainScreen(
     onNotificationButtonClicked: () -> Unit,
     onUsageStatsButtonClicked: () -> Unit,
     onAccessibilityButtonClicked: () -> Unit,
-    onMonitoredAppButtonClicked: () -> Unit,
     onClearLogButtonClicked: () -> Unit,
     onSaveLogButtonClicked: () -> Unit,
     onToggleMonitoring: () -> Unit,
@@ -56,12 +57,17 @@ fun MainScreen(
         )
     }
 
-    LazyColumn(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
     ) {
-        item {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+        ) {
             PermissionCard(
                 uiState = uiState,
                 onOverlayButtonClicked = onOverlayButtonClicked,
@@ -69,25 +75,14 @@ fun MainScreen(
                 onUsageStatsButtonClicked = onUsageStatsButtonClicked,
                 onAccessibilityButtonClicked = onAccessibilityButtonClicked,
             )
-        }
-        item {
-            MonitoredAppCard(
-                onMonitoredAppButtonClicked = onMonitoredAppButtonClicked
-            )
-        }
-        item {
             LogCard(
                 onClearLogButtonClicked = onClearLogButtonClicked,
                 onSaveLogButtonClicked = onSaveLogButtonClicked
             )
-        }
-        item {
             MonitoredStatusCard(
                 uiState = uiState,
                 onToggleMonitoring = onToggleMonitoring,
             )
-        }
-        item {
             VersionText()
         }
     }
@@ -101,7 +96,7 @@ private class LazyColumnEventObserver(
     }
 }
 
-@Preview
+@LightComponentPreview
 @Composable
 fun MainScreenPreview() {
     val mockState = MainScreenUiState(
@@ -119,7 +114,6 @@ fun MainScreenPreview() {
             onNotificationButtonClicked = {},
             onUsageStatsButtonClicked = {},
             onAccessibilityButtonClicked = {},
-            onMonitoredAppButtonClicked = {},
             onClearLogButtonClicked = {},
             onSaveLogButtonClicked = {},
             onToggleMonitoring = {},
@@ -195,42 +189,6 @@ fun PermissionCard(
                 val buttonText =
                     if (uiState.hasAccessibility) "已获得无障碍服务权限" else "申请无障碍服务权限"
                 Text(text = buttonText)
-            }
-        }
-    }
-}
-
-@Composable
-fun MonitoredAppCard(
-    modifier: Modifier = Modifier,
-    onMonitoredAppButtonClicked: () -> Unit,
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "应用管理",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-            FilledTonalButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                onClick = onMonitoredAppButtonClicked
-            ) {
-                Text(text = "应用监控列表")
             }
         }
     }

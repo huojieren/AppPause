@@ -1,19 +1,21 @@
 package com.huojieren.apppause.ui
 
-import android.content.res.Configuration
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -24,6 +26,7 @@ import com.huojieren.apppause.R
 import com.huojieren.apppause.data.Permissions
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
+import com.huojieren.apppause.ui.components.BottomBar
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
 import com.huojieren.apppause.ui.state.MainScreenUiState
@@ -32,52 +35,27 @@ import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.ui.viewModel.MainScreenViewModel
 import com.huojieren.apppause.ui.viewModel.SelectAppViewModel
 
-enum class AppPauseScreen {
-    MainScreen,
-    SelectApp,
+enum class AppPauseScreen(val route: String, val title: String, val icon: ImageVector?) {
+    MainScreen("main", "主页", Icons.Default.Home),
+    AppManager("app_manager", "应用管理", Icons.AutoMirrored.Filled.List),
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(
-    modifier: Modifier = Modifier
+fun AppPauseApp(
+    mainScreenUiState: MainScreenUiState? = null,
+    selectAppUiState: SelectAppUiState? = null,
+    startDestination: String = AppPauseScreen.MainScreen.route
 ) {
-    TopAppBar(
-        modifier = modifier,
-        title = {
-            Text(
-                text = "App Pause",
-                style = MaterialTheme.typography.headlineLarge,
-            )
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-    )
-}
-
-@Composable
-fun BottomBar() {
-    // TODO BottomBar Not yet implemented
-}
-
-@Composable
-fun AppPauseApp() {
     val navController = rememberNavController()
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    AppPauseScreen.valueOf(
-        backStackEntry?.destination?.route ?: AppPauseScreen.MainScreen.name
-    )
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    Scaffold(
-        topBar = { TopBar() },
-        bottomBar = { BottomBar() }
-    ) { innerPadding ->
-        val selectAppViewModel: SelectAppViewModel = hiltViewModel()
-        val selectAppUiState = selectAppViewModel.uiState.collectAsState()
-        val mainScreenViewModel: MainScreenViewModel = hiltViewModel()
-        val mainScreenUiState = mainScreenViewModel.uiState.collectAsState(
+    val mainScreenViewModel: MainScreenViewModel? =
+        if (mainScreenUiState == null) hiltViewModel() else null
+    val selectAppViewModel: SelectAppViewModel? =
+        if (selectAppUiState == null) hiltViewModel() else null
+
+    val actualMainScreenUiState =
+        mainScreenUiState ?: mainScreenViewModel!!.uiState.collectAsState(
             initial = MainScreenUiState(
                 isMonitoring = false,
                 hasOverlay = false,
@@ -85,153 +63,150 @@ fun AppPauseApp() {
                 hasUsageStats = false,
                 hasAccessibility = false
             ),
-        )
+        ).value
 
-        NavHost(
-            navController = navController,
-            startDestination = AppPauseScreen.MainScreen.name,
-            modifier = Modifier.padding(
-                top = innerPadding.calculateTopPadding() + 20.dp,
-                bottom = innerPadding.calculateBottomPadding() + 20.dp,
-                start = 16.dp,
-                end = 16.dp
-            )
-        ) {
-            composable(AppPauseScreen.MainScreen.name) {
-                MainScreen(
-                    uiState = mainScreenUiState.value,
-                    onLifecycleChange = {
-                        mainScreenViewModel.refreshState()
-                    },
-                    onOverlayButtonClicked = {
-                        mainScreenViewModel.requestPermission(Permissions.Overlay)
-                    },
-                    onNotificationButtonClicked = {
-                        mainScreenViewModel.requestPermission(Permissions.Notification)
-                    },
-                    onUsageStatsButtonClicked = {
-                        mainScreenViewModel.requestPermission(Permissions.UsageStats)
-                    },
-                    onAccessibilityButtonClicked = {
-                        mainScreenViewModel.requestPermission(Permissions.Accessibility)
-                    },
-                    onMonitoredAppButtonClicked = {
-                        navController.navigate(AppPauseScreen.SelectApp.name)
-                    },
-                    onClearLogButtonClicked = {
-                        mainScreenViewModel.clearLog()
-                    },
-                    onSaveLogButtonClicked = {
-                        mainScreenViewModel.saveLog()
-                    },
-                    onToggleMonitoring = {
-                        mainScreenViewModel.toggleMonitoring()
-                    }
-                )
+    val actualSelectAppUiState =
+        selectAppUiState ?: selectAppViewModel!!.uiState.collectAsState().value
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        composable(AppPauseScreen.MainScreen.route) { }
+        composable(AppPauseScreen.AppManager.route) { }
+    }
+
+    Scaffold(
+        bottomBar = {
+            BottomBar(currentRoute) { route ->
+                navController.navigate(route) {
+                    popUpTo(
+                        startDestination
+                    ) { inclusive = true }
+                }
             }
+        }
+    ) { innerPadding ->
 
-            composable(AppPauseScreen.SelectApp.name) {
-                SelectAppScreen(
-                    uiState = selectAppUiState.value,
-                    onToggleApp = { app ->
-                        selectAppViewModel.toggleApp(app)
-                    },
-                    getLetterPosition = { letter ->
-                        selectAppViewModel.getLetterPosition(letter)
-                    }
+        AnimatedContent(
+            targetState = currentRoute,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(200)) togetherWith
+                        fadeOut(animationSpec = tween(200))
+            },
+            label = "screen_transition",
+            modifier = Modifier
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
                 )
+                .fillMaxSize()
+        ) { route ->
+            when (route) {
+                AppPauseScreen.MainScreen.route -> {
+                    MainScreen(
+                        uiState = actualMainScreenUiState,
+                        onLifecycleChange = {
+                            mainScreenViewModel?.refreshState()
+                        },
+                        onOverlayButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.Overlay)
+                        },
+                        onNotificationButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.Notification)
+                        },
+                        onUsageStatsButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.UsageStats)
+                        },
+                        onAccessibilityButtonClicked = {
+                            mainScreenViewModel?.requestPermission(Permissions.Accessibility)
+                        },
+                        onClearLogButtonClicked = {
+                            mainScreenViewModel?.clearLog()
+                        },
+                        onSaveLogButtonClicked = {
+                            mainScreenViewModel?.saveLog()
+                        },
+                        onToggleMonitoring = {
+                            mainScreenViewModel?.toggleMonitoring()
+                        },
+                        modifier = Modifier.padding(
+                            vertical = 20.dp,
+                            horizontal = 16.dp
+                        )
+                    )
+                }
+
+                AppPauseScreen.AppManager.route, null -> {
+                    SelectAppScreen(
+                        uiState = actualSelectAppUiState,
+                        onToggleApp = { app ->
+                            selectAppViewModel?.toggleApp(app)
+                        },
+                        getLetterPosition = { letter ->
+                            selectAppViewModel?.getLetterPosition(letter)
+                        },
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp
+                        )
+                    )
+                }
             }
         }
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightAppPreview
+@DarkAppPreview
 @Composable
 fun MainScreenPreview() {
-    val navController = rememberNavController()
-
     AppTheme {
-        Scaffold(
-            topBar = { TopBar() }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = AppPauseScreen.MainScreen.name,
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding() + 20.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 20.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                )
-            ) {
-                composable(AppPauseScreen.MainScreen.name) {
-                    MainScreen(
-                        uiState = MainScreenUiState(
-                            isMonitoring = false,
-                            hasOverlay = false,
-                            hasNotification = false,
-                            hasUsageStats = false,
-                            hasAccessibility = false
-                        ),
-                        onLifecycleChange = {},
-                        onOverlayButtonClicked = {},
-                        onNotificationButtonClicked = {},
-                        onUsageStatsButtonClicked = {},
-                        onAccessibilityButtonClicked = {},
-                        onMonitoredAppButtonClicked = {},
-                        onClearLogButtonClicked = {},
-                        onSaveLogButtonClicked = {},
-                        onToggleMonitoring = {}
-                    )
-                }
-            }
-
-        }
+        AppPauseApp(
+            mainScreenUiState = MainScreenUiState(
+                isMonitoring = false,
+                hasOverlay = false,
+                hasNotification = false,
+                hasUsageStats = false,
+                hasAccessibility = false
+            ),
+            selectAppUiState = SelectAppUiState(),
+            startDestination = AppPauseScreen.MainScreen.route
+        )
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightAppPreview
+@DarkAppPreview
 @Composable
 fun SelectAppScreenEmptyListPreview() {
-    val navController = rememberNavController()
-
     AppTheme {
-        Scaffold(
-            topBar = { TopBar() }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = AppPauseScreen.SelectApp.name,
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding() + 20.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 20.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                )
-            ) {
-                composable(AppPauseScreen.SelectApp.name) {
-                    SelectAppScreen(
-                        uiState = SelectAppUiState(
-                            monitoredApps = emptyList(),
-                            allAppsGrouped = emptyList()
-                        ),
-                        onToggleApp = {},
-                        getLetterPosition = { 0 }
-                    )
-                }
-            }
-        }
+        AppPauseApp(
+            mainScreenUiState = MainScreenUiState(),
+            selectAppUiState = SelectAppUiState(
+                monitoredApps = emptyList(),
+                allAppsGrouped = emptyList()
+            ),
+            startDestination = AppPauseScreen.AppManager.route
+        )
     }
 }
 
-@Preview("Light Theme")
-@Preview("Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightAppPreview
+@DarkAppPreview
 @Composable
 fun SelectAppScreenPreview() {
-    val navController = rememberNavController()
-    val mockState = SelectAppUiState(
+    AppTheme {
+        AppPauseApp(
+            mainScreenUiState = MainScreenUiState(),
+            selectAppUiState = mockSelectAppUiState(),
+            startDestination = AppPauseScreen.AppManager.route
+        )
+    }
+}
+
+@Composable
+fun mockSelectAppUiState(): SelectAppUiState {
+    return SelectAppUiState(
         monitoredApps = listOf(
             AppInfoUi(
                 name = "App 1",
@@ -248,7 +223,7 @@ fun SelectAppScreenPreview() {
             AppLetterGroup(
                 "A", listOf(
                     AppInfoUi(
-                        name = "App 3",
+                        name = "A App",
                         packageName = "com.example.app3",
                         icon = painterResource(id = R.drawable.ic_launcher_foreground)
                     )
@@ -257,42 +232,31 @@ fun SelectAppScreenPreview() {
             AppLetterGroup(
                 "B", listOf(
                     AppInfoUi(
-                        name = "App 4",
+                        name = "B App 1",
                         packageName = "com.example.app4",
                         icon = painterResource(id = R.drawable.ic_launcher_foreground)
                     ),
                     AppInfoUi(
-                        name = "App 5",
+                        name = "B App 2",
                         packageName = "com.example.app5",
+                        icon = painterResource(id = R.drawable.ic_launcher_foreground)
+                    )
+                )
+            ),
+            AppLetterGroup(
+                "C", listOf(
+                    AppInfoUi(
+                        name = "C App 1",
+                        packageName = "com.example.app6",
+                        icon = painterResource(id = R.drawable.ic_launcher_foreground)
+                    ),
+                    AppInfoUi(
+                        name = "C App 2",
+                        packageName = "com.example.app7",
                         icon = painterResource(id = R.drawable.ic_launcher_foreground)
                     )
                 )
             )
         )
     )
-
-    AppTheme {
-        Scaffold(
-            topBar = { TopBar() }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = AppPauseScreen.SelectApp.name,
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding() + 20.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 20.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                )
-            ) {
-                composable(AppPauseScreen.SelectApp.name) {
-                    SelectAppScreen(
-                        uiState = mockState,
-                        onToggleApp = {},
-                        getLetterPosition = { 0 }
-                    )
-                }
-            }
-        }
-    }
 }

@@ -83,6 +83,7 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-drawablepainter
     runtimeOnly(libs.accompanist.drawablepainter)
+    runtimeOnly(libs.accompanist.systemuicontroller)
 
     // ===== Lifecycle =====
     implementation(libs.androidx.lifecycle.common)

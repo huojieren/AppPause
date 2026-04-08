@@ -21,10 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.theme.AppTheme
 
 private val ICON_SIZE = 40.dp
@@ -74,7 +74,7 @@ fun AppListItem(
     }
 }
 
-@Preview("App List Item - Not Monitored")
+@LightComponentPreview
 @Composable
 fun AppListItemNotMonitoredPreview() {
     val mockApp = AppInfoUi(
@@ -91,7 +91,7 @@ fun AppListItemNotMonitoredPreview() {
     }
 }
 
-@Preview("App List Item - Monitored")
+@LightComponentPreview
 @Composable
 fun AppListItemMonitoredPreview() {
     val mockApp = AppInfoUi(

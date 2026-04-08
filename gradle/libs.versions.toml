@@ -1,7 +1,7 @@
 [versions]
 accompanistDrawablepainter = "0.37.3"
+accompanistSystemuicontroller = "0.34.0"
 activityCompose = "1.10.1"
-activityKtx = "1.11.0"
 agp = "8.11.1"
 animation = "1.9.0"
 composeBom = "2025.08.01"
@@ -26,7 +26,6 @@ material = "1.12.0"
 #noinspection GradleDependency 支持到 SDK 35
 androidx-core = "1.16.0"
 androidx-junit = "1.3.0"
-material3 = "1.3.2"
 monitor = "1.8.0"
 navigationCommon = "2.9.3"
 navigationCompose = "2.9.3"
@@ -37,7 +36,6 @@ savedstate = "1.3.2"
 ui = "1.9.0"
 uiGraphics = "1.9.0"
 uiText = "1.9.0"
-uiToolingPreview = "1.9.0"
 uiUnit = "1.9.0"
 datastore = "1.1.7"
 timber = "5.0.1"
@@ -45,9 +43,9 @@ pinyin4j = "2.5.1"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistDrawablepainter" }
+accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
 androidx-activity = { module = "androidx.activity:activity", version.ref = "activityCompose" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
-androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityKtx" }
 androidx-animation = { module = "androidx.compose.animation:animation", version.ref = "animation" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastorePreferencesCore" }
