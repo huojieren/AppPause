@@ -1,8 +1,8 @@
 package com.huojieren.apppause.ui
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -13,7 +13,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -37,26 +36,6 @@ enum class AppPauseScreen(val route: String, val title: String, val icon: ImageV
     MainScreen("main", "主页", Icons.Default.Home),
     AppManager("app_manager", "应用管理", Icons.AutoMirrored.Filled.List),
 }
-
-private fun Modifier.navHostPadding(
-    innerPadding: PaddingValues,
-    currentRoute: String?,
-) = this.then(
-    Modifier.padding(
-        top =
-            if (currentRoute == AppPauseScreen.MainScreen.route)
-                innerPadding.calculateTopPadding() + 20.dp
-            else
-                innerPadding.calculateTopPadding(),
-        bottom =
-            if (currentRoute == AppPauseScreen.MainScreen.route)
-                innerPadding.calculateBottomPadding() + 20.dp
-            else
-                innerPadding.calculateBottomPadding(),
-        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr) + 16.dp,
-        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr) + 16.dp
-    )
-)
 
 @Composable
 fun AppPauseApp(
@@ -88,13 +67,26 @@ fun AppPauseApp(
 
 
     Scaffold(
-        bottomBar = { BottomBar(currentRoute) { route -> navController.navigate(route) } }
+        bottomBar = {
+            BottomBar(currentRoute) { route ->
+                navController.navigate(route) {
+                    popUpTo(
+                        startDestination
+                    ) { inclusive = true }
+                }
+            }
+        }
     ) { innerPadding ->
 
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.navHostPadding(innerPadding, currentRoute)
+            modifier = Modifier.padding(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()
+            ),
+            enterTransition = { fadeIn(animationSpec = tween(400)) },
+            exitTransition = { fadeOut(animationSpec = tween(400)) }
         ) {
             composable(AppPauseScreen.MainScreen.route) {
                 MainScreen(
@@ -122,7 +114,11 @@ fun AppPauseApp(
                     },
                     onToggleMonitoring = {
                         mainScreenViewModel?.toggleMonitoring()
-                    }
+                    },
+                    modifier = Modifier.padding(
+                        vertical = 20.dp,
+                        horizontal = 16.dp
+                    )
                 )
             }
 
@@ -134,7 +130,10 @@ fun AppPauseApp(
                     },
                     getLetterPosition = { letter ->
                         selectAppViewModel?.getLetterPosition(letter)
-                    }
+                    },
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp
+                    )
                 )
             }
         }
