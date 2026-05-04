@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,6 +30,7 @@ import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.ui.components.BottomBar
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
+import com.huojieren.apppause.ui.screens.SettingsScreen
 import com.huojieren.apppause.ui.state.MainScreenUiState
 import com.huojieren.apppause.ui.state.SelectAppUiState
 import com.huojieren.apppause.ui.theme.AppTheme
@@ -37,7 +39,8 @@ import com.huojieren.apppause.ui.viewModel.SelectAppViewModel
 
 enum class AppPauseScreen(val route: String, val title: String, val icon: ImageVector?) {
     MainScreen("main", "主页", Icons.Default.Home),
-    AppManager("app_manager", "应用管理", Icons.AutoMirrored.Filled.List),
+    AppManager("app_manager", "应用", Icons.AutoMirrored.Filled.List),
+    SettingsScreen("settings", "设置", Icons.Filled.Settings),
 }
 
 @Composable
@@ -74,6 +77,7 @@ fun AppPauseApp(
     ) {
         composable(AppPauseScreen.MainScreen.route) { }
         composable(AppPauseScreen.AppManager.route) { }
+        composable(AppPauseScreen.SettingsScreen.route) { }
     }
 
     Scaffold(
@@ -109,6 +113,19 @@ fun AppPauseApp(
                         onLifecycleChange = {
                             mainScreenViewModel?.refreshState()
                         },
+                        onToggleMonitoring = {
+                            mainScreenViewModel?.toggleMonitoring()
+                        },
+                        modifier = Modifier.padding(
+                            vertical = 20.dp,
+                            horizontal = 16.dp
+                        )
+                    )
+                }
+
+                AppPauseScreen.SettingsScreen.route -> {
+                    SettingsScreen(
+                        uiState = actualMainScreenUiState,
                         onOverlayButtonClicked = {
                             mainScreenViewModel?.requestPermission(Permissions.Overlay)
                         },
@@ -126,9 +143,6 @@ fun AppPauseApp(
                         },
                         onSaveLogButtonClicked = {
                             mainScreenViewModel?.saveLog()
-                        },
-                        onToggleMonitoring = {
-                            mainScreenViewModel?.toggleMonitoring()
                         },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
@@ -200,6 +214,25 @@ fun SelectAppScreenPreview() {
             mainScreenUiState = MainScreenUiState(),
             selectAppUiState = mockSelectAppUiState(),
             startDestination = AppPauseScreen.AppManager.route
+        )
+    }
+}
+
+@LightAppPreview
+@DarkAppPreview
+@Composable
+fun SettingsScreenPreview() {
+    AppTheme {
+        AppPauseApp(
+            mainScreenUiState = MainScreenUiState(
+                isMonitoring = true,
+                hasOverlay = true,
+                hasNotification = true,
+                hasUsageStats = true,
+                hasAccessibility = true
+            ),
+            selectAppUiState = SelectAppUiState(),
+            startDestination = AppPauseScreen.SettingsScreen.route
         )
     }
 }
