@@ -1,6 +1,9 @@
 package com.huojieren.apppause.di
 
 import android.content.Context
+import com.huojieren.apppause.data.local.AppDatabase
+import com.huojieren.apppause.data.local.dao.TodoDao
+import com.huojieren.apppause.data.local.dao.TodoGroupDao
 import com.huojieren.apppause.data.repository.DataStoreRepository
 import com.huojieren.apppause.data.repository.LogRepository
 import dagger.Module
@@ -29,4 +32,23 @@ object DataModule {
         return LogRepository(context)
     }
 
+    @Provides
+    @Singleton
+    fun provideAppDatabase(
+        @ApplicationContext context: Context
+    ): AppDatabase {
+        return AppDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTodoDao(database: AppDatabase): TodoDao {
+        return database.todoDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTodoGroupDao(database: AppDatabase): TodoGroupDao {
+        return database.todoGroupDao()
+    }
 }

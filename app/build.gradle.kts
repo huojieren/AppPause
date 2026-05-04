@@ -102,6 +102,11 @@ dependencies {
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.kotlinx.serialization.json)
 
+    // ===== Room =====
+    implementation(libs.room.ktx)
+    implementation(libs.room.runtime)
+    kapt(libs.room.compiler)
+
     // ===== AndroidX Core & 基础 =====
     implementation(libs.androidx.activity)
     implementation(libs.androidx.core)
