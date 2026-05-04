@@ -5,7 +5,6 @@ import com.huojieren.apppause.data.repository.DataStoreRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.ListenerManager
 import com.huojieren.apppause.managers.MonitorManager
-import com.huojieren.apppause.managers.NotificationManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
@@ -50,14 +49,6 @@ object ManagerModule {
         @ApplicationContext context: Context
     ): OverlayManager {
         return OverlayManager(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideNotificationManager(
-        @ApplicationContext context: Context
-    ): NotificationManager {
-        return NotificationManager(context)
     }
 
     @Provides

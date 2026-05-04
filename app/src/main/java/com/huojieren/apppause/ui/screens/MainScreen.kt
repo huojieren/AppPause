@@ -274,7 +274,8 @@ fun MonitoredStatusCard(
             FilledTonalButton(
                 modifier = Modifier
                     .fillMaxWidth(),
-                enabled = uiState.hasOverlay && uiState.hasNotification && uiState.hasUsageStats,
+                enabled = uiState.isMonitoring ||
+                        (uiState.hasOverlay && uiState.hasNotification && uiState.hasUsageStats && uiState.hasAccessibility),
                 onClick = {
                     onToggleMonitoring()
                 },

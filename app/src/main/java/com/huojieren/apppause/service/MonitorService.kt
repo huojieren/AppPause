@@ -61,14 +61,15 @@ class MonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        logger(tag, "create notification")
+        logger(tag, "onCreate start")
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         acquireWakeLock()
+        logger(tag, "onCreate end")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        logger(tag, "start notification")
+        logger(tag, "onStartCommand start, intent=$intent")
 
         // 读取监控策略
         val strategy = intent?.getStringExtra("strategy")
@@ -121,6 +122,7 @@ class MonitorService : Service() {
         }
 
         // 启动前台通知
+        logger(tag, "startForeground start")
         startForeground(
             notificationId,
             NotificationCompat.Builder(this, channelId)
@@ -131,6 +133,7 @@ class MonitorService : Service() {
                 .setOngoing(true)
                 .build()
         )
+        logger(tag, "startForeground end")
 
         // 启动检测器：回调会进入主线程
         monitor?.start { appInfo ->
@@ -181,6 +184,7 @@ class MonitorService : Service() {
     }
 
     private fun createNotificationChannel() {
+        logger(tag, "createNotificationChannel start")
         val channel = NotificationChannel(
             channelId,
             "监控保活通知",
@@ -189,6 +193,7 @@ class MonitorService : Service() {
 
         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
             .createNotificationChannel(channel)
+        logger(tag, "createNotificationChannel end")
     }
 
     private fun acquireWakeLock() {

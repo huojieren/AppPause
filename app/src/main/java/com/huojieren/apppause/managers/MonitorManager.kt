@@ -11,9 +11,6 @@ import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
@@ -34,19 +31,6 @@ class MonitorManager(
     // 最后一次有效应用（用于通知显示）
     private var lastValidApp: AppInfo? = null
     private var lastRemainingTime: Long = 0
-
-    // 通知显示状态
-    private val _notificationState = MutableStateFlow(NotificationDisplayState())
-    val notificationState: StateFlow<NotificationDisplayState> = _notificationState.asStateFlow()
-
-    /**
-     * 通知显示状态
-     */
-    data class NotificationDisplayState(
-        val appName: String? = null,
-        val remainingTimeMs: Long = 0,
-        val isValid: Boolean = false  // 当前是否有效应用
-    )
 
     fun setOnAppChangedListener(listener: (AppInfo?) -> Unit) {
         logger(tag, "set on app changed listener")
@@ -75,8 +59,9 @@ class MonitorManager(
             val intent = Intent(context, MonitorService::class.java)
             // TODO 2025/11/30 21:55 监控策略切换
             intent.putExtra("strategy", MonitorStrategy.ACCESSIBILITY.name)
+            logger(tag, "startMonitor: calling startForegroundService")
             ContextCompat.startForegroundService(context, intent)
-            logger(tag, "startMonitor: foreground service started")
+            logger(tag, "startMonitor: foreground service started, returning")
         } catch (e: Exception) {
             logger(tag, "Failed to start MonitorService: ${e.message}")
             throw IllegalStateException("Failed to start MonitorService：${e.message}", e)
@@ -114,22 +99,16 @@ class MonitorManager(
         // 切换到无效应用时，暂停上一个被监控应用的计时器
         if (!isValidApp(app)) {
             logger(tag, "invalid app: [${packageName ?: "null"}], paused timer")
-            previousApp?.let {
+            previousApp?.let { app ->
+                val remaining = timerManager.getRemainingTime(app)
                 logger(
                     tag,
-                    "pause timer for [${it.packageName}], current remaining: ${
-                        timerManager.getRemainingTime(it)
-                    }ms"
+                    "pause timer for [${app.packageName}], current remaining: ${remaining}ms"
                 )
-                timerManager.pause(it.packageName)
-                // 保存最后一次有效应用信息用于通知显示
-                lastValidApp = it
-                lastRemainingTime = timerManager.getRemainingTime(it)
-                logger(
-                    tag,
-                    "saved last valid app: [${it.name}], remaining: ${lastRemainingTime}ms"
-                )
-                updateNotificationState(it.name, lastRemainingTime, false)
+                timerManager.pause(app.packageName)
+                lastValidApp = app
+                lastRemainingTime = remaining
+                logger(tag, "saved last valid app: [${app.name}], remaining: ${remaining}ms")
             }
             return
         }
@@ -162,30 +141,16 @@ class MonitorManager(
                 "[${validApp.packageName}] continue counting, remaining: ${remaining / 1000}s"
             )
             timerManager.start(validApp)
-            // 更新通知状态为有效
+// 更新通知状态为有效
             lastValidApp = validApp
-            lastRemainingTime = remaining
-            logger(
-                tag,
-                "resume timer, app: [${validApp.name}], remaining: ${remaining}ms"
-            )
-            updateNotificationState(validApp.name, remaining, true)
+            logger(tag, "start new timer, app: [${validApp.name}]")
         } else {
             logger(tag, "[${validApp.packageName}] start new counting")
             onAppChanged?.invoke(validApp)
             // 更新通知状态为有效
             lastValidApp = validApp
             logger(tag, "start new timer, app: [${validApp.name}]")
-            updateNotificationState(validApp.name, 0, true)
         }
-    }
-
-    private fun updateNotificationState(appName: String, remainingMs: Long, isValid: Boolean) {
-        _notificationState.value = NotificationDisplayState(
-            appName = appName,
-            remainingTimeMs = remainingMs,
-            isValid = isValid
-        )
     }
 
     private fun isValidApp(app: AppInfo?): Boolean {
