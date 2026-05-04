@@ -31,10 +31,10 @@ import com.huojieren.apppause.ui.components.BottomBar
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
 import com.huojieren.apppause.ui.screens.SettingsScreen
-import com.huojieren.apppause.ui.state.MainScreenUiState
+import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.ui.state.SelectAppUiState
 import com.huojieren.apppause.ui.theme.AppTheme
-import com.huojieren.apppause.ui.viewModel.MainScreenViewModel
+import com.huojieren.apppause.ui.viewModel.AppStatusViewModel
 import com.huojieren.apppause.ui.viewModel.SelectAppViewModel
 
 enum class AppPauseScreen(val route: String, val title: String, val icon: ImageVector?) {
@@ -45,21 +45,21 @@ enum class AppPauseScreen(val route: String, val title: String, val icon: ImageV
 
 @Composable
 fun AppPauseApp(
-    mainScreenUiState: MainScreenUiState? = null,
+    appStatusUiState: AppStatusUiState? = null,
     selectAppUiState: SelectAppUiState? = null,
     startDestination: String = AppPauseScreen.MainScreen.route
 ) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    val mainScreenViewModel: MainScreenViewModel? =
-        if (mainScreenUiState == null) hiltViewModel() else null
+    val appStatusViewModel: AppStatusViewModel? =
+        if (appStatusUiState == null) hiltViewModel() else null
     val selectAppViewModel: SelectAppViewModel? =
         if (selectAppUiState == null) hiltViewModel() else null
 
-    val actualMainScreenUiState =
-        mainScreenUiState ?: mainScreenViewModel!!.uiState.collectAsState(
-            initial = MainScreenUiState(
+    val actualAppStatusUiState =
+        appStatusUiState ?: appStatusViewModel!!.uiState.collectAsState(
+            initial = AppStatusUiState(
                 isMonitoring = false,
                 hasOverlay = false,
                 hasNotification = false,
@@ -109,12 +109,12 @@ fun AppPauseApp(
             when (route) {
                 AppPauseScreen.MainScreen.route -> {
                     MainScreen(
-                        uiState = actualMainScreenUiState,
+                        uiState = actualAppStatusUiState,
                         onLifecycleChange = {
-                            mainScreenViewModel?.refreshState()
+                            appStatusViewModel?.refreshState()
                         },
                         onToggleMonitoring = {
-                            mainScreenViewModel?.toggleMonitoring()
+                            appStatusViewModel?.toggleMonitoring()
                         },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
@@ -125,24 +125,24 @@ fun AppPauseApp(
 
                 AppPauseScreen.SettingsScreen.route -> {
                     SettingsScreen(
-                        uiState = actualMainScreenUiState,
+                        uiState = actualAppStatusUiState,
                         onOverlayButtonClicked = {
-                            mainScreenViewModel?.requestPermission(Permissions.Overlay)
+                            appStatusViewModel?.requestPermission(Permissions.Overlay)
                         },
                         onNotificationButtonClicked = {
-                            mainScreenViewModel?.requestPermission(Permissions.Notification)
+                            appStatusViewModel?.requestPermission(Permissions.Notification)
                         },
                         onUsageStatsButtonClicked = {
-                            mainScreenViewModel?.requestPermission(Permissions.UsageStats)
+                            appStatusViewModel?.requestPermission(Permissions.UsageStats)
                         },
                         onAccessibilityButtonClicked = {
-                            mainScreenViewModel?.requestPermission(Permissions.Accessibility)
+                            appStatusViewModel?.requestPermission(Permissions.Accessibility)
                         },
                         onClearLogButtonClicked = {
-                            mainScreenViewModel?.clearLog()
+                            appStatusViewModel?.clearLog()
                         },
                         onSaveLogButtonClicked = {
-                            mainScreenViewModel?.saveLog()
+                            appStatusViewModel?.saveLog()
                         },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
@@ -176,7 +176,7 @@ fun AppPauseApp(
 fun MainScreenPreview() {
     AppTheme {
         AppPauseApp(
-            mainScreenUiState = MainScreenUiState(
+            appStatusUiState = AppStatusUiState(
                 isMonitoring = false,
                 hasOverlay = false,
                 hasNotification = false,
@@ -195,7 +195,7 @@ fun MainScreenPreview() {
 fun SelectAppScreenEmptyListPreview() {
     AppTheme {
         AppPauseApp(
-            mainScreenUiState = MainScreenUiState(),
+            appStatusUiState = AppStatusUiState(),
             selectAppUiState = SelectAppUiState(
                 monitoredApps = emptyList(),
                 allAppsGrouped = emptyList()
@@ -211,7 +211,7 @@ fun SelectAppScreenEmptyListPreview() {
 fun SelectAppScreenPreview() {
     AppTheme {
         AppPauseApp(
-            mainScreenUiState = MainScreenUiState(),
+            appStatusUiState = AppStatusUiState(),
             selectAppUiState = mockSelectAppUiState(),
             startDestination = AppPauseScreen.AppManager.route
         )
@@ -224,7 +224,7 @@ fun SelectAppScreenPreview() {
 fun SettingsScreenPreview() {
     AppTheme {
         AppPauseApp(
-            mainScreenUiState = MainScreenUiState(
+            appStatusUiState = AppStatusUiState(
                 isMonitoring = true,
                 hasOverlay = true,
                 hasNotification = true,

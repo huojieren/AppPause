@@ -24,13 +24,13 @@ import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
-import com.huojieren.apppause.ui.state.MainScreenUiState
+import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    uiState: MainScreenUiState,
+    uiState: AppStatusUiState,
     onOverlayButtonClicked: () -> Unit,
     onNotificationButtonClicked: () -> Unit,
     onUsageStatsButtonClicked: () -> Unit,
@@ -63,7 +63,7 @@ fun SettingsScreen(
 @DarkComponentPreview
 @Composable
 fun SettingsScreenPreview() {
-    val mockState = MainScreenUiState(
+    val mockState = AppStatusUiState(
         isMonitoring = true,
         hasOverlay = true,
         hasNotification = true,
@@ -87,7 +87,7 @@ fun SettingsScreenPreview() {
 @Composable
 private fun PermissionCard(
     modifier: Modifier = Modifier,
-    uiState: MainScreenUiState,
+    uiState: AppStatusUiState,
     onOverlayButtonClicked: () -> Unit,
     onNotificationButtonClicked: () -> Unit,
     onUsageStatsButtonClicked: () -> Unit,

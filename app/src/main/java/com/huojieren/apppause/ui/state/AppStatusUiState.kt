@@ -1,6 +1,6 @@
 package com.huojieren.apppause.ui.state
 
-data class MainScreenUiState(
+data class AppStatusUiState(
     val isMonitoring: Boolean = false,
     val hasOverlay: Boolean = false,
     val hasNotification: Boolean = false,

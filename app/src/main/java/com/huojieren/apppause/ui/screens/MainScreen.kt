@@ -20,7 +20,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
-import com.huojieren.apppause.ui.state.MainScreenUiState
+import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 
 private class LazyLifeCycleEventObserver(
@@ -34,7 +34,7 @@ private class LazyLifeCycleEventObserver(
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    uiState: MainScreenUiState,
+    uiState: AppStatusUiState,
     onLifecycleChange: () -> Unit,
     onToggleMonitoring: () -> Unit,
 ) {
@@ -69,7 +69,7 @@ fun MainScreen(
 
 @Composable
 private fun CircularToggleButton(
-    uiState: MainScreenUiState,
+    uiState: AppStatusUiState,
     onToggleMonitoring: () -> Unit,
 ) {
     val canToggle = uiState.isMonitoring ||
@@ -101,7 +101,7 @@ private fun CircularToggleButton(
 }
 
 @Composable
-private fun StatusText(uiState: MainScreenUiState) {
+private fun StatusText(uiState: AppStatusUiState) {
     val statusText = when {
         uiState.isMonitoring -> "监控中"
         !uiState.hasOverlay || !uiState.hasNotification ||
@@ -121,7 +121,7 @@ private fun StatusText(uiState: MainScreenUiState) {
 @DarkComponentPreview
 @Composable
 fun MainScreenOnMonitorPreview() {
-    val mockState = MainScreenUiState(
+    val mockState = AppStatusUiState(
         isMonitoring = true,
         hasOverlay = true,
         hasNotification = true,
@@ -141,7 +141,7 @@ fun MainScreenOnMonitorPreview() {
 @DarkComponentPreview
 @Composable
 fun MainScreenOffMonitorPreview() {
-    val mockState = MainScreenUiState(
+    val mockState = AppStatusUiState(
         isMonitoring = false,
         hasOverlay = true,
         hasNotification = true,
