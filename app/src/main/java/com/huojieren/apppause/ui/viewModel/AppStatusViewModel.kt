@@ -9,7 +9,7 @@ import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
-import com.huojieren.apppause.ui.state.MainScreenUiState
+import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.utils.showToast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,14 +18,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainScreenViewModel @Inject constructor(
+class AppStatusViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val permissionManager: PermissionManager,
     private val logRepository: LogRepository,
     private val monitorManager: MonitorManager,
     private val statusManager: StatusManager
 ) : ViewModel() {
-    private val tag = "MainScreenViewModel"
+    private val tag = "AppStatusViewModel"
     private val appContext = context.applicationContext
 
     val uiState = combine(
@@ -35,7 +35,7 @@ class MainScreenViewModel @Inject constructor(
         statusManager.hasUsageStats,
         statusManager.hasAccessibility
     ) { isMonitoring, hasOverlay, hasNotification, hasUsageStats, hasAccessibility ->
-        MainScreenUiState(
+        AppStatusUiState(
             isMonitoring = isMonitoring,
             hasOverlay = hasOverlay,
             hasNotification = hasNotification,
@@ -45,7 +45,7 @@ class MainScreenViewModel @Inject constructor(
     }
 
     init {
-        logger(tag, "MainScreenViewModel init")
+        logger(tag, "AppStatusViewModel init")
         refreshState()
     }
 
