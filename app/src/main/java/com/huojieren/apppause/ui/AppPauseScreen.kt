@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Scaffold
@@ -25,21 +26,27 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.Permissions
+import com.huojieren.apppause.data.local.entity.TodoEntity
+import com.huojieren.apppause.data.local.entity.TodoGroupEntity
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.ui.components.BottomBar
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
 import com.huojieren.apppause.ui.screens.SettingsScreen
+import com.huojieren.apppause.ui.screens.TodoListScreen
 import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.ui.state.SelectAppUiState
+import com.huojieren.apppause.ui.state.TodoListUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 import com.huojieren.apppause.ui.viewModel.AppStatusViewModel
 import com.huojieren.apppause.ui.viewModel.SelectAppViewModel
+import com.huojieren.apppause.ui.viewModel.TodoViewModel
 
 enum class AppPauseScreen(val route: String, val title: String, val icon: ImageVector?) {
     MainScreen("main", "主页", Icons.Default.Home),
     AppManager("app_manager", "应用", Icons.AutoMirrored.Filled.List),
+    TodoList("todo_list", "待办", Icons.Filled.CheckCircle),
     SettingsScreen("settings", "设置", Icons.Filled.Settings),
 }
 
@@ -47,6 +54,7 @@ enum class AppPauseScreen(val route: String, val title: String, val icon: ImageV
 fun AppPauseApp(
     appStatusUiState: AppStatusUiState? = null,
     selectAppUiState: SelectAppUiState? = null,
+    todoListUiState: TodoListUiState? = null,
     startDestination: String = AppPauseScreen.MainScreen.route
 ) {
     val navController = rememberNavController()
@@ -56,6 +64,8 @@ fun AppPauseApp(
         if (appStatusUiState == null) hiltViewModel() else null
     val selectAppViewModel: SelectAppViewModel? =
         if (selectAppUiState == null) hiltViewModel() else null
+    val todoViewModel: TodoViewModel? =
+        if (todoListUiState == null) hiltViewModel() else null
 
     val actualAppStatusUiState =
         appStatusUiState ?: appStatusViewModel!!.uiState.collectAsState(
@@ -71,12 +81,16 @@ fun AppPauseApp(
     val actualSelectAppUiState =
         selectAppUiState ?: selectAppViewModel!!.uiState.collectAsState().value
 
+    val actualTodoListUiState =
+        todoListUiState ?: todoViewModel!!.uiState.collectAsState().value
+
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
         composable(AppPauseScreen.MainScreen.route) { }
         composable(AppPauseScreen.AppManager.route) { }
+        composable(AppPauseScreen.TodoList.route) { }
         composable(AppPauseScreen.SettingsScreen.route) { }
     }
 
@@ -151,6 +165,34 @@ fun AppPauseApp(
                     )
                 }
 
+                AppPauseScreen.TodoList.route -> {
+                    TodoListScreen(
+                        uiState = actualTodoListUiState,
+                        onSelectGroup = {
+                            todoViewModel?.selectGroup(it)
+                        },
+                        onShowAddDialog = {
+                            todoViewModel?.showAddDialog()
+                        },
+                        onHideAddDialog = {
+                            todoViewModel?.hideAddDialog()
+                        },
+                        onAddTodo = { name, description, groupId ->
+                            todoViewModel?.addTodo(name, description, groupId)
+                        },
+                        onDeleteTodo = {
+                            todoViewModel?.deleteTodo(it)
+                        },
+                        onToggleTodoCompletion = {
+                            todoViewModel?.toggleTodoCompletion(it)
+                        },
+                        modifier = Modifier.padding(
+                            vertical = 20.dp,
+                            horizontal = 16.dp
+                        )
+                    )
+                }
+
                 AppPauseScreen.AppManager.route, null -> {
                     SelectAppScreen(
                         uiState = actualSelectAppUiState,
@@ -184,6 +226,7 @@ fun MainScreenPreview() {
                 hasAccessibility = false
             ),
             selectAppUiState = SelectAppUiState(),
+            todoListUiState = TodoListUiState(),
             startDestination = AppPauseScreen.MainScreen.route
         )
     }
@@ -200,6 +243,7 @@ fun SelectAppScreenEmptyListPreview() {
                 monitoredApps = emptyList(),
                 allAppsGrouped = emptyList()
             ),
+            todoListUiState = TodoListUiState(),
             startDestination = AppPauseScreen.AppManager.route
         )
     }
@@ -213,6 +257,7 @@ fun SelectAppScreenPreview() {
         AppPauseApp(
             appStatusUiState = AppStatusUiState(),
             selectAppUiState = mockSelectAppUiState(),
+            todoListUiState = TodoListUiState(),
             startDestination = AppPauseScreen.AppManager.route
         )
     }
@@ -232,7 +277,22 @@ fun SettingsScreenPreview() {
                 hasAccessibility = true
             ),
             selectAppUiState = SelectAppUiState(),
+            todoListUiState = TodoListUiState(),
             startDestination = AppPauseScreen.SettingsScreen.route
+        )
+    }
+}
+
+@LightAppPreview
+@DarkAppPreview
+@Composable
+fun TodoListScreenPreview() {
+    AppTheme {
+        AppPauseApp(
+            appStatusUiState = AppStatusUiState(),
+            selectAppUiState = SelectAppUiState(),
+            todoListUiState = mockTodoListUiState(),
+            startDestination = AppPauseScreen.TodoList.route
         )
     }
 }
@@ -291,5 +351,43 @@ fun mockSelectAppUiState(): SelectAppUiState {
                 )
             )
         )
+    )
+}
+
+private fun mockTodoListUiState(): TodoListUiState {
+    return TodoListUiState(
+        todos = listOf(
+            TodoEntity(
+                id = 1,
+                name = "学习 Kotlin",
+                description = "学习协程和Flow",
+                isCompleted = false,
+                groupId = 1
+            ),
+            TodoEntity(
+                id = 2,
+                name = "完成项目",
+                description = "App Pause 开发",
+                isCompleted = true,
+                groupId = 1
+            ),
+            TodoEntity(
+                id = 3,
+                name = "健身",
+                description = "每周三次",
+                isCompleted = false,
+                groupId = 2
+            )
+        ),
+        groups = listOf(
+            TodoGroupEntity(id = 1, name = "工作", color = "#2196F3", isDefault = true),
+            TodoGroupEntity(id = 2, name = "生活", color = "#4CAF50", isDefault = true),
+            TodoGroupEntity(id = 3, name = "学习", color = "#FF9800", isDefault = true)
+        ),
+        selectedGroupId = null,
+        isLoading = false,
+        showAddDialog = false,
+        showEditDialog = false,
+        editingTodo = null
     )
 }
