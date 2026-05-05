@@ -162,6 +162,7 @@ private fun pixelsToDp(pixels: Int) = with(LocalDensity.current) { pixels.toDp()
 
 
 @LightComponentPreview
+//@DarkComponentPreview
 @Composable
 fun PickerExample() {
     AppTheme {

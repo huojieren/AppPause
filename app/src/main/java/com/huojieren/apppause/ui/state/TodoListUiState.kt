@@ -10,7 +10,10 @@ data class TodoListUiState(
     val isLoading: Boolean = false,
     val showAddDialog: Boolean = false,
     val showEditDialog: Boolean = false,
-    val editingTodo: TodoEntity? = null
+    val editingTodo: TodoEntity? = null,
+    val showAddGroupDialog: Boolean = false,
+    val showEditGroupDialog: Boolean = false,
+    val editingGroup: TodoGroupEntity? = null
 )
 
 data class TodoItemWithGroup(

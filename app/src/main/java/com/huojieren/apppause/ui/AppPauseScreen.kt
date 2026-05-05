@@ -171,20 +171,50 @@ fun AppPauseApp(
                         onSelectGroup = {
                             todoViewModel?.selectGroup(it)
                         },
-                        onShowAddDialog = {
-                            todoViewModel?.showAddDialog()
+                        onShowAddTodoDialog = {
+                            todoViewModel?.showAddTodoDialog()
                         },
-                        onHideAddDialog = {
-                            todoViewModel?.hideAddDialog()
+                        onHideAddTodoDialog = {
+                            todoViewModel?.hideAddTodoDialog()
                         },
                         onAddTodo = { name, description, groupId ->
                             todoViewModel?.addTodo(name, description, groupId)
+                        },
+                        onShowEditTodoDialog = { todo ->
+                            todoViewModel?.showEditTodoDialog(todo)
+                        },
+                        onHideEditTodoDialog = {
+                            todoViewModel?.hideEditTodoDialog()
+                        },
+                        onUpdateTodo = { todo ->
+                            todoViewModel?.updateTodo(todo)
                         },
                         onDeleteTodo = {
                             todoViewModel?.deleteTodo(it)
                         },
                         onToggleTodoCompletion = {
                             todoViewModel?.toggleTodoCompletion(it)
+                        },
+                        onShowAddGroupDialog = {
+                            todoViewModel?.showAddGroupDialog()
+                        },
+                        onHideAddGroupDialog = {
+                            todoViewModel?.hideAddGroupDialog()
+                        },
+                        onAddGroup = { name, color ->
+                            todoViewModel?.addGroup(name, color)
+                        },
+                        onShowEditGroupDialog = { group ->
+                            todoViewModel?.showEditGroupDialog(group)
+                        },
+                        onHideEditGroupDialog = {
+                            todoViewModel?.hideEditGroupDialog()
+                        },
+                        onUpdateGroup = { group ->
+                            todoViewModel?.updateGroup(group)
+                        },
+                        onDeleteGroup = { group ->
+                            todoViewModel?.deleteGroup(group)
                         },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
@@ -212,8 +242,8 @@ fun AppPauseApp(
     }
 }
 
-@LightAppPreview
-@DarkAppPreview
+//@LightAppPreview
+//@DarkAppPreview
 @Composable
 fun MainScreenPreview() {
     AppTheme {
@@ -232,8 +262,8 @@ fun MainScreenPreview() {
     }
 }
 
-@LightAppPreview
-@DarkAppPreview
+//@LightAppPreview
+//@DarkAppPreview
 @Composable
 fun SelectAppScreenEmptyListPreview() {
     AppTheme {
@@ -249,8 +279,8 @@ fun SelectAppScreenEmptyListPreview() {
     }
 }
 
-@LightAppPreview
-@DarkAppPreview
+//@LightAppPreview
+//@DarkAppPreview
 @Composable
 fun SelectAppScreenPreview() {
     AppTheme {
@@ -263,8 +293,8 @@ fun SelectAppScreenPreview() {
     }
 }
 
-@LightAppPreview
-@DarkAppPreview
+//@LightAppPreview
+//@DarkAppPreview
 @Composable
 fun SettingsScreenPreview() {
     AppTheme {
@@ -284,7 +314,7 @@ fun SettingsScreenPreview() {
 }
 
 @LightAppPreview
-@DarkAppPreview
+//@DarkAppPreview
 @Composable
 fun TodoListScreenPreview() {
     AppTheme {
@@ -388,6 +418,9 @@ private fun mockTodoListUiState(): TodoListUiState {
         isLoading = false,
         showAddDialog = false,
         showEditDialog = false,
-        editingTodo = null
+        editingTodo = null,
+        showAddGroupDialog = false,
+        showEditGroupDialog = false,
+        editingGroup = null
     )
 }

@@ -24,6 +24,9 @@ class TodoViewModel @Inject constructor(
     private val _showAddDialog = MutableStateFlow(false)
     private val _showEditDialog = MutableStateFlow(false)
     private val _editingTodo = MutableStateFlow<TodoEntity?>(null)
+    private val _showAddGroupDialog = MutableStateFlow(false)
+    private val _showEditGroupDialog = MutableStateFlow(false)
+    private val _editingGroup = MutableStateFlow<TodoGroupEntity?>(null)
 
     val uiState: StateFlow<TodoListUiState> = combine(
         todoRepository.getAllTodos(),
@@ -31,7 +34,10 @@ class TodoViewModel @Inject constructor(
         _selectedGroupId,
         _showAddDialog,
         _showEditDialog,
-        _editingTodo
+        _editingTodo,
+        _showAddGroupDialog,
+        _showEditGroupDialog,
+        _editingGroup
     ) { flows ->
         val todos = flows[0] as List<TodoEntity>
         val groups = flows[1] as List<TodoGroupEntity>
@@ -39,6 +45,9 @@ class TodoViewModel @Inject constructor(
         val showAddDialog = flows[3] as Boolean
         val showEditDialog = flows[4] as Boolean
         val editingTodo = flows[5] as TodoEntity?
+        val showAddGroupDialog = flows[6] as Boolean
+        val showEditGroupDialog = flows[7] as Boolean
+        val editingGroup = flows[8] as TodoGroupEntity?
 
         val filteredTodos = if (selectedGroupId != null) {
             todos.filter { it.groupId == selectedGroupId }
@@ -53,7 +62,10 @@ class TodoViewModel @Inject constructor(
             isLoading = false,
             showAddDialog = showAddDialog,
             showEditDialog = showEditDialog,
-            editingTodo = editingTodo
+            editingTodo = editingTodo,
+            showAddGroupDialog = showAddGroupDialog,
+            showEditGroupDialog = showEditGroupDialog,
+            editingGroup = editingGroup
         )
     }.stateIn(
         scope = viewModelScope,
@@ -65,20 +77,20 @@ class TodoViewModel @Inject constructor(
         _selectedGroupId.value = groupId
     }
 
-    fun showAddDialog() {
+    fun showAddTodoDialog() {
         _showAddDialog.value = true
     }
 
-    fun hideAddDialog() {
+    fun hideAddTodoDialog() {
         _showAddDialog.value = false
     }
 
-    fun showEditDialog(todo: TodoEntity) {
+    fun showEditTodoDialog(todo: TodoEntity) {
         _editingTodo.value = todo
         _showEditDialog.value = true
     }
 
-    fun hideEditDialog() {
+    fun hideEditTodoDialog() {
         _showEditDialog.value = false
         _editingTodo.value = null
     }
@@ -91,14 +103,14 @@ class TodoViewModel @Inject constructor(
                 groupId = groupId
             )
             todoRepository.insertTodo(todo)
-            hideAddDialog()
+            hideAddTodoDialog()
         }
     }
 
     fun updateTodo(todo: TodoEntity) {
         viewModelScope.launch {
-            todoRepository.updateTodo(todo)
-            hideEditDialog()
+            todoRepository.updateTodo(todo.copy(updatedAt = System.currentTimeMillis()))
+            hideEditTodoDialog()
         }
     }
 
@@ -114,6 +126,24 @@ class TodoViewModel @Inject constructor(
         }
     }
 
+    fun showAddGroupDialog() {
+        _showAddGroupDialog.value = true
+    }
+
+    fun hideAddGroupDialog() {
+        _showAddGroupDialog.value = false
+    }
+
+    fun showEditGroupDialog(group: TodoGroupEntity) {
+        _editingGroup.value = group
+        _showEditGroupDialog.value = true
+    }
+
+    fun hideEditGroupDialog() {
+        _showEditGroupDialog.value = false
+        _editingGroup.value = null
+    }
+
     fun addGroup(name: String, color: String) {
         viewModelScope.launch {
             val group = TodoGroupEntity(
@@ -122,6 +152,20 @@ class TodoViewModel @Inject constructor(
                 isDefault = false
             )
             todoRepository.insertGroup(group)
+            hideAddGroupDialog()
+        }
+    }
+
+    fun updateGroup(group: TodoGroupEntity) {
+        viewModelScope.launch {
+            todoRepository.updateGroup(group)
+            hideEditGroupDialog()
+        }
+    }
+
+    fun deleteGroup(group: TodoGroupEntity) {
+        viewModelScope.launch {
+            todoRepository.deleteGroup(group)
         }
     }
 }
