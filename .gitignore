@@ -88,7 +88,8 @@ public/
 *.bak  
 *.tmp  
 *.swp  
-*.swo  
+*.swo
+open-opencode.bat
 
 # 忽略Windows命令错误输出文件
 nul
