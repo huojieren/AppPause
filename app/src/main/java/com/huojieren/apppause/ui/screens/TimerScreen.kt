@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.first
 fun TimeSelectionScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
+    isSharedTimingEnabled: Boolean = false,
     activeTodos: List<TodoEntity> = emptyList(),
     onExtend5Clicked: () -> Unit,
     onExtend10Clicked: () -> Unit,
@@ -145,7 +146,11 @@ fun TimeSelectionScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     // TODO 2025/11/7 23:05 根据 text 动态设置行数
                     Text(
-                        text = "为 ${appInfoUi.name} 设置使用时长",
+                        text = if (isSharedTimingEnabled) {
+                            "为本次使用选择时间"
+                        } else {
+                            "为 ${appInfoUi.name} 设置使用时长"
+                        },
                         style = MaterialTheme.typography.titleLarge,
                     )
                     Spacer(modifier = Modifier.height(8.dp))

@@ -14,19 +14,19 @@ import javax.inject.Singleton
 
 @Singleton
 class SettingsRepository @Inject constructor(
-    @param:ApplicationContext context: Context
+    @ApplicationContext context: Context
 ) {
     private val dataStore: DataStore<Preferences> = context.appDataStore
 
-    fun getPerAppTimingEnabled(): Flow<Boolean> {
+    fun getSharedTimingEnabled(): Flow<Boolean> {
         return dataStore.data.map { preferences ->
-            preferences[DataStoreKeys.PER_APP_TIMING_ENABLED] ?: false
+            preferences[DataStoreKeys.SHARED_TIMING_ENABLED] ?: false
         }
     }
 
-    suspend fun setPerAppTimingEnabled(enabled: Boolean) {
+    suspend fun setSharedTimingEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
-            preferences[DataStoreKeys.PER_APP_TIMING_ENABLED] = enabled
+            preferences[DataStoreKeys.SHARED_TIMING_ENABLED] = enabled
         }
     }
 }

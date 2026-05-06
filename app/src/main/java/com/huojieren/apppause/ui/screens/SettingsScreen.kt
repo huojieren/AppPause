@@ -38,7 +38,7 @@ fun SettingsScreen(
     onAccessibilityButtonClicked: () -> Unit,
     onClearLogButtonClicked: () -> Unit,
     onSaveLogButtonClicked: () -> Unit,
-    onPerAppTimingChanged: (Boolean) -> Unit,
+    onSharedTimingChanged: (Boolean) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -59,7 +59,7 @@ fun SettingsScreen(
         )
         TimingCard(
             uiState = uiState,
-            onPerAppTimingChanged = onPerAppTimingChanged
+            onSharedTimingChanged = onSharedTimingChanged
         )
         AboutCard()
     }
@@ -85,7 +85,7 @@ fun SettingsScreenPreview() {
             onAccessibilityButtonClicked = {},
             onClearLogButtonClicked = {},
             onSaveLogButtonClicked = {},
-            onPerAppTimingChanged = {}
+            onSharedTimingChanged = {}
         )
     }
 }
@@ -94,7 +94,7 @@ fun SettingsScreenPreview() {
 private fun TimingCard(
     modifier: Modifier = Modifier,
     uiState: AppStatusUiState,
-    onPerAppTimingChanged: (Boolean) -> Unit
+    onSharedTimingChanged: (Boolean) -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -122,13 +122,13 @@ private fun TimingCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "每个应用单独计时",
+                    text = "所有应用共享额度",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Switch(
-                    checked = uiState.isPerAppTimingEnabled,
-                    onCheckedChange = onPerAppTimingChanged
+                    checked = uiState.isSharedTimingEnabled,
+                    onCheckedChange = onSharedTimingChanged
                 )
             }
         }

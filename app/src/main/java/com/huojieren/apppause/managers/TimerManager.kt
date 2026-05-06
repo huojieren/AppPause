@@ -19,7 +19,7 @@ class TimerManager(
     private val tag = "TimerManager"
     private val handler = Handler(Looper.getMainLooper())
     private val sharedTimerKey = "__shared_timer__"
-    private var perAppTimingEnabled = false
+    private var perAppTimingEnabled = true
 
     // 使用可变Map来存储倒计时状态
     private val timerStateMap = mutableMapOf<String, TimerState>()
@@ -68,6 +68,10 @@ class TimerManager(
 
     private fun timerKey(packageName: String): String {
         return if (perAppTimingEnabled) packageName else sharedTimerKey
+    }
+
+    fun isPerAppTimingEnabled(): Boolean {
+        return perAppTimingEnabled
     }
 
     /**

@@ -50,9 +50,9 @@ class AppStatusViewModel @Inject constructor(
 
     val uiState = combine(
         permissionState,
-        settingsRepository.getPerAppTimingEnabled()
-    ) { state, isPerAppTimingEnabled ->
-        state.copy(isPerAppTimingEnabled = isPerAppTimingEnabled)
+        settingsRepository.getSharedTimingEnabled()
+    ) { state, isSharedTimingEnabled ->
+        state.copy(isSharedTimingEnabled = isSharedTimingEnabled)
     }
 
     init {
@@ -75,12 +75,12 @@ class AppStatusViewModel @Inject constructor(
         permissionManager.requestPermission(permission)
     }
 
-    fun setPerAppTimingEnabled(enabled: Boolean) {
-        logger(tag, "setPerAppTimingEnabled: $enabled")
-        timerManager.setPerAppTimingEnabled(enabled, clearTimers = true)
+    fun setSharedTimingEnabled(enabled: Boolean) {
+        logger(tag, "setSharedTimingEnabled: $enabled")
+        timerManager.setPerAppTimingEnabled(!enabled, clearTimers = true)
         monitorManager.resetCurrentAppTracking()
         viewModelScope.launch {
-            settingsRepository.setPerAppTimingEnabled(enabled)
+            settingsRepository.setSharedTimingEnabled(enabled)
         }
     }
 

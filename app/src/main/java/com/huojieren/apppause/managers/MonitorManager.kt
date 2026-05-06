@@ -51,7 +51,7 @@ class MonitorManager(
         }
 
         timerManager.setPerAppTimingEnabled(
-            settingsRepository.getPerAppTimingEnabled().first(),
+            !settingsRepository.getSharedTimingEnabled().first(),
             clearTimers = false
         )
 
