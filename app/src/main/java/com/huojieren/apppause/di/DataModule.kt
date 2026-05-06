@@ -2,6 +2,7 @@ package com.huojieren.apppause.di
 
 import android.content.Context
 import com.huojieren.apppause.data.local.AppDatabase
+import com.huojieren.apppause.data.local.dao.AppDao
 import com.huojieren.apppause.data.local.dao.TodoDao
 import com.huojieren.apppause.data.local.dao.TodoGroupDao
 import com.huojieren.apppause.data.repository.DataStoreRepository
@@ -38,6 +39,12 @@ object DataModule {
         @ApplicationContext context: Context
     ): AppDatabase {
         return AppDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppDao(database: AppDatabase): AppDao {
+        return database.appDao()
     }
 
     @Provides

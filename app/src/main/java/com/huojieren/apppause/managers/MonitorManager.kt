@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
-import com.huojieren.apppause.data.repository.DataStoreRepository
+import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
@@ -18,13 +18,13 @@ import javax.inject.Singleton
 @Singleton
 class MonitorManager(
     private val context: Context,
-    private val dataStoreRepository: DataStoreRepository,
+    private val appRepository: AppRepository,
     private val timerManager: TimerManager,
     private val statusManager: StatusManager
 ) {
     private val tag = "MonitorManager"
     private val scope = CoroutineScope(Dispatchers.Main)
-    private var monitoredApps = setOf<AppInfo>()
+    private var monitoredPackages = setOf<String>()
     private var currentApp: AppInfo? = null
     private var onAppChanged: ((AppInfo?) -> Unit)? = null
 
@@ -49,7 +49,9 @@ class MonitorManager(
         timerManager.clearAllTimers()
 
         scope.launch {
-            monitoredApps = dataStoreRepository.getMonitoredApps().first().toSet()
+            monitoredPackages = appRepository.getMonitoredAppsOnce()
+                .map { it.packageName }
+                .toSet()
         }
 
         try {
@@ -157,6 +159,6 @@ class MonitorManager(
         return app != null &&
                 app.packageName.isNotEmpty() &&
                 !app.packageName.startsWith("com.huojieren.apppause") &&
-                monitoredApps.contains(app)
+                monitoredPackages.contains(app.packageName)
     }
 }

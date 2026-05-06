@@ -2,11 +2,14 @@ package com.huojieren.apppause.data.local
 
 import android.content.Context
 import androidx.room.Database
+import androidx.room.migration.Migration
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.huojieren.apppause.data.local.dao.AppDao
 import com.huojieren.apppause.data.local.dao.TodoDao
 import com.huojieren.apppause.data.local.dao.TodoGroupDao
+import com.huojieren.apppause.data.local.entity.AppEntity
 import com.huojieren.apppause.data.local.entity.TodoEntity
 import com.huojieren.apppause.data.local.entity.TodoGroupEntity
 import kotlinx.coroutines.CoroutineScope
@@ -14,11 +17,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [TodoEntity::class, TodoGroupEntity::class],
-    version = 1,
+    entities = [TodoEntity::class, TodoGroupEntity::class, AppEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun appDao(): AppDao
     abstract fun todoDao(): TodoDao
     abstract fun todoGroupDao(): TodoGroupDao
 
@@ -36,9 +40,26 @@ abstract class AppDatabase : RoomDatabase() {
                     DATABASE_NAME
                 )
                     .addCallback(DatabaseCallback())
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `apps` (
+                        `packageName` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `isMonitored` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`packageName`)
+                    )
+                    """.trimIndent()
+                )
             }
         }
 
