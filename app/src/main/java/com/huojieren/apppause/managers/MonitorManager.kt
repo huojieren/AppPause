@@ -6,15 +6,18 @@ import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
+import kotlinx.coroutines.flow.first
 import javax.inject.Singleton
 
 @Singleton
 class MonitorManager(
     private val context: Context,
     private val appRepository: AppRepository,
+    private val settingsRepository: SettingsRepository,
     private val timerManager: TimerManager,
     private val statusManager: StatusManager
 ) {
@@ -32,6 +35,13 @@ class MonitorManager(
         onAppChanged = listener
     }
 
+    fun resetCurrentAppTracking() {
+        logger(tag, "resetCurrentAppTracking")
+        currentApp = null
+        lastValidApp = null
+        lastRemainingTime = 0
+    }
+
     suspend fun startMonitor() {
         logger(tag, "startMonitor called")
 
@@ -39,6 +49,11 @@ class MonitorManager(
         if (!AppPauseAccessibilityService.isInitialized()) {
             throw IllegalStateException("Accessibility service not initialized, please enable it first")
         }
+
+        timerManager.setPerAppTimingEnabled(
+            settingsRepository.getPerAppTimingEnabled().first(),
+            clearTimers = false
+        )
 
         // 清空所有倒计时，保证新的监控周期
         timerManager.clearAllTimers()

@@ -6,4 +6,5 @@ data class AppStatusUiState(
     val hasNotification: Boolean = false,
     val hasUsageStats: Boolean = false,
     val hasAccessibility: Boolean = false,
+    val isPerAppTimingEnabled: Boolean = false,
 )

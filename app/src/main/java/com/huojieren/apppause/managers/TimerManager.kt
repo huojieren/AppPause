@@ -18,6 +18,8 @@ class TimerManager(
 ) {
     private val tag = "TimerManager"
     private val handler = Handler(Looper.getMainLooper())
+    private val sharedTimerKey = "__shared_timer__"
+    private var perAppTimingEnabled = false
 
     // 使用可变Map来存储倒计时状态
     private val timerStateMap = mutableMapOf<String, TimerState>()
@@ -53,11 +55,26 @@ class TimerManager(
         var todoPrompt: TimerTodoPrompt? = null
     )
 
+    fun setPerAppTimingEnabled(enabled: Boolean, clearTimers: Boolean = true) {
+        if (perAppTimingEnabled == enabled) {
+            return
+        }
+        perAppTimingEnabled = enabled
+        logger(tag, "setPerAppTimingEnabled: $enabled")
+        if (clearTimers) {
+            clearAllTimers()
+        }
+    }
+
+    private fun timerKey(packageName: String): String {
+        return if (perAppTimingEnabled) packageName else sharedTimerKey
+    }
+
     /**
      * 获取剩余时间
      */
     fun getRemainingTime(app: AppInfo): Long {
-        val state = timerStateMap[app.packageName]
+        val state = timerStateMap[timerKey(app.packageName)]
         return state?.remainingTime ?: 0
     }
 
@@ -79,16 +96,17 @@ class TimerManager(
         todoPrompt: TimerTodoPrompt? = null
     ) {
         val packageName = app.packageName
+        val key = timerKey(packageName)
 
         // 判断是否是继续倒计时（有暂停的倒计时）
-        val previousState = timerStateMap[packageName]
+        val previousState = timerStateMap[key]
         val isContinueTimer = previousState != null
 
         // 先停止现有倒计时
         stop(packageName)
 
         // 获取或设置倒计时时间
-        val targetTimeMs = timeMs ?: timerStateMap[packageName]?.remainingTime ?: 0
+        val targetTimeMs = timeMs ?: timerStateMap[key]?.remainingTime ?: 0
         val targetTodoPrompt = todoPrompt ?: previousState?.todoPrompt
 
         if (targetTimeMs <= 0) {
@@ -108,7 +126,7 @@ class TimerManager(
             appInfo = app,
             todoPrompt = targetTodoPrompt
         )
-        timerStateMap[packageName] = state
+        timerStateMap[key] = state
 
         // 更新 StateFlow - 正在运行
         _currentTimerState.value = TimerDisplayState(
@@ -128,7 +146,7 @@ class TimerManager(
         showStartedToast(app, isContinueTimer, targetTimeMs)
 
         // 启动倒计时
-        startCountdown(packageName, state)
+        startCountdown(key, packageName, state)
     }
 
     private fun showStartedToast(app: AppInfo, isContinueTimer: Boolean, targetTimeMs: Long) {
@@ -156,15 +174,16 @@ class TimerManager(
      * 停止倒计时
      */
     fun stop(packageName: String) {
-        val state = timerStateMap[packageName]
+        val key = timerKey(packageName)
+        val state = timerStateMap[key]
         if (state?.isRunning == true) {
             state.isRunning = false
 
             // 保留 StateFlow 但标记为暂停状态
-            if (_currentTimerState.value?.packageName == packageName) {
+            if (_currentTimerState.value?.packageName == packageName || !perAppTimingEnabled) {
                 _currentTimerState.value = TimerDisplayState(
-                    packageName = packageName,
-                    appName = _currentTimerState.value?.appName ?: "",
+                    packageName = _currentTimerState.value?.packageName ?: packageName,
+                    appName = _currentTimerState.value?.appName ?: state.appInfo?.name ?: "",
                     remainingTimeMs = state.remainingTime,
                     isRunning = false
                 )
@@ -197,7 +216,7 @@ class TimerManager(
      * 检查指定应用的倒计时是否正在运行
      */
     fun isTimerRunning(packageName: String): Boolean {
-        val state = timerStateMap[packageName]
+        val state = timerStateMap[timerKey(packageName)]
         return state?.isRunning == true
     }
 
@@ -209,7 +228,7 @@ class TimerManager(
     /**
      * 启动倒计时循环
      */
-    private fun startCountdown(packageName: String, state: TimerState) {
+    private fun startCountdown(timerKey: String, packageName: String, state: TimerState) {
         val runnable = object : Runnable {
             override fun run() {
                 if (!state.isRunning) {
@@ -248,7 +267,7 @@ class TimerManager(
                     state.remainingTime = 0
                     state.isRunning = false
                     val finishedAppInfo = state.appInfo
-                    timerStateMap.remove(packageName)
+                    timerStateMap.remove(timerKey)
                     logCounter = 0
 
                     // 清除 StateFlow

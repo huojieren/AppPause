@@ -170,6 +170,9 @@ fun AppPauseApp(
                         onSaveLogButtonClicked = {
                             appStatusViewModel?.saveLog()
                         },
+                        onPerAppTimingChanged = {
+                            appStatusViewModel?.setPerAppTimingEnabled(it)
+                        },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
                             horizontal = 16.dp
