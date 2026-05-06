@@ -62,7 +62,7 @@ class ListenerManager @Inject constructor(
         CoroutineScope(Dispatchers.Main).launch {
             val icon = appManager.loadIcon(appInfo.packageName)
             val activeTodos = todoRepository.getActiveTodos().first()
-            val isTimeSelectionTodoPromptEnabled = settingsRepository.getTimeSelectionTodoPromptEnabled().first()
+            val isTodoPromptEnabled = settingsRepository.getTodoPromptEnabled().first()
             overlayManager.showOverlay(
                 isSlowFadeIn = false,
                 content = {
@@ -70,7 +70,7 @@ class ListenerManager @Inject constructor(
                         modifier = Modifier.fillMaxSize(),
                         appInfoUi = appInfo.toUI(icon),
                         isSharedTimingEnabled = !timerManager.isPerAppTimingEnabled(),
-                        isTimeSelectionTodoPromptEnabled = isTimeSelectionTodoPromptEnabled,
+                        isTodoPromptEnabled = isTodoPromptEnabled,
                         activeTodos = activeTodos,
                         onExtend5Clicked = {
                             overlayManager.removeOverlay()
@@ -177,7 +177,7 @@ class ListenerManager @Inject constructor(
                         appInfoUi = appInfo.toUI(icon),
                         isSharedTimingEnabled = timeoutInfo.isSharedTimingEnabled,
                         isWaitBeforeReturnEnabled = timeoutInfo.isWaitBeforeReturnEnabled,
-                        isTimeoutTodoPromptEnabled = timeoutInfo.isTimeoutTodoPromptEnabled,
+                        isTodoPromptEnabled = timeoutInfo.isTodoPromptEnabled,
                         todoPrompt = timeoutInfo.todoPrompt,
                         fadeInCompleteEvent = overlayManager.fadeInCompleteEvent,
                         onClickReturnToHome = {

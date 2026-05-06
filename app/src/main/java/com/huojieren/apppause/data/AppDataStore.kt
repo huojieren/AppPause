@@ -26,7 +26,5 @@ object DataStoreKeys {
 
     val WAIT_BEFORE_RETURN_ENABLED = booleanPreferencesKey("wait_before_return_enabled")
 
-    val TIMEOUT_TODO_PROMPT_ENABLED = booleanPreferencesKey("timeout_todo_prompt_enabled")
-
-    val TIME_SELECTION_TODO_PROMPT_ENABLED = booleanPreferencesKey("time_selection_todo_prompt_enabled")
+    val TODO_PROMPT_ENABLED = booleanPreferencesKey("todo_prompt_enabled")
 }

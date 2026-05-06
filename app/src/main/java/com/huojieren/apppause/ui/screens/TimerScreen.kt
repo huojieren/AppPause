@@ -54,7 +54,7 @@ fun TimeSelectionScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
     isSharedTimingEnabled: Boolean = false,
-    isTimeSelectionTodoPromptEnabled: Boolean = false,
+    isTodoPromptEnabled: Boolean = false,
     activeTodos: List<TodoEntity> = emptyList(),
     onExtend5Clicked: () -> Unit,
     onExtend10Clicked: () -> Unit,
@@ -178,7 +178,7 @@ fun TimeSelectionScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (isTimeSelectionTodoPromptEnabled) {
+                    if (isTodoPromptEnabled) {
                         Box(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -305,7 +305,7 @@ fun TimeOutScreen(
     appInfoUi: AppInfoUi,
     isSharedTimingEnabled: Boolean = false,
     isWaitBeforeReturnEnabled: Boolean = false,
-    isTimeoutTodoPromptEnabled: Boolean = false,
+    isTodoPromptEnabled: Boolean = false,
     todoPrompt: TimerTodoPrompt? = null,
     fadeInCompleteEvent: SharedFlow<Unit>,
     onClickReturnToHome: () -> Unit,

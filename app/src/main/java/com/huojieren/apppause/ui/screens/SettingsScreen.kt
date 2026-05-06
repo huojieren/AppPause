@@ -39,8 +39,7 @@ fun SettingsScreen(
     onSaveLogButtonClicked: () -> Unit,
     onSharedTimingChanged: (Boolean) -> Unit,
     onWaitBeforeReturnChanged: (Boolean) -> Unit,
-    onTimeoutTodoPromptChanged: (Boolean) -> Unit,
-    onTimeSelectionTodoPromptChanged: (Boolean) -> Unit,
+    onTodoPromptChanged: (Boolean) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -59,8 +58,7 @@ fun SettingsScreen(
             uiState = uiState,
             onSharedTimingChanged = onSharedTimingChanged,
             onWaitBeforeReturnChanged = onWaitBeforeReturnChanged,
-            onTimeoutTodoPromptChanged = onTimeoutTodoPromptChanged,
-            onTimeSelectionTodoPromptChanged = onTimeSelectionTodoPromptChanged,
+            onTodoPromptChanged = onTodoPromptChanged,
         )
         LogGroup(
             onClearLogButtonClicked = onClearLogButtonClicked,
@@ -92,8 +90,7 @@ fun SettingsScreenPreview() {
             onSaveLogButtonClicked = {},
             onSharedTimingChanged = {},
             onWaitBeforeReturnChanged = {},
-            onTimeoutTodoPromptChanged = {},
-            onTimeSelectionTodoPromptChanged = {}
+            onTodoPromptChanged = {}
         )
     }
 }
@@ -120,22 +117,22 @@ private fun PermissionGroup(
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         )
         SettingsClickableRow(
-            title = if (uiState.hasOverlay) "悬浮窗权限" else "申请悬浮窗权限",
+            title = if (uiState.hasOverlay) "悬浮窗权限（已获取）" else "申请悬浮窗权限",
             onClick = onOverlayButtonClicked,
             enabled = !uiState.hasOverlay
         )
         SettingsClickableRow(
-            title = if (uiState.hasNotification) "通知权限" else "申请通知权限",
+            title = if (uiState.hasNotification) "通知权限（已获取）" else "申请通知权限",
             onClick = onNotificationButtonClicked,
             enabled = !uiState.hasNotification
         )
         SettingsClickableRow(
-            title = if (uiState.hasUsageStats) "使用情况权限" else "申请使用情况权限",
+            title = if (uiState.hasUsageStats) "使用情况权限（已获取）" else "申请使用情况权限",
             onClick = onUsageStatsButtonClicked,
             enabled = !uiState.hasUsageStats
         )
         SettingsClickableRow(
-            title = if (uiState.hasAccessibility) "无障碍服务权限" else "申请无障碍服务权限",
+            title = if (uiState.hasAccessibility) "无障碍服务权限（已获取）" else "申请无障碍服务权限",
             onClick = onAccessibilityButtonClicked,
             enabled = !uiState.hasAccessibility
         )
@@ -148,8 +145,7 @@ private fun TimingGroup(
     uiState: AppStatusUiState,
     onSharedTimingChanged: (Boolean) -> Unit,
     onWaitBeforeReturnChanged: (Boolean) -> Unit,
-    onTimeoutTodoPromptChanged: (Boolean) -> Unit,
-    onTimeSelectionTodoPromptChanged: (Boolean) -> Unit,
+    onTodoPromptChanged: (Boolean) -> Unit,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -174,14 +170,9 @@ private fun TimingGroup(
             onCheckedChange = onWaitBeforeReturnChanged
         )
         SettingsSwitchRow(
-            title = "超时窗口弹出todo",
-            checked = uiState.isTimeoutTodoPromptEnabled,
-            onCheckedChange = onTimeoutTodoPromptChanged
-        )
-        SettingsSwitchRow(
-            title = "选择时间窗口弹出todo",
-            checked = uiState.isTimeSelectionTodoPromptEnabled,
-            onCheckedChange = onTimeSelectionTodoPromptChanged
+            title = "计时窗口显示待办提醒",
+            checked = uiState.isTodoPromptEnabled,
+            onCheckedChange = onTodoPromptChanged
         )
     }
 }

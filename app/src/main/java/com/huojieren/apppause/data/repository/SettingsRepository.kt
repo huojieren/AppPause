@@ -42,27 +42,15 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    fun getTimeoutTodoPromptEnabled(): Flow<Boolean> {
+    fun getTodoPromptEnabled(): Flow<Boolean> {
         return dataStore.data.map { preferences ->
-            preferences[DataStoreKeys.TIMEOUT_TODO_PROMPT_ENABLED] ?: false
+            preferences[DataStoreKeys.TODO_PROMPT_ENABLED] ?: false
         }
     }
 
-    suspend fun setTimeoutTodoPromptEnabled(enabled: Boolean) {
+    suspend fun setTodoPromptEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
-            preferences[DataStoreKeys.TIMEOUT_TODO_PROMPT_ENABLED] = enabled
-        }
-    }
-
-    fun getTimeSelectionTodoPromptEnabled(): Flow<Boolean> {
-        return dataStore.data.map { preferences ->
-            preferences[DataStoreKeys.TIME_SELECTION_TODO_PROMPT_ENABLED] ?: false
-        }
-    }
-
-    suspend fun setTimeSelectionTodoPromptEnabled(enabled: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[DataStoreKeys.TIME_SELECTION_TODO_PROMPT_ENABLED] = enabled
+            preferences[DataStoreKeys.TODO_PROMPT_ENABLED] = enabled
         }
     }
 }

@@ -52,14 +52,12 @@ class AppStatusViewModel @Inject constructor(
         permissionState,
         settingsRepository.getSharedTimingEnabled(),
         settingsRepository.getWaitBeforeReturnEnabled(),
-        settingsRepository.getTimeoutTodoPromptEnabled(),
-        settingsRepository.getTimeSelectionTodoPromptEnabled()
-    ) { state, isSharedTimingEnabled, isWaitBeforeReturnEnabled, isTimeoutTodoPromptEnabled, isTimeSelectionTodoPromptEnabled ->
+        settingsRepository.getTodoPromptEnabled()
+    ) { state, isSharedTimingEnabled, isWaitBeforeReturnEnabled, isTodoPromptEnabled ->
         state.copy(
             isSharedTimingEnabled = isSharedTimingEnabled,
             isWaitBeforeReturnEnabled = isWaitBeforeReturnEnabled,
-            isTimeoutTodoPromptEnabled = isTimeoutTodoPromptEnabled,
-            isTimeSelectionTodoPromptEnabled = isTimeSelectionTodoPromptEnabled
+            isTodoPromptEnabled = isTodoPromptEnabled
         )
     }
 
@@ -100,18 +98,11 @@ class AppStatusViewModel @Inject constructor(
         }
     }
 
-    fun setTimeoutTodoPromptEnabled(enabled: Boolean) {
-        logger(tag, "setTimeoutTodoPromptEnabled: $enabled")
+    fun setTodoPromptEnabled(enabled: Boolean) {
+        logger(tag, "setTodoPromptEnabled: $enabled")
         viewModelScope.launch {
-            settingsRepository.setTimeoutTodoPromptEnabled(enabled)
+            settingsRepository.setTodoPromptEnabled(enabled)
             timerManager.refreshSettings()
-        }
-    }
-
-    fun setTimeSelectionTodoPromptEnabled(enabled: Boolean) {
-        logger(tag, "setTimeSelectionTodoPromptEnabled: $enabled")
-        viewModelScope.launch {
-            settingsRepository.setTimeSelectionTodoPromptEnabled(enabled)
         }
     }
 

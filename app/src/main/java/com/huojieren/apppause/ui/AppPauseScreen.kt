@@ -195,11 +195,8 @@ fun AppPauseApp(
                         onWaitBeforeReturnChanged = {
                             appStatusViewModel?.setWaitBeforeReturnEnabled(it)
                         },
-                        onTimeoutTodoPromptChanged = {
-                            appStatusViewModel?.setTimeoutTodoPromptEnabled(it)
-                        },
-                        onTimeSelectionTodoPromptChanged = {
-                            appStatusViewModel?.setTimeSelectionTodoPromptEnabled(it)
+                        onTodoPromptChanged = {
+                            appStatusViewModel?.setTodoPromptEnabled(it)
                         },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
