@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.data.models.toEntity
-import com.huojieren.apppause.data.repository.DataStoreRepository
+import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.ui.state.SelectAppUiState
@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SelectAppViewModel @Inject constructor(
-    private val dataStoreRepository: DataStoreRepository,
+    private val appRepository: AppRepository,
     private val appManager: AppManager,
 ) : ViewModel() {
     private val tag = "SelectAppViewModel"
@@ -39,7 +39,9 @@ class SelectAppViewModel @Inject constructor(
     fun addApp(appInfoUi: AppInfoUi) {
         logger(tag, "Add app: ${appInfoUi.name}")
         if (!_uiState.value.monitoredApps.any { it.packageName == appInfoUi.packageName }) {
-            dataStoreRepository.addAppToMonitored(appInfoUi.toEntity())
+            viewModelScope.launch {
+                appRepository.addAppToMonitored(appInfoUi.toEntity())
+            }
             _uiState.update { currentState ->
                 currentState.copy(
                     monitoredApps = currentState.monitoredApps + appInfoUi
@@ -50,7 +52,9 @@ class SelectAppViewModel @Inject constructor(
 
     fun removeApp(appInfoUi: AppInfoUi) {
         logger(tag, "Remove app: ${appInfoUi.name}")
-        dataStoreRepository.removeAppFromMonitor(appInfoUi.toEntity())
+        viewModelScope.launch {
+            appRepository.removeAppFromMonitor(appInfoUi.toEntity())
+        }
         _uiState.update { currentState ->
             currentState.copy(
                 monitoredApps = currentState.monitoredApps.filter { it.packageName != appInfoUi.packageName }
@@ -71,7 +75,7 @@ class SelectAppViewModel @Inject constructor(
 
     suspend fun refreshMonitoredApps() {
         logger(tag, "Refresh monitored apps")
-        val appInfoList = dataStoreRepository.getMonitoredApps().first()
+        val appInfoList = appRepository.getMonitoredAppsOnce()
         logger(tag, "Monitored apps: $appInfoList")
 
         val appInfoUiList = appManager.toUiList(appInfoList)
@@ -83,7 +87,7 @@ class SelectAppViewModel @Inject constructor(
         val appInfoGrouped = appManager.loadInstalledAppsGrouped()
         logger(tag, "All apps grouped: ${appInfoGrouped.map { it.letter to it.items.size }}")
 
-        dataStoreRepository.saveAllApps(appInfoGrouped.flatMap { it.items })
+        appRepository.saveAllApps(appInfoGrouped.flatMap { it.items })
 
         val appsUiGrouped = appInfoGrouped.map { group ->
             val appsUiList = appManager.toUiList(group.items)

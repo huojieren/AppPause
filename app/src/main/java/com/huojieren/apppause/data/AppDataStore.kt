@@ -3,6 +3,7 @@ package com.huojieren.apppause.data
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 
@@ -17,4 +18,7 @@ object DataStoreKeys {
 
     // 所有应用
     val ALL_APPS = stringSetPreferencesKey("all_apps")
+
+    // DataStore 应用数据迁移到 Room 的完成标记
+    val ROOM_APP_MIGRATION_COMPLETED = booleanPreferencesKey("room_app_migration_completed")
 }

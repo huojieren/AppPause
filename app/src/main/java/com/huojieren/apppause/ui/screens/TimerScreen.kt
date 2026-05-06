@@ -1,7 +1,9 @@
 package com.huojieren.apppause.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,14 +16,19 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -29,7 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
+import com.huojieren.apppause.data.local.entity.TodoEntity
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.data.models.TimerTodoPrompt
+import com.huojieren.apppause.data.models.TodoPromptInput
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.components.Picker
@@ -43,15 +53,20 @@ import kotlinx.coroutines.flow.first
 fun TimeSelectionScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
+    activeTodos: List<TodoEntity> = emptyList(),
     onExtend5Clicked: () -> Unit,
     onExtend10Clicked: () -> Unit,
     onCancelButtonClicked: () -> Unit,
-    onConfirmButtonClicked: (Int) -> Unit
+    onConfirmButtonClicked: (Int, TodoPromptInput?) -> Unit
 ) {
     val timeValues = remember { (1..60).map { it.toString() } }
     val valuesPickerState = rememberPickerState()
     val units = remember { listOf("分钟", "小时", "秒钟") }
     val unitsPickerState = rememberPickerState()
+    var todoText by remember { mutableStateOf("") }
+    var selectedTodo by remember { mutableStateOf<TodoEntity?>(null) }
+    var todoMenuExpanded by remember { mutableStateOf(false) }
+    var shouldSaveCustomTodo by remember { mutableStateOf(false) }
 
     // 使用 remember 创建派生状态
     val selectedTimeInSeconds = remember(
@@ -66,6 +81,39 @@ fun TimeSelectionScreen(
             "分钟" -> value * 60
             "小时" -> value * 3600
             else -> value
+        }
+    }
+    val normalizedTodoText = todoText.trim()
+    val filteredTodos = remember(activeTodos, todoText) {
+        val query = todoText.trim()
+        if (query.isBlank()) {
+            activeTodos.take(5)
+        } else {
+            activeTodos
+                .filter { it.name.contains(query, ignoreCase = true) }
+                .take(5)
+        }
+    }
+    val isCustomTodo = normalizedTodoText.isNotBlank() && selectedTodo == null
+    val todoPromptInput = remember(
+        normalizedTodoText,
+        selectedTodo,
+        shouldSaveCustomTodo
+    ) {
+        when {
+            selectedTodo != null -> TodoPromptInput(
+                todoId = selectedTodo!!.id,
+                title = selectedTodo!!.name,
+                shouldSave = false
+            )
+
+            normalizedTodoText.isNotBlank() -> TodoPromptInput(
+                todoId = null,
+                title = normalizedTodoText,
+                shouldSave = shouldSaveCustomTodo
+            )
+
+            else -> null
         }
     }
 
@@ -122,6 +170,59 @@ fun TimeSelectionScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = todoText,
+                            onValueChange = { value ->
+                                if (selectedTodo?.name != value) {
+                                    selectedTodo = null
+                                }
+                                todoText = value
+                                todoMenuExpanded = true
+                                if (value.isBlank()) {
+                                    shouldSaveCustomTodo = false
+                                }
+                            },
+                            label = { Text("待办提醒（可选）") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        DropdownMenu(
+                            expanded = todoMenuExpanded && filteredTodos.isNotEmpty(),
+                            onDismissRequest = { todoMenuExpanded = false },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            filteredTodos.forEach { todo ->
+                                DropdownMenuItem(
+                                    text = { Text(todo.name) },
+                                    onClick = {
+                                        selectedTodo = todo
+                                        todoText = todo.name
+                                        shouldSaveCustomTodo = false
+                                        todoMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    if (isCustomTodo) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = shouldSaveCustomTodo,
+                                onCheckedChange = { shouldSaveCustomTodo = it }
+                            )
+                            Text(
+                                text = "保存到 todo list",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row {
                         FilledTonalButton(
                             modifier = Modifier.weight(1f),
@@ -147,7 +248,9 @@ fun TimeSelectionScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             modifier = Modifier.weight(1f),
-                            onClick = { onConfirmButtonClicked(selectedTimeInSeconds) }
+                            onClick = {
+                                onConfirmButtonClicked(selectedTimeInSeconds, todoPromptInput)
+                            }
                         ) {
                             Text(text = "确定")
                         }
@@ -172,10 +275,14 @@ fun TimeSelectionCardPreView() {
         TimeSelectionScreen(
             modifier = Modifier.fillMaxSize(),
             appInfoUi = mockAppInfo,
+            activeTodos = listOf(
+                TodoEntity(id = 1, name = "写日报"),
+                TodoEntity(id = 2, name = "整理学习笔记")
+            ),
             onExtend5Clicked = {},
             onExtend10Clicked = {},
             onCancelButtonClicked = {},
-            onConfirmButtonClicked = {}
+            onConfirmButtonClicked = { _, _ -> }
         )
     }
 }
@@ -186,6 +293,7 @@ private const val TAG = "TimeOutScreen"
 fun TimeOutScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
+    todoPrompt: TimerTodoPrompt? = null,
     fadeInCompleteEvent: SharedFlow<Unit>,
     onClickReturnToHome: () -> Unit,
     onAutoReturnToHome: () -> Unit = {},
@@ -234,6 +342,14 @@ fun TimeOutScreen(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.error
             )
+            if (todoPrompt != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "该做：${todoPrompt.title}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = onClickReturnToHome,
@@ -268,6 +384,11 @@ fun TimeOutScreenPreview() {
         TimeOutScreen(
             modifier = Modifier.fillMaxSize(),
             appInfoUi = mockAppInfoUi,
+            todoPrompt = TimerTodoPrompt(
+                todoId = 1,
+                title = "写日报",
+                isSavedTodo = true
+            ),
             onClickReturnToHome = {},
             fadeInCompleteEvent = mockFlow
         )

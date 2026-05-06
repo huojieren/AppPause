@@ -43,3 +43,7 @@ Version catalog in `gradle/libs.versions.toml`
 ## Testing
 
 Single unit test at `app/src/test/java/com/huojieren/apppause/ExampleUnitTest.kt`
+
+## Code Conventions
+
+- UI Compose conventions → see `.opencode/skills/ui-convention/SKILL.md`

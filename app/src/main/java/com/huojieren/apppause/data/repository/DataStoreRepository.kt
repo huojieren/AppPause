@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -68,6 +69,31 @@ class DataStoreRepository(
             }
     }
 
+    suspend fun getLegacyMonitoredAppsOnce(): List<AppInfo> {
+        return decodeApps(dataStore.data.first()[DataStoreKeys.MONITORED_APPS] ?: emptySet())
+    }
+
+    suspend fun getLegacyAllAppsOnce(): List<AppInfo> {
+        val appsJson = dataStore.data.first()[DataStoreKeys.ALL_APPS] ?: emptySet()
+        return appsJson.flatMap { value ->
+            try {
+                json.decodeFromString<List<AppInfo>>(value)
+            } catch (_: Exception) {
+                decodeApps(setOf(value))
+            }
+        }
+    }
+
+    suspend fun isRoomAppMigrationCompleted(): Boolean {
+        return dataStore.data.first()[DataStoreKeys.ROOM_APP_MIGRATION_COMPLETED] == true
+    }
+
+    suspend fun setRoomAppMigrationCompleted() {
+        dataStore.edit { preferences ->
+            preferences[DataStoreKeys.ROOM_APP_MIGRATION_COMPLETED] = true
+        }
+    }
+
     /**
      * 保存所有应用到DataStore中
      */
@@ -77,6 +103,18 @@ class DataStoreRepository(
                 val appsJson = json.encodeToString(apps)
                 preferences[DataStoreKeys.ALL_APPS] = setOf(appsJson)
             }
+        }
+    }
+
+    private fun decodeApps(appsJson: Set<String>): List<AppInfo> {
+        return try {
+            appsJson.map { json.decodeFromString<AppInfo>(it) }
+        } catch (e: Exception) {
+            logger(
+                "DataStoreRepository",
+                "Error decoding appsJson: $e"
+            )
+            emptyList()
         }
     }
 }

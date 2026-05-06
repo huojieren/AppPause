@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfoUi
+import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.theme.AppTheme
 
@@ -75,6 +76,7 @@ fun AppListItem(
 }
 
 @LightComponentPreview
+@DarkComponentPreview
 @Composable
 fun AppListItemNotMonitoredPreview() {
     val mockApp = AppInfoUi(
@@ -92,6 +94,7 @@ fun AppListItemNotMonitoredPreview() {
 }
 
 @LightComponentPreview
+@DarkComponentPreview
 @Composable
 fun AppListItemMonitoredPreview() {
     val mockApp = AppInfoUi(
