@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.huojieren.apppause.data.Permissions
 import com.huojieren.apppause.data.repository.LogRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
+import com.huojieren.apppause.managers.TimerManager
 import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.utils.showToast
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,13 +24,15 @@ class AppStatusViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val permissionManager: PermissionManager,
     private val logRepository: LogRepository,
+    private val settingsRepository: SettingsRepository,
     private val monitorManager: MonitorManager,
-    private val statusManager: StatusManager
+    private val statusManager: StatusManager,
+    private val timerManager: TimerManager
 ) : ViewModel() {
     private val tag = "AppStatusViewModel"
     private val appContext = context.applicationContext
 
-    val uiState = combine(
+    private val permissionState = combine(
         statusManager.isMonitoring,
         statusManager.hasOverlay,
         statusManager.hasNotification,
@@ -42,6 +46,13 @@ class AppStatusViewModel @Inject constructor(
             hasUsageStats = hasUsageStats,
             hasAccessibility = hasAccessibility
         )
+    }
+
+    val uiState = combine(
+        permissionState,
+        settingsRepository.getSharedTimingEnabled()
+    ) { state, isSharedTimingEnabled ->
+        state.copy(isSharedTimingEnabled = isSharedTimingEnabled)
     }
 
     init {
@@ -62,6 +73,15 @@ class AppStatusViewModel @Inject constructor(
     fun requestPermission(permission: Permissions) {
         logger(tag, "requestPermission $permission")
         permissionManager.requestPermission(permission)
+    }
+
+    fun setSharedTimingEnabled(enabled: Boolean) {
+        logger(tag, "setSharedTimingEnabled: $enabled")
+        timerManager.setPerAppTimingEnabled(!enabled, clearTimers = true)
+        monitorManager.resetCurrentAppTracking()
+        viewModelScope.launch {
+            settingsRepository.setSharedTimingEnabled(enabled)
+        }
     }
 
     fun clearLog() {

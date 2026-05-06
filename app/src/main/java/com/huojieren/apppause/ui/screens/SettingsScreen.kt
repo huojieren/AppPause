@@ -14,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,6 +38,7 @@ fun SettingsScreen(
     onAccessibilityButtonClicked: () -> Unit,
     onClearLogButtonClicked: () -> Unit,
     onSaveLogButtonClicked: () -> Unit,
+    onSharedTimingChanged: (Boolean) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -54,6 +56,10 @@ fun SettingsScreen(
         LogCard(
             onClearLogButtonClicked = onClearLogButtonClicked,
             onSaveLogButtonClicked = onSaveLogButtonClicked
+        )
+        TimingCard(
+            uiState = uiState,
+            onSharedTimingChanged = onSharedTimingChanged
         )
         AboutCard()
     }
@@ -78,8 +84,54 @@ fun SettingsScreenPreview() {
             onUsageStatsButtonClicked = {},
             onAccessibilityButtonClicked = {},
             onClearLogButtonClicked = {},
-            onSaveLogButtonClicked = {}
+            onSaveLogButtonClicked = {},
+            onSharedTimingChanged = {}
         )
+    }
+}
+
+@Composable
+private fun TimingCard(
+    modifier: Modifier = Modifier,
+    uiState: AppStatusUiState,
+    onSharedTimingChanged: (Boolean) -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "计时设置",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "所有应用共享额度",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Switch(
+                    checked = uiState.isSharedTimingEnabled,
+                    onCheckedChange = onSharedTimingChanged
+                )
+            }
+        }
     }
 }
 

@@ -8,7 +8,8 @@ data class TimerTodoPrompt(
 
 data class TimerTimeoutInfo(
     val appInfo: AppInfo,
-    val todoPrompt: TimerTodoPrompt?
+    val todoPrompt: TimerTodoPrompt?,
+    val isSharedTimingEnabled: Boolean = false
 )
 
 data class TodoPromptInput(

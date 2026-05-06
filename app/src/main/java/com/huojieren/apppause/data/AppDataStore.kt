@@ -21,4 +21,6 @@ object DataStoreKeys {
 
     // DataStore 应用数据迁移到 Room 的完成标记
     val ROOM_APP_MIGRATION_COMPLETED = booleanPreferencesKey("room_app_migration_completed")
+
+    val SHARED_TIMING_ENABLED = booleanPreferencesKey("shared_timing_enabled")
 }

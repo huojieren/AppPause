@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.first
 fun TimeSelectionScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
+    isSharedTimingEnabled: Boolean = false,
     activeTodos: List<TodoEntity> = emptyList(),
     onExtend5Clicked: () -> Unit,
     onExtend10Clicked: () -> Unit,
@@ -137,15 +138,21 @@ fun TimeSelectionScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Image(
-                        painter = appInfoUi.icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    if (!isSharedTimingEnabled) {
+                        Image(
+                            painter = appInfoUi.icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     // TODO 2025/11/7 23:05 根据 text 动态设置行数
                     Text(
-                        text = "为 ${appInfoUi.name} 设置使用时长",
+                        text = if (isSharedTimingEnabled) {
+                            "为本次使用选择时间"
+                        } else {
+                            "为 ${appInfoUi.name} 设置使用时长"
+                        },
                         style = MaterialTheme.typography.titleLarge,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -293,6 +300,7 @@ private const val TAG = "TimeOutScreen"
 fun TimeOutScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
+    isSharedTimingEnabled: Boolean = false,
     todoPrompt: TimerTodoPrompt? = null,
     fadeInCompleteEvent: SharedFlow<Unit>,
     onClickReturnToHome: () -> Unit,
@@ -324,21 +332,29 @@ fun TimeOutScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Image(
-                painter = appInfoUi.icon,
-                contentDescription = null,
-                modifier = Modifier.size(120.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            if (!isSharedTimingEnabled) {
+                Image(
+                    painter = appInfoUi.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(120.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             // TODO 2025/11/7 23:05 根据 text 动态设置行数
+            if (!isSharedTimingEnabled) {
+                Text(
+                    text = appInfoUi.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             Text(
-                text = appInfoUi.name,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "使用时间已到",
+                text = if (isSharedTimingEnabled) {
+                    "本次使用时长已到"
+                } else {
+                    "使用时间已到"
+                },
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.error
             )

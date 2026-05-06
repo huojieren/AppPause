@@ -66,6 +66,7 @@ class ListenerManager @Inject constructor(
                     TimeSelectionScreen(
                         modifier = Modifier.fillMaxSize(),
                         appInfoUi = appInfo.toUI(icon),
+                        isSharedTimingEnabled = !timerManager.isPerAppTimingEnabled(),
                         activeTodos = activeTodos,
                         onExtend5Clicked = {
                             overlayManager.removeOverlay()
@@ -170,6 +171,7 @@ class ListenerManager @Inject constructor(
                     TimeOutScreen(
                         modifier = Modifier.fillMaxSize(),
                         appInfoUi = appInfo.toUI(icon),
+                        isSharedTimingEnabled = timeoutInfo.isSharedTimingEnabled,
                         todoPrompt = timeoutInfo.todoPrompt,
                         fadeInCompleteEvent = overlayManager.fadeInCompleteEvent,
                         onClickReturnToHome = {
