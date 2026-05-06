@@ -2,6 +2,7 @@ package com.huojieren.apppause.di
 
 import android.content.Context
 import com.huojieren.apppause.data.repository.AppRepository
+import com.huojieren.apppause.data.repository.TodoRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.ListenerManager
 import com.huojieren.apppause.managers.MonitorManager
@@ -80,14 +81,16 @@ object ManagerModule {
         appManager: AppManager,
         monitorManager: MonitorManager,
         overlayManager: OverlayManager,
-        timerManager: TimerManager
+        timerManager: TimerManager,
+        todoRepository: TodoRepository
     ): ListenerManager {
         return ListenerManager(
             context,
             monitorManager,
             overlayManager,
             timerManager,
-            appManager
+            appManager,
+            todoRepository
         )
     }
 }

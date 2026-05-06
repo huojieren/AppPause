@@ -5,6 +5,8 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.huojieren.apppause.data.models.AppInfo
+import com.huojieren.apppause.data.models.TimerTimeoutInfo
+import com.huojieren.apppause.data.models.TimerTodoPrompt
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.utils.showToast
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +26,7 @@ class TimerManager(
     private val _currentTimerState = MutableStateFlow<TimerDisplayState?>(null)
     val currentTimerState: StateFlow<TimerDisplayState?> = _currentTimerState.asStateFlow()
 
-    private var onTimeOut: ((AppInfo) -> Unit)? = null
+    private var onTimeOut: ((TimerTimeoutInfo) -> Unit)? = null
 
     // 日志控制
     private var logCounter = 0
@@ -47,7 +49,8 @@ class TimerManager(
         var remainingTime: Long,
         var isRunning: Boolean = false,
         var startTime: Long = 0,
-        var appInfo: AppInfo? = null
+        var appInfo: AppInfo? = null,
+        var todoPrompt: TimerTodoPrompt? = null
     )
 
     /**
@@ -61,7 +64,7 @@ class TimerManager(
     /**
      * 设置超时监听器
      */
-    fun setOnTimeOutListener(listener: (AppInfo) -> Unit) {
+    fun setOnTimeOutListener(listener: (TimerTimeoutInfo) -> Unit) {
         onTimeOut = listener
     }
 
@@ -70,7 +73,11 @@ class TimerManager(
      * @param app 应用信息
      * @param timeMs 倒计时时间（毫秒），如果为null则使用当前剩余时间
      */
-    fun start(app: AppInfo, timeMs: Long? = null) {
+    fun start(
+        app: AppInfo,
+        timeMs: Long? = null,
+        todoPrompt: TimerTodoPrompt? = null
+    ) {
         val packageName = app.packageName
 
         // 判断是否是继续倒计时（有暂停的倒计时）
@@ -82,6 +89,7 @@ class TimerManager(
 
         // 获取或设置倒计时时间
         val targetTimeMs = timeMs ?: timerStateMap[packageName]?.remainingTime ?: 0
+        val targetTodoPrompt = todoPrompt ?: previousState?.todoPrompt
 
         if (targetTimeMs <= 0) {
             logger(
@@ -97,7 +105,8 @@ class TimerManager(
             remainingTime = targetTimeMs,
             isRunning = true,
             startTime = System.currentTimeMillis(),
-            appInfo = app
+            appInfo = app,
+            todoPrompt = targetTodoPrompt
         )
         timerStateMap[packageName] = state
 
@@ -248,7 +257,14 @@ class TimerManager(
                     }
 
                     logger(tag, "[$packageName] timer finished")
-                    finishedAppInfo?.let { onTimeOut?.invoke(it) }
+                    finishedAppInfo?.let {
+                        onTimeOut?.invoke(
+                            TimerTimeoutInfo(
+                                appInfo = it,
+                                todoPrompt = state.todoPrompt
+                            )
+                        )
+                    }
                 }
             }
         }
