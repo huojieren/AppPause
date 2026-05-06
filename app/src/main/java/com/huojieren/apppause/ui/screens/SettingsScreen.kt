@@ -78,8 +78,7 @@ fun SettingsScreenPreview() {
             onUsageStatsButtonClicked = {},
             onAccessibilityButtonClicked = {},
             onClearLogButtonClicked = {},
-            onSaveLogButtonClicked = {},
-            modifier = Modifier.padding(16.dp)
+            onSaveLogButtonClicked = {}
         )
     }
 }

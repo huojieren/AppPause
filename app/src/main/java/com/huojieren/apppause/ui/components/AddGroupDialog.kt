@@ -5,11 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.theme.AppTheme
+import androidx.core.graphics.toColorInt
 
 private val colorOptions = listOf(
     "#2196F3", "#4CAF50", "#FF9800", "#E91E63",
@@ -62,12 +65,14 @@ fun AddGroupDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text("选择颜色", style = MaterialTheme.typography.labelMedium)
+
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    colorOptions.forEach { color ->
+                    items(colorOptions) { color ->
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
@@ -116,8 +121,8 @@ fun AddGroupDialog(
 
 fun parseColor(colorString: String): Color {
     return try {
-        Color(android.graphics.Color.parseColor(colorString))
-    } catch (e: Exception) {
+        Color(colorString.toColorInt())
+    } catch (_: Exception) {
         Color.Gray
     }
 }

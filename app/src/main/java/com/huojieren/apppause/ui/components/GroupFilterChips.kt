@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -44,7 +43,7 @@ fun GroupFilterChips(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
-            FilterChip(
+            CompactFilterChip(
                 selected = selectedGroupId == null,
                 onClick = { onGroupSelected(null) },
                 label = { Text("全部") }
@@ -52,7 +51,7 @@ fun GroupFilterChips(
         }
         items(groups) { group ->
             Box {
-                FilterChip(
+                CompactFilterChip(
                     selected = selectedGroupId == group.id,
                     onClick = { onGroupSelected(group.id) },
                     label = { Text(group.name) },
@@ -97,7 +96,7 @@ fun GroupFilterChips(
             }
         }
         item {
-            FilterChip(
+            CompactFilterChip(
                 selected = false,
                 onClick = onAddGroup,
                 label = { Text("+ 分组") }

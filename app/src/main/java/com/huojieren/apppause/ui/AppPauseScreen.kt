@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -103,6 +106,15 @@ fun AppPauseApp(
                     ) { inclusive = true }
                 }
             }
+        },
+        floatingActionButton = {
+            if (currentRoute == AppPauseScreen.TodoList.route) {
+                FloatingActionButton(
+                    onClick = { todoViewModel?.showAddTodoDialog() }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "添加待办")
+                }
+            }
         }
     ) { innerPadding ->
 
@@ -170,9 +182,6 @@ fun AppPauseApp(
                         uiState = actualTodoListUiState,
                         onSelectGroup = {
                             todoViewModel?.selectGroup(it)
-                        },
-                        onShowAddTodoDialog = {
-                            todoViewModel?.showAddTodoDialog()
                         },
                         onHideAddTodoDialog = {
                             todoViewModel?.hideAddTodoDialog()
@@ -293,7 +302,7 @@ fun SelectAppScreenPreview() {
     }
 }
 
-//@LightAppPreview
+@LightAppPreview
 //@DarkAppPreview
 @Composable
 fun SettingsScreenPreview() {
