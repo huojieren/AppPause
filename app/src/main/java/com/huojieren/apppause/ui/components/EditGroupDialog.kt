@@ -106,22 +106,22 @@ fun EditGroupDialog(
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm(group.copy(name = name, color = selectedColor))
-                },
-                enabled = name.isNotBlank()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("保存")
-            }
-        },
-        dismissButton = {
-            Row {
                 TextButton(onClick = { onDelete(group) }) {
                     Text("删除", color = MaterialTheme.colorScheme.error)
                 }
                 TextButton(onClick = onDismiss) {
                     Text("取消")
+                }
+                TextButton(
+                    onClick = {
+                        onConfirm(group.copy(name = name, color = selectedColor))
+                    },
+                    enabled = name.isNotBlank()
+                ) {
+                    Text("保存")
                 }
             }
         }
