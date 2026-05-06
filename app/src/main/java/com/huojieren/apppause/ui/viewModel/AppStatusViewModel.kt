@@ -50,9 +50,17 @@ class AppStatusViewModel @Inject constructor(
 
     val uiState = combine(
         permissionState,
-        settingsRepository.getSharedTimingEnabled()
-    ) { state, isSharedTimingEnabled ->
-        state.copy(isSharedTimingEnabled = isSharedTimingEnabled)
+        settingsRepository.getSharedTimingEnabled(),
+        settingsRepository.getWaitBeforeReturnEnabled(),
+        settingsRepository.getTimeoutTodoPromptEnabled(),
+        settingsRepository.getTimeSelectionTodoPromptEnabled()
+    ) { state, isSharedTimingEnabled, isWaitBeforeReturnEnabled, isTimeoutTodoPromptEnabled, isTimeSelectionTodoPromptEnabled ->
+        state.copy(
+            isSharedTimingEnabled = isSharedTimingEnabled,
+            isWaitBeforeReturnEnabled = isWaitBeforeReturnEnabled,
+            isTimeoutTodoPromptEnabled = isTimeoutTodoPromptEnabled,
+            isTimeSelectionTodoPromptEnabled = isTimeSelectionTodoPromptEnabled
+        )
     }
 
     init {
@@ -81,6 +89,29 @@ class AppStatusViewModel @Inject constructor(
         monitorManager.resetCurrentAppTracking()
         viewModelScope.launch {
             settingsRepository.setSharedTimingEnabled(enabled)
+        }
+    }
+
+    fun setWaitBeforeReturnEnabled(enabled: Boolean) {
+        logger(tag, "setWaitBeforeReturnEnabled: $enabled")
+        viewModelScope.launch {
+            settingsRepository.setWaitBeforeReturnEnabled(enabled)
+            timerManager.refreshSettings()
+        }
+    }
+
+    fun setTimeoutTodoPromptEnabled(enabled: Boolean) {
+        logger(tag, "setTimeoutTodoPromptEnabled: $enabled")
+        viewModelScope.launch {
+            settingsRepository.setTimeoutTodoPromptEnabled(enabled)
+            timerManager.refreshSettings()
+        }
+    }
+
+    fun setTimeSelectionTodoPromptEnabled(enabled: Boolean) {
+        logger(tag, "setTimeSelectionTodoPromptEnabled: $enabled")
+        viewModelScope.launch {
+            settingsRepository.setTimeSelectionTodoPromptEnabled(enabled)
         }
     }
 
@@ -118,27 +149,14 @@ class AppStatusViewModel @Inject constructor(
                 } catch (e: Exception) {
                     logger(tag, "Failed to start monitoring: ${e.message}")
                     showToast(appContext, "启动监控失败：${e.message}")
-                    // 刷新权限状态
                     refreshState()
                 }
             } else {
                 when {
                     !statusManager.hasOverlay.value -> showToast(appContext, "请先授予悬浮窗权限")
-                    !statusManager.hasNotification.value -> showToast(
-                        appContext,
-                        "请先授予通知权限"
-                    )
-
-                    !statusManager.hasUsageStats.value -> showToast(
-                        appContext,
-                        "请先授予使用统计权限"
-                    )
-
-                    !statusManager.hasAccessibility.value -> showToast(
-                        appContext,
-                        "请先授予无障碍服务权限"
-                    )
-
+                    !statusManager.hasNotification.value -> showToast(appContext, "请先授予通知权限")
+                    !statusManager.hasUsageStats.value -> showToast(appContext, "请先授予使用统计权限")
+                    !statusManager.hasAccessibility.value -> showToast(appContext, "请先授予无障碍服务权限")
                     else -> showToast(appContext, "请先授予所有权限")
                 }
             }

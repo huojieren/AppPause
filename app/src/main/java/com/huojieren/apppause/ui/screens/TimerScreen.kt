@@ -54,6 +54,7 @@ fun TimeSelectionScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
     isSharedTimingEnabled: Boolean = false,
+    isTimeSelectionTodoPromptEnabled: Boolean = false,
     activeTodos: List<TodoEntity> = emptyList(),
     onExtend5Clicked: () -> Unit,
     onExtend10Clicked: () -> Unit,
@@ -177,56 +178,58 @@ fun TimeSelectionScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = todoText,
-                            onValueChange = { value ->
-                                if (selectedTodo?.name != value) {
-                                    selectedTodo = null
-                                }
-                                todoText = value
-                                todoMenuExpanded = true
-                                if (value.isBlank()) {
-                                    shouldSaveCustomTodo = false
-                                }
-                            },
-                            label = { Text("待办提醒（可选）") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        DropdownMenu(
-                            expanded = todoMenuExpanded && filteredTodos.isNotEmpty(),
-                            onDismissRequest = { todoMenuExpanded = false },
+                    if (isTimeSelectionTodoPromptEnabled) {
+                        Box(
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            filteredTodos.forEach { todo ->
-                                DropdownMenuItem(
-                                    text = { Text(todo.name) },
-                                    onClick = {
-                                        selectedTodo = todo
-                                        todoText = todo.name
-                                        shouldSaveCustomTodo = false
-                                        todoMenuExpanded = false
+                            OutlinedTextField(
+                                value = todoText,
+                                onValueChange = { value ->
+                                    if (selectedTodo?.name != value) {
+                                        selectedTodo = null
                                     }
-                                )
+                                    todoText = value
+                                    todoMenuExpanded = true
+                                    if (value.isBlank()) {
+                                        shouldSaveCustomTodo = false
+                                    }
+                                },
+                                label = { Text("待办提醒（可选）") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            DropdownMenu(
+                                expanded = todoMenuExpanded && filteredTodos.isNotEmpty(),
+                                onDismissRequest = { todoMenuExpanded = false },
+                                modifier = Modifier.fillMaxWidth()
+) {
+                                filteredTodos.forEach { todo ->
+                                    DropdownMenuItem(
+                                        text = { Text(todo.name) },
+                                        onClick = {
+                                            selectedTodo = todo
+                                            todoText = todo.name
+                                            shouldSaveCustomTodo = false
+                                            todoMenuExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
-                    }
-                    if (isCustomTodo) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = shouldSaveCustomTodo,
-                                onCheckedChange = { shouldSaveCustomTodo = it }
-                            )
-                            Text(
-                                text = "保存到 todo list",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        if (isCustomTodo) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = shouldSaveCustomTodo,
+                                    onCheckedChange = { shouldSaveCustomTodo = it }
+                                )
+                                Text(
+                                    text = "保存到 todo list",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -301,12 +304,14 @@ fun TimeOutScreen(
     modifier: Modifier = Modifier,
     appInfoUi: AppInfoUi,
     isSharedTimingEnabled: Boolean = false,
+    isWaitBeforeReturnEnabled: Boolean = false,
+    isTimeoutTodoPromptEnabled: Boolean = false,
     todoPrompt: TimerTodoPrompt? = null,
     fadeInCompleteEvent: SharedFlow<Unit>,
     onClickReturnToHome: () -> Unit,
     onAutoReturnToHome: () -> Unit = {},
 ) {
-    var countDown by remember { mutableIntStateOf(5) }
+    var countDown by remember { mutableIntStateOf(if (isWaitBeforeReturnEnabled) 5 else 0) }
     val canClick = countDown <= 0
 
     LaunchedEffect(fadeInCompleteEvent) {

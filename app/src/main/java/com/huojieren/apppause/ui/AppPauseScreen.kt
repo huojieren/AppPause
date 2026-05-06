@@ -18,6 +18,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -34,6 +38,7 @@ import com.huojieren.apppause.data.local.entity.TodoGroupEntity
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.ui.components.BottomBar
+import com.huojieren.apppause.ui.components.ConfirmDialog
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
 import com.huojieren.apppause.ui.screens.SettingsScreen
@@ -86,6 +91,20 @@ fun AppPauseApp(
 
     val actualTodoListUiState =
         todoListUiState ?: todoViewModel!!.uiState.collectAsState().value
+
+    var showClearLogDialog by remember { mutableStateOf(false) }
+
+    if (showClearLogDialog) {
+        ConfirmDialog(
+            title = "清空日志",
+            message = "确定要清空所有缓存日志吗？此操作不可撤销。",
+            onDismiss = { showClearLogDialog = false },
+            onConfirm = {
+                appStatusViewModel?.clearLog()
+                showClearLogDialog = false
+            }
+        )
+    }
 
     NavHost(
         navController = navController,
@@ -165,13 +184,22 @@ fun AppPauseApp(
                             appStatusViewModel?.requestPermission(Permissions.Accessibility)
                         },
                         onClearLogButtonClicked = {
-                            appStatusViewModel?.clearLog()
+                            showClearLogDialog = true
                         },
                         onSaveLogButtonClicked = {
                             appStatusViewModel?.saveLog()
                         },
                         onSharedTimingChanged = {
                             appStatusViewModel?.setSharedTimingEnabled(it)
+                        },
+                        onWaitBeforeReturnChanged = {
+                            appStatusViewModel?.setWaitBeforeReturnEnabled(it)
+                        },
+                        onTimeoutTodoPromptChanged = {
+                            appStatusViewModel?.setTimeoutTodoPromptEnabled(it)
+                        },
+                        onTimeSelectionTodoPromptChanged = {
+                            appStatusViewModel?.setTimeSelectionTodoPromptEnabled(it)
                         },
                         modifier = Modifier.padding(
                             vertical = 20.dp,

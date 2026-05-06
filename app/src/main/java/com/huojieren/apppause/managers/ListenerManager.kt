@@ -12,6 +12,7 @@ import com.huojieren.apppause.data.models.TimerTodoPrompt
 import com.huojieren.apppause.data.models.TodoPromptInput
 import com.huojieren.apppause.data.models.toUI
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.data.repository.TodoRepository
 import com.huojieren.apppause.ui.screens.TimeOutScreen
 import com.huojieren.apppause.ui.screens.TimeSelectionScreen
@@ -29,7 +30,8 @@ class ListenerManager @Inject constructor(
     private val overlayManager: OverlayManager,
     private val timerManager: TimerManager,
     private val appManager: AppManager,
-    private val todoRepository: TodoRepository
+    private val todoRepository: TodoRepository,
+    private val settingsRepository: SettingsRepository
 ) {
     private val tag = "ListenerManager"
 
@@ -60,6 +62,7 @@ class ListenerManager @Inject constructor(
         CoroutineScope(Dispatchers.Main).launch {
             val icon = appManager.loadIcon(appInfo.packageName)
             val activeTodos = todoRepository.getActiveTodos().first()
+            val isTimeSelectionTodoPromptEnabled = settingsRepository.getTimeSelectionTodoPromptEnabled().first()
             overlayManager.showOverlay(
                 isSlowFadeIn = false,
                 content = {
@@ -67,6 +70,7 @@ class ListenerManager @Inject constructor(
                         modifier = Modifier.fillMaxSize(),
                         appInfoUi = appInfo.toUI(icon),
                         isSharedTimingEnabled = !timerManager.isPerAppTimingEnabled(),
+                        isTimeSelectionTodoPromptEnabled = isTimeSelectionTodoPromptEnabled,
                         activeTodos = activeTodos,
                         onExtend5Clicked = {
                             overlayManager.removeOverlay()
@@ -172,6 +176,8 @@ class ListenerManager @Inject constructor(
                         modifier = Modifier.fillMaxSize(),
                         appInfoUi = appInfo.toUI(icon),
                         isSharedTimingEnabled = timeoutInfo.isSharedTimingEnabled,
+                        isWaitBeforeReturnEnabled = timeoutInfo.isWaitBeforeReturnEnabled,
+                        isTimeoutTodoPromptEnabled = timeoutInfo.isTimeoutTodoPromptEnabled,
                         todoPrompt = timeoutInfo.todoPrompt,
                         fadeInCompleteEvent = overlayManager.fadeInCompleteEvent,
                         onClickReturnToHome = {

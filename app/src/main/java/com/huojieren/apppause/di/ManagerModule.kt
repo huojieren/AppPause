@@ -66,9 +66,10 @@ object ManagerModule {
     @Provides
     @Singleton
     fun provideTimerManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        settingsRepository: SettingsRepository
     ): TimerManager {
-        return TimerManager(context)
+        return TimerManager(context, settingsRepository)
     }
 
     @Provides
@@ -85,7 +86,8 @@ object ManagerModule {
         monitorManager: MonitorManager,
         overlayManager: OverlayManager,
         timerManager: TimerManager,
-        todoRepository: TodoRepository
+        todoRepository: TodoRepository,
+        settingsRepository: SettingsRepository
     ): ListenerManager {
         return ListenerManager(
             context,
@@ -93,7 +95,8 @@ object ManagerModule {
             overlayManager,
             timerManager,
             appManager,
-            todoRepository
+            todoRepository,
+            settingsRepository
         )
     }
 }
