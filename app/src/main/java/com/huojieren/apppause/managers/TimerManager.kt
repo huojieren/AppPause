@@ -41,7 +41,8 @@ class TimerManager(
         val packageName: String,
         val appName: String,
         val remainingTimeMs: Long,
-        val isRunning: Boolean
+        val isRunning: Boolean,
+        val isSharedTimingEnabled: Boolean
     )
 
     /**
@@ -137,7 +138,8 @@ class TimerManager(
             packageName = packageName,
             appName = app.name,
             remainingTimeMs = targetTimeMs,
-            isRunning = true
+            isRunning = true,
+            isSharedTimingEnabled = !perAppTimingEnabled
         )
 
         logger(tag, "--------------------")
@@ -167,9 +169,17 @@ class TimerManager(
             } else {
                 "${seconds}秒"
             }
-            "${app.name} 继续计时，剩余 $timeText"
+            if (perAppTimingEnabled) {
+                "${app.name} 继续计时，剩余 $timeText"
+            } else {
+                "继续计时，剩余 $timeText"
+            }
         } else {
-            "${app.name} 开始倒计时"
+            if (perAppTimingEnabled) {
+                "${app.name} 开始倒计时"
+            } else {
+                "已开始倒计时"
+            }
         }
         showToast(context, message)
     }
@@ -189,7 +199,8 @@ class TimerManager(
                     packageName = _currentTimerState.value?.packageName ?: packageName,
                     appName = _currentTimerState.value?.appName ?: state.appInfo?.name ?: "",
                     remainingTimeMs = state.remainingTime,
-                    isRunning = false
+                    isRunning = false,
+                    isSharedTimingEnabled = !perAppTimingEnabled
                 )
                 logger(
                     tag,
@@ -284,7 +295,8 @@ class TimerManager(
                         onTimeOut?.invoke(
                             TimerTimeoutInfo(
                                 appInfo = it,
-                                todoPrompt = state.todoPrompt
+                                todoPrompt = state.todoPrompt,
+                                isSharedTimingEnabled = !perAppTimingEnabled
                             )
                         )
                     }

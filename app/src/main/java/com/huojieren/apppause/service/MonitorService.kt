@@ -148,7 +148,8 @@ class MonitorService : Service() {
                     updateNotification(
                         timerState.appName,
                         timerState.remainingTimeMs,
-                        timerState.isRunning
+                        timerState.isRunning,
+                        timerState.isSharedTimingEnabled
                     )
                 } else {
                     // 没有正在计时的应用（倒计时结束），显示初始状态
@@ -229,7 +230,12 @@ class MonitorService : Service() {
         }
     }
 
-    private fun updateNotification(appName: String, remainingTimeMs: Long, isValid: Boolean) {
+    private fun updateNotification(
+        appName: String,
+        remainingTimeMs: Long,
+        isValid: Boolean,
+        isSharedTimingEnabled: Boolean
+    ) {
         val remainingSeconds = remainingTimeMs / 1000
         val minutes = remainingSeconds / 60
         val seconds = remainingSeconds % 60
@@ -239,10 +245,11 @@ class MonitorService : Service() {
             "${seconds}秒"
         }
 
+        val targetName = if (isSharedTimingEnabled) "本次使用时长" else appName
         val contentText = if (isValid) {
-            "$appName 剩余 $timeText"
+            "$targetName 剩余 $timeText"
         } else {
-            "$appName 已暂停，剩余 $timeText"
+            "$targetName 已暂停，剩余 $timeText"
         }
 
         logger(
