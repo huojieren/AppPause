@@ -166,6 +166,7 @@ class TodoViewModel @Inject constructor(
     fun deleteGroup(group: TodoGroupEntity) {
         viewModelScope.launch {
             todoRepository.deleteGroup(group)
+            hideEditGroupDialog()
         }
     }
 }
