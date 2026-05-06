@@ -9,10 +9,6 @@ import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Singleton
@@ -23,7 +19,6 @@ class MonitorManager(
     private val statusManager: StatusManager
 ) {
     private val tag = "MonitorManager"
-    private val scope = CoroutineScope(Dispatchers.Main)
     private var monitoredPackages = setOf<String>()
     private var currentApp: AppInfo? = null
     private var onAppChanged: ((AppInfo?) -> Unit)? = null
@@ -37,7 +32,7 @@ class MonitorManager(
         onAppChanged = listener
     }
 
-    fun startMonitor() {
+    suspend fun startMonitor() {
         logger(tag, "startMonitor called")
 
         // 检查无障碍服务是否初始化
@@ -48,11 +43,9 @@ class MonitorManager(
         // 清空所有倒计时，保证新的监控周期
         timerManager.clearAllTimers()
 
-        scope.launch {
-            monitoredPackages = appRepository.getMonitoredAppsOnce()
-                .map { it.packageName }
-                .toSet()
-        }
+        monitoredPackages = appRepository.getMonitoredAppsOnce()
+            .map { it.packageName }
+            .toSet()
 
         try {
             statusManager.setIsMonitoring(true)
