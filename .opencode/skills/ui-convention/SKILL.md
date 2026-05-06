@@ -56,11 +56,74 @@ annotation class LightComponentPreview
 annotation class DarkComponentPreview
 ```
 
+## 5. Layout & Spacing Conventions
+
+### Core Principle: Screen as Pure Component
+
+**All spacing, padding, and FAB should be controlled by parent (AppPauseScreen), not individual Screens.**
+
+- Screen is a pure UI component that only renders content
+- Screen does NOT contain Scaffold, FAB, or internal padding
+- Parent (AppPauseScreen) controls all layout decisions
+
+### Specific Rules
+
+| Rule | Example |
+|------|---------|
+| No internal Scaffold in Screen | ❌ `Scaffold { innerPadding -> ... }` |
+| No FAB in Screen | ❌ `floatingActionButton = { ... }` |
+| No internal padding | ❌ `Modifier.padding(16.dp)` |
+| Pass modifier to content | ✅ `Column(modifier = modifier.fillMaxSize())` |
+| FAB in parent | ✅ Scaffold in AppPauseScreen |
+| Parent controls spacing | ✅ `modifier = Modifier.padding(16.dp)` |
+
+### Example
+
+```kotlin
+// ❌ Wrong - Screen handles its own layout
+@Composable
+fun TodoListScreen(...) {
+    Scaffold(
+        modifier = modifier,
+        floatingActionButton = { ... }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) { ... }
+    }
+}
+
+// ✅ Correct - Screen as pure component
+@Composable
+fun TodoListScreen(modifier: Modifier = Modifier, ...) {
+    Column(modifier = modifier.fillMaxSize()) { ... }
+}
+
+// Parent controls layout
+@Composable
+fun AppPauseScreen(...) {
+    Scaffold(
+        floatingActionButton = { ... }  // FAB here
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding).padding(16.dp)) {
+            TodoListScreen(...)  // No padding inside
+        }
+    }
+}
+```
+
+### Components: Same Principle
+
+- Components should also accept `modifier` and not add internal padding
+- Let parent control spacing through modifier
+- Exception: Small self-contained components like simple icons, dividers
+
+---
+
 ## Common Issues to Avoid
 
 | Issue                                       | Solution                                          |
 |---------------------------------------------|---------------------------------------------------|
 | Screen receiving ViewModel directly         | Pass `uiState` + callbacks instead                |
 | Missing Dark theme Preview                  | Add both annotations to the same Preview function |
+| Screen has internal Scaffold/padding/FAB   | Move to parent, Screen as pure component         |
 | Multiple unrelated Composables in one file  | Split into separate files                         |
 | State class not following naming convention | Use `{feature}UiState` pattern                    |
