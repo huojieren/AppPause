@@ -30,9 +30,6 @@
     <!-- 终止后台进程权限，可用于关闭其他应用程序的后台运行 -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
-    <!-- 数据同步类型前台服务权限 -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
     <!-- 忽略电池优化选项权限，使应用能在后台持续运行不受限制 -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -62,9 +59,14 @@
             android:name=".service.MonitorService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="specialUse"
             android:stopWithTask="false"
-            tools:targetApi="34" />
+            tools:targetApi="34">
+
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Continuous local app usage monitoring and focus timer enforcement" />
+        </service>
         <!-- android:stopWithTask="false" 任务结束不直接停止服务 -->
 
         <!-- 无障碍服务 -->
