@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.huojieren.apppause.data.models.MonitorIntent
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.state.AppStatusUiState
@@ -85,16 +86,24 @@ private fun CircularToggleButton(
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = if (uiState.isMonitoring)
                 MaterialTheme.colorScheme.primary
+            else if (uiState.isMonitoringInterrupted)
+                MaterialTheme.colorScheme.tertiary
             else
                 MaterialTheme.colorScheme.secondary,
             contentColor = if (uiState.isMonitoring)
                 MaterialTheme.colorScheme.onPrimary
+            else if (uiState.isMonitoringInterrupted)
+                MaterialTheme.colorScheme.onTertiary
             else
                 MaterialTheme.colorScheme.onSecondary
         )
     ) {
         Text(
-            text = if (uiState.isMonitoring) "停止" else "开启",
+            text = when {
+                uiState.isMonitoring -> "停止"
+                uiState.isMonitoringInterrupted -> "恢复"
+                else -> "开启"
+            },
             style = MaterialTheme.typography.headlineMedium
         )
     }
@@ -104,6 +113,7 @@ private fun CircularToggleButton(
 private fun StatusText(uiState: AppStatusUiState) {
     val statusText = when {
         uiState.isMonitoring -> "监控中"
+        uiState.isMonitoringInterrupted -> "监控已中断，点击上方按钮恢复"
         !uiState.hasOverlay || !uiState.hasNotification ||
                 !uiState.hasUsageStats || !uiState.hasAccessibility -> "请先在设置页授予所需权限"
 
@@ -143,6 +153,27 @@ fun MainScreenOnMonitorPreview() {
 fun MainScreenOffMonitorPreview() {
     val mockState = AppStatusUiState(
         isMonitoring = false,
+        hasOverlay = true,
+        hasNotification = true,
+        hasUsageStats = true,
+        hasAccessibility = true
+    )
+    AppTheme {
+        MainScreen(
+            uiState = mockState,
+            onLifecycleChange = {},
+            onToggleMonitoring = {},
+        )
+    }
+}
+
+@LightComponentPreview
+@DarkComponentPreview
+@Composable
+fun MainScreenInterruptedMonitorPreview() {
+    val mockState = AppStatusUiState(
+        isMonitoring = false,
+        monitorIntent = MonitorIntent.Enabled,
         hasOverlay = true,
         hasNotification = true,
         hasUsageStats = true,

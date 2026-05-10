@@ -32,15 +32,23 @@ class AppStatusViewModel @Inject constructor(
     private val tag = "AppStatusViewModel"
     private val appContext = context.applicationContext
 
-    private val permissionState = combine(
+    private val monitorState = combine(
         statusManager.isMonitoring,
+        settingsRepository.getMonitorIntent()
+    ) { isMonitoring, monitorIntent ->
+        isMonitoring to monitorIntent
+    }
+
+    private val permissionState = combine(
+        monitorState,
         statusManager.hasOverlay,
         statusManager.hasNotification,
         statusManager.hasUsageStats,
         statusManager.hasAccessibility
-    ) { isMonitoring, hasOverlay, hasNotification, hasUsageStats, hasAccessibility ->
+    ) { monitorState, hasOverlay, hasNotification, hasUsageStats, hasAccessibility ->
         AppStatusUiState(
-            isMonitoring = isMonitoring,
+            isMonitoring = monitorState.first,
+            monitorIntent = monitorState.second,
             hasOverlay = hasOverlay,
             hasNotification = hasNotification,
             hasUsageStats = hasUsageStats,

@@ -9,7 +9,9 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.huojieren.apppause.R
+import com.huojieren.apppause.data.models.MonitorIntent
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.StatusManager
@@ -24,8 +26,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -42,6 +46,9 @@ class MonitorService : Service() {
 
     @Inject
     lateinit var timerManager: TimerManager
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
 
     private val tag = "MonitorService"
 
@@ -76,8 +83,14 @@ class MonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logger(tag, "onStartCommand start, intent=$intent")
 
+        if (intent == null && getStoredMonitorIntent() == MonitorIntent.Disabled) {
+            logger(tag, "sticky restart ignored because monitor intent is disabled")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         // 读取监控策略
-        val strategy = intent?.getStringExtra("strategy")
+        val strategy = intent?.getStringExtra("strategy") ?: getStoredMonitorStrategy().name
         logger(tag, "get strategy: [$strategy]")
 
         monitor?.stop()
@@ -208,6 +221,14 @@ class MonitorService : Service() {
         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
             .createNotificationChannel(channel)
         logger(tag, "createNotificationChannel end")
+    }
+
+    private fun getStoredMonitorIntent(): MonitorIntent = runBlocking {
+        settingsRepository.getMonitorIntent().first()
+    }
+
+    private fun getStoredMonitorStrategy(): MonitorStrategy = runBlocking {
+        settingsRepository.getMonitorStrategy().first()
     }
 
     private fun acquireWakeLock() {
