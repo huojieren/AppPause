@@ -9,6 +9,7 @@ data class AppStatusUiState(
     val hasNotification: Boolean = false,
     val hasUsageStats: Boolean = false,
     val hasAccessibility: Boolean = false,
+    val hasBatteryOptimizationExemption: Boolean = false,
     val isSharedTimingEnabled: Boolean = false,
 ) {
     val isMonitoringInterrupted: Boolean

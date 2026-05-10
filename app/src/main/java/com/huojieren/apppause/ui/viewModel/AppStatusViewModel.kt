@@ -19,6 +19,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private data class PermissionFlags(
+    val hasOverlay: Boolean,
+    val hasNotification: Boolean,
+    val hasUsageStats: Boolean,
+    val hasAccessibility: Boolean,
+    val hasBatteryOptimizationExemption: Boolean
+)
+
 @HiltViewModel
 class AppStatusViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -39,20 +47,34 @@ class AppStatusViewModel @Inject constructor(
         isMonitoring to monitorIntent
     }
 
-    private val permissionState = combine(
-        monitorState,
+    private val permissionFlags = combine(
         statusManager.hasOverlay,
         statusManager.hasNotification,
         statusManager.hasUsageStats,
-        statusManager.hasAccessibility
-    ) { monitorState, hasOverlay, hasNotification, hasUsageStats, hasAccessibility ->
-        AppStatusUiState(
-            isMonitoring = monitorState.first,
-            monitorIntent = monitorState.second,
+        statusManager.hasAccessibility,
+        statusManager.hasBatteryOptimizationExemption
+    ) { hasOverlay, hasNotification, hasUsageStats, hasAccessibility, hasBatteryOptimizationExemption ->
+        PermissionFlags(
             hasOverlay = hasOverlay,
             hasNotification = hasNotification,
             hasUsageStats = hasUsageStats,
-            hasAccessibility = hasAccessibility
+            hasAccessibility = hasAccessibility,
+            hasBatteryOptimizationExemption = hasBatteryOptimizationExemption
+        )
+    }
+
+    private val permissionState = combine(
+        monitorState,
+        permissionFlags
+    ) { monitorState, permissionFlags ->
+        AppStatusUiState(
+            isMonitoring = monitorState.first,
+            monitorIntent = monitorState.second,
+            hasOverlay = permissionFlags.hasOverlay,
+            hasNotification = permissionFlags.hasNotification,
+            hasUsageStats = permissionFlags.hasUsageStats,
+            hasAccessibility = permissionFlags.hasAccessibility,
+            hasBatteryOptimizationExemption = permissionFlags.hasBatteryOptimizationExemption
         )
     }
 
@@ -75,6 +97,9 @@ class AppStatusViewModel @Inject constructor(
             statusManager.setHasNotification(permissionManager.refreshPermission(Permissions.Notification))
             statusManager.setHasUsageStats(permissionManager.refreshPermission(Permissions.UsageStats))
             statusManager.setHasAccessibility(permissionManager.refreshPermission(Permissions.Accessibility))
+            statusManager.setHasBatteryOptimizationExemption(
+                permissionManager.refreshPermission(Permissions.BatteryOptimization)
+            )
         }
     }
 

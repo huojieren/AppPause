@@ -7,5 +7,6 @@ enum class Permissions {
     Overlay,
     Notification,
     UsageStats,
-    Accessibility
+    Accessibility,
+    BatteryOptimization
 }

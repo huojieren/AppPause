@@ -36,6 +36,7 @@ fun SettingsScreen(
     onNotificationButtonClicked: () -> Unit,
     onUsageStatsButtonClicked: () -> Unit,
     onAccessibilityButtonClicked: () -> Unit,
+    onBatteryOptimizationButtonClicked: () -> Unit,
     onClearLogButtonClicked: () -> Unit,
     onSaveLogButtonClicked: () -> Unit,
     onSharedTimingChanged: (Boolean) -> Unit,
@@ -52,6 +53,7 @@ fun SettingsScreen(
             onNotificationButtonClicked = onNotificationButtonClicked,
             onUsageStatsButtonClicked = onUsageStatsButtonClicked,
             onAccessibilityButtonClicked = onAccessibilityButtonClicked,
+            onBatteryOptimizationButtonClicked = onBatteryOptimizationButtonClicked,
         )
         LogCard(
             onClearLogButtonClicked = onClearLogButtonClicked,
@@ -83,6 +85,7 @@ fun SettingsScreenPreview() {
             onNotificationButtonClicked = {},
             onUsageStatsButtonClicked = {},
             onAccessibilityButtonClicked = {},
+            onBatteryOptimizationButtonClicked = {},
             onClearLogButtonClicked = {},
             onSaveLogButtonClicked = {},
             onSharedTimingChanged = {}
@@ -143,6 +146,7 @@ private fun PermissionCard(
     onNotificationButtonClicked: () -> Unit,
     onUsageStatsButtonClicked: () -> Unit,
     onAccessibilityButtonClicked: () -> Unit = {},
+    onBatteryOptimizationButtonClicked: () -> Unit = {},
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -205,6 +209,17 @@ private fun PermissionCard(
             ) {
                 val buttonText =
                     if (uiState.hasAccessibility) "已获得无障碍服务权限" else "申请无障碍服务权限"
+                Text(text = buttonText)
+            }
+            FilledTonalButton(
+                enabled = !uiState.hasBatteryOptimizationExemption,
+                onClick = onBatteryOptimizationButtonClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                val buttonText =
+                    if (uiState.hasBatteryOptimizationExemption) "已关闭电池优化限制" else "设置电池优化白名单"
                 Text(text = buttonText)
             }
         }

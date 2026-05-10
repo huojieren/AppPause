@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
@@ -61,6 +62,11 @@ class PermissionManager(
             Permissions.Accessibility -> {
                 return AppPauseAccessibilityService.isInitialized()
             }
+
+            Permissions.BatteryOptimization -> {
+                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+                return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+            }
         }
     }
 
@@ -99,6 +105,12 @@ class PermissionManager(
             // 请求无障碍服务权限
             Permissions.Accessibility -> {
                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
+
+            Permissions.BatteryOptimization -> {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             }
