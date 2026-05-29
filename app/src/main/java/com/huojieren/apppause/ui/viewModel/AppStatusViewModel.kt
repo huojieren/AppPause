@@ -113,7 +113,18 @@ class AppStatusViewModel @Inject constructor(
 
     fun requestPermission(permission: Permissions) {
         logger(tag, "requestPermission $permission")
-        permissionManager.requestPermission(permission)
+        val isGranted = when (permission) {
+            Permissions.Overlay -> statusManager.hasOverlay.value
+            Permissions.Notification -> statusManager.hasNotification.value
+            Permissions.UsageStats -> statusManager.hasUsageStats.value
+            Permissions.Accessibility -> statusManager.hasAccessibility.value
+            Permissions.BatteryOptimization -> statusManager.hasBatteryOptimizationExemption.value
+        }
+        if (isGranted) {
+            showToast(appContext, "已获取")
+        } else {
+            permissionManager.requestPermission(permission)
+        }
     }
 
     fun setSharedTimingEnabled(enabled: Boolean) {
