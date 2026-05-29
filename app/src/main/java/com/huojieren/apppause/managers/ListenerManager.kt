@@ -177,6 +177,7 @@ class ListenerManager @Inject constructor(
                         appInfoUi = appInfo.toUI(icon),
                         isSharedTimingEnabled = timeoutInfo.isSharedTimingEnabled,
                         isWaitBeforeReturnEnabled = timeoutInfo.isWaitBeforeReturnEnabled,
+                        waitBeforeReturnSeconds = timeoutInfo.waitBeforeReturnSeconds,
                         isTodoPromptEnabled = timeoutInfo.isTodoPromptEnabled,
                         todoPrompt = timeoutInfo.todoPrompt,
                         fadeInCompleteEvent = overlayManager.fadeInCompleteEvent,

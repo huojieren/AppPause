@@ -8,5 +8,6 @@ data class AppStatusUiState(
     val hasAccessibility: Boolean = false,
     val isSharedTimingEnabled: Boolean = false,
     val isWaitBeforeReturnEnabled: Boolean = false,
+    val waitBeforeReturnSeconds: Int = 5,
     val isTodoPromptEnabled: Boolean = false,
 )

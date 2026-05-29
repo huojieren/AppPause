@@ -195,6 +195,9 @@ fun AppPauseApp(
                         onWaitBeforeReturnChanged = {
                             appStatusViewModel?.setWaitBeforeReturnEnabled(it)
                         },
+                        onWaitBeforeReturnSecondsChanged = {
+                            appStatusViewModel?.setWaitBeforeReturnSeconds(it)
+                        },
                         onTodoPromptChanged = {
                             appStatusViewModel?.setTodoPromptEnabled(it)
                         },
@@ -341,7 +344,9 @@ fun SettingsScreenPreview() {
                 hasOverlay = true,
                 hasNotification = true,
                 hasUsageStats = true,
-                hasAccessibility = true
+                hasAccessibility = true,
+                isWaitBeforeReturnEnabled = true,
+                waitBeforeReturnSeconds = 5
             ),
             selectAppUiState = SelectAppUiState(),
             todoListUiState = TodoListUiState(),

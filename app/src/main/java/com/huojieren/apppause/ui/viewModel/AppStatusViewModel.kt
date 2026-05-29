@@ -52,11 +52,13 @@ class AppStatusViewModel @Inject constructor(
         permissionState,
         settingsRepository.getSharedTimingEnabled(),
         settingsRepository.getWaitBeforeReturnEnabled(),
+        settingsRepository.getWaitBeforeReturnSeconds(),
         settingsRepository.getTodoPromptEnabled()
-    ) { state, isSharedTimingEnabled, isWaitBeforeReturnEnabled, isTodoPromptEnabled ->
+    ) { state, isSharedTimingEnabled, isWaitBeforeReturnEnabled, waitBeforeReturnSeconds, isTodoPromptEnabled ->
         state.copy(
             isSharedTimingEnabled = isSharedTimingEnabled,
             isWaitBeforeReturnEnabled = isWaitBeforeReturnEnabled,
+            waitBeforeReturnSeconds = waitBeforeReturnSeconds,
             isTodoPromptEnabled = isTodoPromptEnabled
         )
     }
@@ -94,6 +96,14 @@ class AppStatusViewModel @Inject constructor(
         logger(tag, "setWaitBeforeReturnEnabled: $enabled")
         viewModelScope.launch {
             settingsRepository.setWaitBeforeReturnEnabled(enabled)
+            timerManager.refreshSettings()
+        }
+    }
+
+    fun setWaitBeforeReturnSeconds(seconds: Int) {
+        logger(tag, "setWaitBeforeReturnSeconds: $seconds")
+        viewModelScope.launch {
+            settingsRepository.setWaitBeforeReturnSeconds(seconds.coerceIn(1, 99))
             timerManager.refreshSettings()
         }
     }

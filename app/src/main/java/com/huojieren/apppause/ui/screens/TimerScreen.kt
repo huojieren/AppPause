@@ -305,13 +305,16 @@ fun TimeOutScreen(
     appInfoUi: AppInfoUi,
     isSharedTimingEnabled: Boolean = false,
     isWaitBeforeReturnEnabled: Boolean = false,
+    waitBeforeReturnSeconds: Int = 5,
     isTodoPromptEnabled: Boolean = false,
     todoPrompt: TimerTodoPrompt? = null,
     fadeInCompleteEvent: SharedFlow<Unit>,
     onClickReturnToHome: () -> Unit,
     onAutoReturnToHome: () -> Unit = {},
 ) {
-    var countDown by remember { mutableIntStateOf(if (isWaitBeforeReturnEnabled) 5 else 0) }
+    var countDown by remember {
+        mutableIntStateOf(if (isWaitBeforeReturnEnabled) waitBeforeReturnSeconds.coerceAtLeast(0) else 0)
+    }
     val canClick = countDown <= 0
 
     LaunchedEffect(fadeInCompleteEvent) {

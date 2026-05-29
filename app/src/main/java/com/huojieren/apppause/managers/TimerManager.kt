@@ -27,6 +27,7 @@ class TimerManager(
 
     // 缓存的设置值（避免在start()中阻塞）
     private var cachedWaitBeforeReturnEnabled = false
+    private var cachedWaitBeforeReturnSeconds = SettingsRepository.DEFAULT_WAIT_BEFORE_RETURN_SECONDS
     private var cachedTodoPromptEnabled = false
 
     // 使用可变Map来存储倒计时状态
@@ -51,10 +52,13 @@ class TimerManager(
             cachedWaitBeforeReturnEnabled = runBlocking {
                 settingsRepository.getWaitBeforeReturnEnabled().first()
             }
+            cachedWaitBeforeReturnSeconds = runBlocking {
+                settingsRepository.getWaitBeforeReturnSeconds().first()
+            }
             cachedTodoPromptEnabled = runBlocking {
                 settingsRepository.getTodoPromptEnabled().first()
             }
-            logger(tag, "Settings loaded: waitBeforeReturn=$cachedWaitBeforeReturnEnabled, todoPrompt=$cachedTodoPromptEnabled")
+            logger(tag, "Settings loaded: waitBeforeReturn=$cachedWaitBeforeReturnEnabled, waitSeconds=$cachedWaitBeforeReturnSeconds, todoPrompt=$cachedTodoPromptEnabled")
         } catch (e: Exception) {
             logger(tag, "Failed to load settings: ${e.message}")
         }
@@ -85,6 +89,7 @@ class TimerManager(
         var appInfo: AppInfo? = null,
         var todoPrompt: TimerTodoPrompt? = null,
         var isWaitBeforeReturnEnabled: Boolean = false,
+        var waitBeforeReturnSeconds: Int = SettingsRepository.DEFAULT_WAIT_BEFORE_RETURN_SECONDS,
         var isTodoPromptEnabled: Boolean = false
     )
 
@@ -163,6 +168,7 @@ class TimerManager(
             appInfo = app,
             todoPrompt = targetTodoPrompt,
             isWaitBeforeReturnEnabled = cachedWaitBeforeReturnEnabled,
+            waitBeforeReturnSeconds = cachedWaitBeforeReturnSeconds,
             isTodoPromptEnabled = cachedTodoPromptEnabled
         )
         timerStateMap[key] = state
@@ -332,6 +338,7 @@ class TimerManager(
                                 todoPrompt = if (state.isTodoPromptEnabled) state.todoPrompt else null,
                                 isSharedTimingEnabled = !perAppTimingEnabled,
                                 isWaitBeforeReturnEnabled = state.isWaitBeforeReturnEnabled,
+                                waitBeforeReturnSeconds = state.waitBeforeReturnSeconds,
                                 isTodoPromptEnabled = state.isTodoPromptEnabled
                             )
                         )

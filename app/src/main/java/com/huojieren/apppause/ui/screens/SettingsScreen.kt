@@ -1,29 +1,41 @@
 package com.huojieren.apppause.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.huojieren.apppause.BuildConfig
 import com.huojieren.apppause.R
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
+import com.huojieren.apppause.ui.components.SettingsNumberInputRow
+import com.huojieren.apppause.ui.components.SettingsSwitchRow
 import com.huojieren.apppause.ui.state.AppStatusUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 
@@ -39,13 +51,22 @@ fun SettingsScreen(
     onSaveLogButtonClicked: () -> Unit,
     onSharedTimingChanged: (Boolean) -> Unit,
     onWaitBeforeReturnChanged: (Boolean) -> Unit,
+    onWaitBeforeReturnSecondsChanged: (Int) -> Unit,
     onTodoPromptChanged: (Boolean) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+
     Column(
         modifier = modifier
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(pass = PointerEventPass.Initial)
+                    focusManager.clearFocus()
+                }
+            }
             .verticalScroll(rememberScrollState())
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         PermissionGroup(
             uiState = uiState,
@@ -58,6 +79,7 @@ fun SettingsScreen(
             uiState = uiState,
             onSharedTimingChanged = onSharedTimingChanged,
             onWaitBeforeReturnChanged = onWaitBeforeReturnChanged,
+            onWaitBeforeReturnSecondsChanged = onWaitBeforeReturnSecondsChanged,
             onTodoPromptChanged = onTodoPromptChanged,
         )
         LogGroup(
@@ -77,7 +99,9 @@ fun SettingsScreenPreview() {
         hasOverlay = true,
         hasNotification = true,
         hasUsageStats = true,
-        hasAccessibility = true
+        hasAccessibility = true,
+        isWaitBeforeReturnEnabled = true,
+        waitBeforeReturnSeconds = 5
     )
     AppTheme {
         SettingsScreen(
@@ -90,6 +114,7 @@ fun SettingsScreenPreview() {
             onSaveLogButtonClicked = {},
             onSharedTimingChanged = {},
             onWaitBeforeReturnChanged = {},
+            onWaitBeforeReturnSecondsChanged = {},
             onTodoPromptChanged = {}
         )
     }
@@ -104,35 +129,35 @@ private fun PermissionGroup(
     onUsageStatsButtonClicked: () -> Unit,
     onAccessibilityButtonClicked: () -> Unit = {},
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        Text(
-            text = "权限管理",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+    SettingsCard(modifier = modifier) {
         SettingsClickableRow(
-            title = if (uiState.hasOverlay) "悬浮窗权限（已获取）" else "申请悬浮窗权限",
+            title = "悬浮窗权限",
+            subtitle = if (uiState.hasOverlay) "已获取，可正常显示计时窗口" else "允许在应用上方显示计时窗口",
+            trailingText = if (uiState.hasOverlay) "已获取" else null,
             onClick = onOverlayButtonClicked,
             enabled = !uiState.hasOverlay
         )
+        SettingsDivider()
         SettingsClickableRow(
-            title = if (uiState.hasNotification) "通知权限（已获取）" else "申请通知权限",
+            title = "通知权限",
+            subtitle = if (uiState.hasNotification) "已获取，可保持监控服务运行" else "允许显示前台服务通知",
+            trailingText = if (uiState.hasNotification) "已获取" else null,
             onClick = onNotificationButtonClicked,
             enabled = !uiState.hasNotification
         )
+        SettingsDivider()
         SettingsClickableRow(
-            title = if (uiState.hasUsageStats) "使用情况权限（已获取）" else "申请使用情况权限",
+            title = "使用情况权限",
+            subtitle = if (uiState.hasUsageStats) "已获取，可识别当前使用的应用" else "用于判断当前正在使用哪个应用",
+            trailingText = if (uiState.hasUsageStats) "已获取" else null,
             onClick = onUsageStatsButtonClicked,
             enabled = !uiState.hasUsageStats
         )
+        SettingsDivider()
         SettingsClickableRow(
-            title = if (uiState.hasAccessibility) "无障碍服务权限（已获取）" else "申请无障碍服务权限",
+            title = "无障碍服务权限",
+            subtitle = if (uiState.hasAccessibility) "已获取，可辅助返回桌面" else "用于超时后引导回到桌面",
+            trailingText = if (uiState.hasAccessibility) "已获取" else null,
             onClick = onAccessibilityButtonClicked,
             enabled = !uiState.hasAccessibility
         )
@@ -145,32 +170,37 @@ private fun TimingGroup(
     uiState: AppStatusUiState,
     onSharedTimingChanged: (Boolean) -> Unit,
     onWaitBeforeReturnChanged: (Boolean) -> Unit,
+    onWaitBeforeReturnSecondsChanged: (Int) -> Unit,
     onTodoPromptChanged: (Boolean) -> Unit,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        Text(
-            text = "计时设置",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+    SettingsCard(modifier = modifier) {
         SettingsSwitchRow(
             title = "所有应用共享额度",
+            infoText = "开启后所有应用一起计算使用时长",
             checked = uiState.isSharedTimingEnabled,
             onCheckedChange = onSharedTimingChanged
         )
+        SettingsDivider()
         SettingsSwitchRow(
-            title = "超时返回需等待5秒",
+            title = "超时返回前等待",
+            infoText = "开启后可自定义返回桌面前的等待时间",
             checked = uiState.isWaitBeforeReturnEnabled,
             onCheckedChange = onWaitBeforeReturnChanged
         )
+        if (uiState.isWaitBeforeReturnEnabled) {
+            SettingsDivider()
+            SettingsNumberInputRow(
+                title = "等待时长",
+                subtitle = "默认 5 秒，可设置 1 到 99 秒",
+                value = uiState.waitBeforeReturnSeconds,
+                onValueChange = onWaitBeforeReturnSecondsChanged,
+                suffix = "秒"
+            )
+        }
+        SettingsDivider()
         SettingsSwitchRow(
             title = "计时窗口显示待办提醒",
+            infoText = "开启后选择时间和超时时显示待办提醒",
             checked = uiState.isTodoPromptEnabled,
             onCheckedChange = onTodoPromptChanged
         )
@@ -183,25 +213,17 @@ private fun LogGroup(
     onClearLogButtonClicked: () -> Unit,
     onSaveLogButtonClicked: () -> Unit
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        Text(
-            text = "日志管理",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+    SettingsCard(modifier = modifier) {
         SettingsClickableRow(
             title = "保存缓存日志",
+            subtitle = "导出当前缓存日志用于排查问题",
             onClick = onSaveLogButtonClicked,
             isHighlight = false
         )
+        SettingsDivider()
         SettingsClickableRow(
             title = "清空缓存日志",
+            subtitle = "删除本地缓存日志",
             onClick = onClearLogButtonClicked,
             isHighlight = true
         )
@@ -212,54 +234,59 @@ private fun LogGroup(
 private fun AboutGroup(
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        Text(
-            text = "关于",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-        Text(
-            text = stringResource(R.string.version_text, BuildConfig.VERSION_NAME),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .fillMaxWidth()
+    SettingsCard(modifier = modifier) {
+        SettingsStaticRow(
+            title = "版本",
+            subtitle = stringResource(R.string.version_text, BuildConfig.VERSION_NAME)
         )
     }
 }
 
 @Composable
-private fun SettingsSwitchRow(
+private fun SettingsCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(content = content)
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 16.dp),
+        thickness = DividerDefaults.Thickness,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+    )
+}
+
+@Composable
+private fun SettingsStaticRow(
     modifier: Modifier = Modifier,
     title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    subtitle: String
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-            )
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -268,6 +295,8 @@ private fun SettingsSwitchRow(
 private fun SettingsClickableRow(
     modifier: Modifier = Modifier,
     title: String,
+    subtitle: String,
+    trailingText: String? = null,
     onClick: () -> Unit,
     enabled: Boolean = true,
     isHighlight: Boolean = false
@@ -280,19 +309,43 @@ private fun SettingsClickableRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = when {
-                !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                isHighlight -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurface
-            }
-        )
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 12.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = when {
+                    !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    isHighlight -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                }
+            )
+        }
+        if (trailingText != null) {
+            Text(
+                text = trailingText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                modifier = Modifier.size(26.dp),
+                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            )
+        }
     }
 }
