@@ -23,4 +23,8 @@ object DataStoreKeys {
     val ROOM_APP_MIGRATION_COMPLETED = booleanPreferencesKey("room_app_migration_completed")
 
     val SHARED_TIMING_ENABLED = booleanPreferencesKey("shared_timing_enabled")
+
+    val WAIT_BEFORE_RETURN_ENABLED = booleanPreferencesKey("wait_before_return_enabled")
+
+    val TODO_PROMPT_ENABLED = booleanPreferencesKey("todo_prompt_enabled")
 }

@@ -29,4 +29,28 @@ class SettingsRepository @Inject constructor(
             preferences[DataStoreKeys.SHARED_TIMING_ENABLED] = enabled
         }
     }
+
+    fun getWaitBeforeReturnEnabled(): Flow<Boolean> {
+        return dataStore.data.map { preferences ->
+            preferences[DataStoreKeys.WAIT_BEFORE_RETURN_ENABLED] ?: false
+        }
+    }
+
+    suspend fun setWaitBeforeReturnEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DataStoreKeys.WAIT_BEFORE_RETURN_ENABLED] = enabled
+        }
+    }
+
+    fun getTodoPromptEnabled(): Flow<Boolean> {
+        return dataStore.data.map { preferences ->
+            preferences[DataStoreKeys.TODO_PROMPT_ENABLED] ?: false
+        }
+    }
+
+    suspend fun setTodoPromptEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DataStoreKeys.TODO_PROMPT_ENABLED] = enabled
+        }
+    }
 }
