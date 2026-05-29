@@ -8,18 +8,27 @@ import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.TimerTimeoutInfo
 import com.huojieren.apppause.data.models.TimerTodoPrompt
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.utils.showToast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class TimerManager(
-    private val context: Context
+    private val context: Context,
+    private val settingsRepository: SettingsRepository
 ) {
     private val tag = "TimerManager"
     private val handler = Handler(Looper.getMainLooper())
     private val sharedTimerKey = "__shared_timer__"
     private var perAppTimingEnabled = true
+
+    // 缓存的设置值（避免在start()中阻塞）
+    private var cachedWaitBeforeReturnEnabled = false
+    private var cachedWaitBeforeReturnSeconds = SettingsRepository.DEFAULT_WAIT_BEFORE_RETURN_SECONDS
+    private var cachedTodoPromptEnabled = false
 
     // 使用可变Map来存储倒计时状态
     private val timerStateMap = mutableMapOf<String, TimerState>()
@@ -33,6 +42,31 @@ class TimerManager(
     // 日志控制
     private var logCounter = 0
     private val logInterval = 5 // 每5次倒计时间隔输出一次日志
+
+    init {
+        loadSettings()
+    }
+
+    private fun loadSettings() {
+        try {
+            cachedWaitBeforeReturnEnabled = runBlocking {
+                settingsRepository.getWaitBeforeReturnEnabled().first()
+            }
+            cachedWaitBeforeReturnSeconds = runBlocking {
+                settingsRepository.getWaitBeforeReturnSeconds().first()
+            }
+            cachedTodoPromptEnabled = runBlocking {
+                settingsRepository.getTodoPromptEnabled().first()
+            }
+            logger(tag, "Settings loaded: waitBeforeReturn=$cachedWaitBeforeReturnEnabled, waitSeconds=$cachedWaitBeforeReturnSeconds, todoPrompt=$cachedTodoPromptEnabled")
+        } catch (e: Exception) {
+            logger(tag, "Failed to load settings: ${e.message}")
+        }
+    }
+
+    fun refreshSettings() {
+        loadSettings()
+    }
 
     /**
      * 倒计时显示状态
@@ -53,7 +87,10 @@ class TimerManager(
         var isRunning: Boolean = false,
         var startTime: Long = 0,
         var appInfo: AppInfo? = null,
-        var todoPrompt: TimerTodoPrompt? = null
+        var todoPrompt: TimerTodoPrompt? = null,
+        var isWaitBeforeReturnEnabled: Boolean = false,
+        var waitBeforeReturnSeconds: Int = SettingsRepository.DEFAULT_WAIT_BEFORE_RETURN_SECONDS,
+        var isTodoPromptEnabled: Boolean = false
     )
 
     fun setPerAppTimingEnabled(enabled: Boolean, clearTimers: Boolean = true) {
@@ -129,7 +166,10 @@ class TimerManager(
             isRunning = true,
             startTime = System.currentTimeMillis(),
             appInfo = app,
-            todoPrompt = targetTodoPrompt
+            todoPrompt = targetTodoPrompt,
+            isWaitBeforeReturnEnabled = cachedWaitBeforeReturnEnabled,
+            waitBeforeReturnSeconds = cachedWaitBeforeReturnSeconds,
+            isTodoPromptEnabled = cachedTodoPromptEnabled
         )
         timerStateMap[key] = state
 
@@ -295,8 +335,11 @@ class TimerManager(
                         onTimeOut?.invoke(
                             TimerTimeoutInfo(
                                 appInfo = it,
-                                todoPrompt = state.todoPrompt,
-                                isSharedTimingEnabled = !perAppTimingEnabled
+                                todoPrompt = if (state.isTodoPromptEnabled) state.todoPrompt else null,
+                                isSharedTimingEnabled = !perAppTimingEnabled,
+                                isWaitBeforeReturnEnabled = state.isWaitBeforeReturnEnabled,
+                                waitBeforeReturnSeconds = state.waitBeforeReturnSeconds,
+                                isTodoPromptEnabled = state.isTodoPromptEnabled
                             )
                         )
                     }

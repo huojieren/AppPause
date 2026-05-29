@@ -118,6 +118,26 @@ fun AppPauseScreen(...) {
 
 ---
 
+## 6. Existing App Style First
+
+- Before changing UI, inspect nearby accepted screens/components and follow their color roles,
+  density, typography, card shapes, and spacing.
+- In this project, prefer the visual language from `TodoListScreen`, `TodoListItem`, and
+  `GroupFilterChips` before introducing a new style.
+- Screen Composables should not set full-page background colors. App-level containers or
+  `Scaffold` should own page background so previews and real screens stay consistent.
+- Settings screens should use grouped cards with Material color roles:
+    - Card container: `MaterialTheme.colorScheme.surfaceContainer`
+    - Card shape: `MaterialTheme.shapes.medium`
+    - Title: `MaterialTheme.typography.titleMedium`
+    - Subtitle: `MaterialTheme.typography.bodyMedium`
+    - Subtitle color: `MaterialTheme.colorScheme.onSurfaceVariant`
+    - Divider: `MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)`
+- Prefer persistent subtitles over info icons/tooltips for setting descriptions.
+- Inline numeric controls should be sized to their value range and kept visually secondary.
+
+---
+
 ## Common Issues to Avoid
 
 | Issue                                       | Solution                                          |

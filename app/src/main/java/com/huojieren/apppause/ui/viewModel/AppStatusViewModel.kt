@@ -50,9 +50,17 @@ class AppStatusViewModel @Inject constructor(
 
     val uiState = combine(
         permissionState,
-        settingsRepository.getSharedTimingEnabled()
-    ) { state, isSharedTimingEnabled ->
-        state.copy(isSharedTimingEnabled = isSharedTimingEnabled)
+        settingsRepository.getSharedTimingEnabled(),
+        settingsRepository.getWaitBeforeReturnEnabled(),
+        settingsRepository.getWaitBeforeReturnSeconds(),
+        settingsRepository.getTodoPromptEnabled()
+    ) { state, isSharedTimingEnabled, isWaitBeforeReturnEnabled, waitBeforeReturnSeconds, isTodoPromptEnabled ->
+        state.copy(
+            isSharedTimingEnabled = isSharedTimingEnabled,
+            isWaitBeforeReturnEnabled = isWaitBeforeReturnEnabled,
+            waitBeforeReturnSeconds = waitBeforeReturnSeconds,
+            isTodoPromptEnabled = isTodoPromptEnabled
+        )
     }
 
     init {
@@ -81,6 +89,30 @@ class AppStatusViewModel @Inject constructor(
         monitorManager.resetCurrentAppTracking()
         viewModelScope.launch {
             settingsRepository.setSharedTimingEnabled(enabled)
+        }
+    }
+
+    fun setWaitBeforeReturnEnabled(enabled: Boolean) {
+        logger(tag, "setWaitBeforeReturnEnabled: $enabled")
+        viewModelScope.launch {
+            settingsRepository.setWaitBeforeReturnEnabled(enabled)
+            timerManager.refreshSettings()
+        }
+    }
+
+    fun setWaitBeforeReturnSeconds(seconds: Int) {
+        logger(tag, "setWaitBeforeReturnSeconds: $seconds")
+        viewModelScope.launch {
+            settingsRepository.setWaitBeforeReturnSeconds(seconds.coerceIn(1, 99))
+            timerManager.refreshSettings()
+        }
+    }
+
+    fun setTodoPromptEnabled(enabled: Boolean) {
+        logger(tag, "setTodoPromptEnabled: $enabled")
+        viewModelScope.launch {
+            settingsRepository.setTodoPromptEnabled(enabled)
+            timerManager.refreshSettings()
         }
     }
 
@@ -118,27 +150,14 @@ class AppStatusViewModel @Inject constructor(
                 } catch (e: Exception) {
                     logger(tag, "Failed to start monitoring: ${e.message}")
                     showToast(appContext, "启动监控失败：${e.message}")
-                    // 刷新权限状态
                     refreshState()
                 }
             } else {
                 when {
                     !statusManager.hasOverlay.value -> showToast(appContext, "请先授予悬浮窗权限")
-                    !statusManager.hasNotification.value -> showToast(
-                        appContext,
-                        "请先授予通知权限"
-                    )
-
-                    !statusManager.hasUsageStats.value -> showToast(
-                        appContext,
-                        "请先授予使用统计权限"
-                    )
-
-                    !statusManager.hasAccessibility.value -> showToast(
-                        appContext,
-                        "请先授予无障碍服务权限"
-                    )
-
+                    !statusManager.hasNotification.value -> showToast(appContext, "请先授予通知权限")
+                    !statusManager.hasUsageStats.value -> showToast(appContext, "请先授予使用统计权限")
+                    !statusManager.hasAccessibility.value -> showToast(appContext, "请先授予无障碍服务权限")
                     else -> showToast(appContext, "请先授予所有权限")
                 }
             }
