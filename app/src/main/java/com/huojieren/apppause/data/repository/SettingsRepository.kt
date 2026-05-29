@@ -18,6 +18,10 @@ import javax.inject.Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext context: Context
 ) {
+    companion object {
+        const val DEFAULT_WAIT_BEFORE_RETURN_SECONDS = 5
+    }
+
     private val dataStore: DataStore<Preferences> = context.appDataStore
 
     fun getSharedTimingEnabled(): Flow<Boolean> {
@@ -57,6 +61,42 @@ class SettingsRepository @Inject constructor(
     suspend fun setMonitorStrategy(strategy: MonitorStrategy) {
         dataStore.edit { preferences ->
             preferences[DataStoreKeys.MONITOR_STRATEGY] = strategy.name
+        }
+    }
+
+    fun getWaitBeforeReturnEnabled(): Flow<Boolean> {
+        return dataStore.data.map { preferences ->
+            preferences[DataStoreKeys.WAIT_BEFORE_RETURN_ENABLED] ?: false
+        }
+    }
+
+    suspend fun setWaitBeforeReturnEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DataStoreKeys.WAIT_BEFORE_RETURN_ENABLED] = enabled
+        }
+    }
+
+    fun getWaitBeforeReturnSeconds(): Flow<Int> {
+        return dataStore.data.map { preferences ->
+            preferences[DataStoreKeys.WAIT_BEFORE_RETURN_SECONDS] ?: DEFAULT_WAIT_BEFORE_RETURN_SECONDS
+        }
+    }
+
+    suspend fun setWaitBeforeReturnSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[DataStoreKeys.WAIT_BEFORE_RETURN_SECONDS] = seconds
+        }
+    }
+
+    fun getTodoPromptEnabled(): Flow<Boolean> {
+        return dataStore.data.map { preferences ->
+            preferences[DataStoreKeys.TODO_PROMPT_ENABLED] ?: false
+        }
+    }
+
+    suspend fun setTodoPromptEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DataStoreKeys.TODO_PROMPT_ENABLED] = enabled
         }
     }
 }

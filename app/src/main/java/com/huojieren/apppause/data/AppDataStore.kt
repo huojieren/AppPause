@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -28,4 +29,10 @@ object DataStoreKeys {
     val MONITOR_INTENT = stringPreferencesKey("monitor_intent")
 
     val MONITOR_STRATEGY = stringPreferencesKey("monitor_strategy")
+
+    val WAIT_BEFORE_RETURN_ENABLED = booleanPreferencesKey("wait_before_return_enabled")
+
+    val WAIT_BEFORE_RETURN_SECONDS = intPreferencesKey("wait_before_return_seconds")
+
+    val TODO_PROMPT_ENABLED = booleanPreferencesKey("todo_prompt_enabled")
 }

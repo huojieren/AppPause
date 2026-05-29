@@ -11,6 +11,9 @@ data class AppStatusUiState(
     val hasAccessibility: Boolean = false,
     val hasBatteryOptimizationExemption: Boolean = false,
     val isSharedTimingEnabled: Boolean = false,
+    val isWaitBeforeReturnEnabled: Boolean = false,
+    val waitBeforeReturnSeconds: Int = 5,
+    val isTodoPromptEnabled: Boolean = false,
 ) {
     val isMonitoringInterrupted: Boolean
         get() = monitorIntent == MonitorIntent.Enabled && !isMonitoring
