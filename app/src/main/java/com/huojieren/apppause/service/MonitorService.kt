@@ -85,18 +85,7 @@ class MonitorService : Service() {
             MonitorStrategy.ACCESSIBILITY.name -> {
                 if (AppPauseAccessibilityService.isInitialized()) {
                     logger(tag, "Creating AccessibilityMonitor")
-                    try {
-                        AccessibilityMonitor(appManager)
-                    } catch (e: Exception) {
-                        logger(
-                            tag,
-                            "Failed to create AccessibilityMonitor, falling back to UsageStats: ${e.message}"
-                        )
-                        UsageStatsMonitor(
-                            this,
-                            appManager
-                        )
-                    }
+                    AccessibilityMonitor(appManager, serviceScope)
                 } else {
                     logger(
                         tag,

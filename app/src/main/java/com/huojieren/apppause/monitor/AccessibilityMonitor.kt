@@ -1,33 +1,34 @@
 package com.huojieren.apppause.monitor
 
-import android.accessibilityservice.AccessibilityService
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.service.AppPauseAccessibilityService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 class AccessibilityMonitor(
     private val appManager: AppManager,
+    private val scope: CoroutineScope,
 ) : ForegroundAppMonitor {
     private val tag = "AccessibilityMonitor"
-    private lateinit var service: AccessibilityService
+    private var collectionJob: Job? = null
+
     override fun start(onAppChanged: (AppInfo?) -> Unit) {
         stop()
         logger(tag, "start accessibility monitor")
 
-        try {
-            service = AppPauseAccessibilityService.getInstance()
-            AppPauseAccessibilityService.setOnAppChangedListener { packageName ->
+        collectionJob = scope.launch {
+            AppPauseAccessibilityService.windowChangedEvent.collect { packageName ->
                 onAppChanged(appManager.getAppInfo(packageName))
             }
-        } catch (e: IllegalStateException) {
-            logger(tag, "AccessibilityService not initialized: ${e.message}")
-            throw e
         }
     }
 
     override fun stop() {
         logger(tag, "stop accessibility monitor")
-        AppPauseAccessibilityService.removeOnAppChangedListener()
+        collectionJob?.cancel()
+        collectionJob = null
     }
 }

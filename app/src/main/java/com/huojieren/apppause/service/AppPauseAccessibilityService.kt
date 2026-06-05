@@ -6,6 +6,10 @@ import android.view.accessibility.AccessibilityEvent
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.managers.StatusManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
 
 @SuppressLint("AccessibilityPolicy")// 忽略无障碍服务隐私警告
@@ -24,15 +28,11 @@ class AppPauseAccessibilityService : AccessibilityService() {
         @SuppressLint("StaticFieldLeak")
         private var instance: AppPauseAccessibilityService? = null
 
-        private var onAppChangedListener: ((String) -> Unit)? = null
-
-        fun setOnAppChangedListener(listener: (String) -> Unit) {
-            onAppChangedListener = listener
-        }
-
-        fun removeOnAppChangedListener() {
-            onAppChangedListener = null
-        }
+        private val _windowChangedEvent = MutableSharedFlow<String>(
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        )
+        val windowChangedEvent: SharedFlow<String> = _windowChangedEvent.asSharedFlow()
 
         fun getInstance(): AppPauseAccessibilityService {
             return instance
@@ -92,7 +92,7 @@ class AppPauseAccessibilityService : AccessibilityService() {
                 lastLogTime = currentTime
                 logger(tag, "onAccessibilityEvent: topPackage [$topPackage]")
             }
-            topPackage?.let { onAppChangedListener?.invoke(topPackage) }
+            topPackage?.let { _windowChangedEvent.tryEmit(it) }
         }
     }
 
