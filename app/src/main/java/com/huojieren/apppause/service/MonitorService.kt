@@ -21,6 +21,8 @@ import com.huojieren.apppause.monitor.UsageStatsMonitor
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -52,7 +54,10 @@ class MonitorService : Service() {
     private lateinit var notificationManager: NotificationManager
 
     // 与 Service 生命周期绑定的协程作用域
-    private val serviceScope = CoroutineScope(Dispatchers.Default)
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
+    private var timerStateJob: Job? = null
+    private var wakeLockRefreshJob: Job? = null
 
     // 监控策略
     private var monitor: ForegroundAppMonitor? = null
@@ -141,7 +146,8 @@ class MonitorService : Service() {
         }
 
         // 收集倒计时状态并更新通知
-        serviceScope.launch {
+        timerStateJob?.cancel()
+        timerStateJob = serviceScope.launch {
             timerManager.currentTimerState.collect { timerState ->
                 if (timerState != null) {
                     // 根据 isRunning 判断是正在计时还是暂停
@@ -165,6 +171,9 @@ class MonitorService : Service() {
 
     override fun onDestroy() {
         logger(tag, "destroy notification")
+        timerStateJob?.cancel()
+        wakeLockRefreshJob?.cancel()
+        serviceJob.cancel()
         // 停止检测器
         monitor?.stop()
         monitor = null
@@ -205,7 +214,8 @@ class MonitorService : Service() {
             wakeLock.acquire(10 * 60 * 1000L)
         }
         // 周期性续租，避免被系统回收（仅刷新，不释放长时间不安全）
-        serviceScope.launch {
+        wakeLockRefreshJob?.cancel()
+        wakeLockRefreshJob = serviceScope.launch {
             while (isActive) {
                 delay(9 * 60 * 1000L)
                 try {
