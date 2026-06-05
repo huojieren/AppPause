@@ -24,6 +24,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -58,6 +60,7 @@ class MonitorService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
     private var timerStateJob: Job? = null
     private var wakeLockRefreshJob: Job? = null
+    private var monitorEventJob: Job? = null
 
     // 监控策略
     private var monitor: ForegroundAppMonitor? = null
@@ -129,10 +132,12 @@ class MonitorService : Service() {
         )
         logger(tag, "startForeground end")
 
-        // 启动检测器：回调会进入主线程
-        monitor?.start { appInfo ->
-            monitorManager.handleAppChange(appInfo)
-        }
+        // 启动检测器
+        monitor?.start()
+        monitorEventJob?.cancel()
+        monitorEventJob = monitor?.appChangedEvent
+            ?.onEach { appInfo -> monitorManager.handleAppChange(appInfo) }
+            ?.launchIn(serviceScope)
 
         // 收集倒计时状态并更新通知
         timerStateJob?.cancel()
@@ -160,6 +165,7 @@ class MonitorService : Service() {
 
     override fun onDestroy() {
         logger(tag, "destroy notification")
+        monitorEventJob?.cancel()
         timerStateJob?.cancel()
         wakeLockRefreshJob?.cancel()
         serviceJob.cancel()

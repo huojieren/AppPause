@@ -1,6 +1,7 @@
 package com.huojieren.apppause.monitor
 
 import com.huojieren.apppause.data.models.AppInfo
+import kotlinx.coroutines.flow.SharedFlow
 
 interface ForegroundAppMonitor {
     enum class MonitorStrategy {
@@ -8,6 +9,8 @@ interface ForegroundAppMonitor {
         ACCESSIBILITY
     }
 
-    fun start(onAppChanged: (AppInfo?) -> Unit)
+    val appChangedEvent: SharedFlow<AppInfo?>
+
+    fun start()
     fun stop()
 }
