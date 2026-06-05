@@ -7,14 +7,19 @@ import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
+import com.huojieren.apppause.monitor.ForegroundAppMonitor
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Singleton
 
 @Singleton
@@ -38,6 +43,22 @@ class MonitorManager(
     // 最后一次有效应用（用于通知显示）
     private var lastValidApp: AppInfo? = null
     private var lastRemainingTime: Long = 0
+
+    private var monitorEventJob: Job? = null
+
+    fun startCollecting(monitor: ForegroundAppMonitor, scope: CoroutineScope) {
+        logger(tag, "startCollecting")
+        monitorEventJob?.cancel()
+        monitorEventJob = monitor.appChangedEvent
+            .onEach { handleAppChange(it) }
+            .launchIn(scope)
+    }
+
+    fun stopCollecting() {
+        logger(tag, "stopCollecting")
+        monitorEventJob?.cancel()
+        monitorEventJob = null
+    }
 
     fun resetCurrentAppTracking() {
         logger(tag, "resetCurrentAppTracking")
