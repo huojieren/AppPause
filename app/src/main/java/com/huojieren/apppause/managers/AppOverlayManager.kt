@@ -17,41 +17,41 @@ import com.huojieren.apppause.data.repository.TodoRepository
 import com.huojieren.apppause.ui.screens.TimeOutScreen
 import com.huojieren.apppause.ui.screens.TimeSelectionScreen
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ListenerManager @Inject constructor(
+class AppOverlayManager @Inject constructor(
     private val context: Context,
     private val monitorManager: MonitorManager,
     private val overlayManager: OverlayManager,
     private val timerManager: TimerManager,
     private val appManager: AppManager,
     private val todoRepository: TodoRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val scope: CoroutineScope
 ) {
-    private val tag = "ListenerManager"
+    private val tag = "AppOverlayManager"
 
     private var currentApp: AppInfo? = null
 
     init {
-        setupListeners()
-    }
-
-    private fun setupListeners() {
-        monitorManager.setOnAppChangedListener { app ->
-            currentApp = app
-            if (app != null) {
+        monitorManager.appChangedEvent
+            .onEach { app ->
+                currentApp = app
                 showTimeSelectionOverlay(app)
             }
-        }
+            .launchIn(scope)
 
-        timerManager.setOnTimeOutListener { appInfo ->
-            showTimeOutOverlay(appInfo)
-        }
+        timerManager.timeOutEvent
+            .onEach { timeoutInfo ->
+                showTimeOutOverlay(timeoutInfo)
+            }
+            .launchIn(scope)
     }
 
     private fun showTimeSelectionOverlay(appInfo: AppInfo) {
@@ -59,7 +59,7 @@ class ListenerManager @Inject constructor(
         logger(tag, "Showing time selection overlay")
         logger(tag, "app: [${appInfo.packageName}]")
         logger(tag, "--------------------")
-        CoroutineScope(Dispatchers.Main).launch {
+        scope.launch {
             val icon = appManager.loadIcon(appInfo.packageName)
             val activeTodos = todoRepository.getActiveTodos().first()
             val isTodoPromptEnabled = settingsRepository.getTodoPromptEnabled().first()
@@ -98,7 +98,7 @@ class ListenerManager @Inject constructor(
                             logger(tag, "current app: [${currentApp?.packageName ?: "null"}]")
                             logger(tag, "second: $second")
                             logger(tag, "--------------------")
-                            CoroutineScope(Dispatchers.Main).launch {
+                            scope.launch {
                                 currentApp?.let { app ->
                                     val todoPrompt = resolveTodoPrompt(todoInput, activeTodos)
                                     // 传入的是用户选择的秒数，转换为毫秒
@@ -167,7 +167,7 @@ class ListenerManager @Inject constructor(
         logger(tag, "showTimeOutOverlay: app=${appInfo.packageName}")
         logger(tag, "====================")
 
-        CoroutineScope(Dispatchers.Main).launch {
+        scope.launch {
             val icon = appManager.loadIcon(appInfo.packageName)
             overlayManager.showOverlay(
                 isSlowFadeIn = true,

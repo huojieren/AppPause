@@ -7,10 +7,19 @@ import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
+import com.huojieren.apppause.monitor.ForegroundAppMonitor
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import com.huojieren.apppause.service.MonitorService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Singleton
 
 @Singleton
@@ -24,15 +33,31 @@ class MonitorManager(
     private val tag = "MonitorManager"
     private var monitoredPackages = setOf<String>()
     private var currentApp: AppInfo? = null
-    private var onAppChanged: ((AppInfo?) -> Unit)? = null
+
+    private val _appChangedEvent = MutableSharedFlow<AppInfo>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val appChangedEvent: SharedFlow<AppInfo> = _appChangedEvent.asSharedFlow()
 
     // 最后一次有效应用（用于通知显示）
     private var lastValidApp: AppInfo? = null
     private var lastRemainingTime: Long = 0
 
-    fun setOnAppChangedListener(listener: (AppInfo?) -> Unit) {
-        logger(tag, "set on app changed listener")
-        onAppChanged = listener
+    private var monitorEventJob: Job? = null
+
+    fun startCollecting(monitor: ForegroundAppMonitor, scope: CoroutineScope) {
+        logger(tag, "startCollecting")
+        monitorEventJob?.cancel()
+        monitorEventJob = monitor.appChangedEvent
+            .onEach { handleAppChange(it) }
+            .launchIn(scope)
+    }
+
+    fun stopCollecting() {
+        logger(tag, "stopCollecting")
+        monitorEventJob?.cancel()
+        monitorEventJob = null
     }
 
     fun resetCurrentAppTracking() {
@@ -151,12 +176,12 @@ class MonitorManager(
                 "[${validApp.packageName}] continue counting, remaining: ${remaining / 1000}s"
             )
             timerManager.start(validApp)
-// 更新通知状态为有效
+            // 更新通知状态为有效
             lastValidApp = validApp
             logger(tag, "start new timer, app: [${validApp.name}]")
         } else {
             logger(tag, "[${validApp.packageName}] start new counting")
-            onAppChanged?.invoke(validApp)
+            _appChangedEvent.tryEmit(validApp)
             // 更新通知状态为有效
             lastValidApp = validApp
             logger(tag, "start new timer, app: [${validApp.name}]")

@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import androidx.core.content.edit
-import com.huojieren.apppause.managers.ListenerManager
+import com.huojieren.apppause.managers.AppOverlayManager
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import java.io.File
@@ -18,7 +18,7 @@ import javax.inject.Inject
 class App : Application() {
 
     @Inject
-    lateinit var listenerManager: ListenerManager
+    lateinit var appOverlayManager: AppOverlayManager
 
     override fun onCreate() {
         super.onCreate()

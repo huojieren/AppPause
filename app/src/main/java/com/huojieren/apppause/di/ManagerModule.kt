@@ -5,8 +5,8 @@ import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.data.repository.TodoRepository
 import com.huojieren.apppause.managers.AppManager
-import com.huojieren.apppause.managers.ListenerManager
 import com.huojieren.apppause.managers.MonitorManager
+import com.huojieren.apppause.managers.AppOverlayManager
 import com.huojieren.apppause.managers.OverlayManager
 import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
@@ -16,6 +16,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 @Module
@@ -67,9 +70,10 @@ object ManagerModule {
     @Singleton
     fun provideTimerManager(
         @ApplicationContext context: Context,
-        settingsRepository: SettingsRepository
+        settingsRepository: SettingsRepository,
+        scope: CoroutineScope
     ): TimerManager {
-        return TimerManager(context, settingsRepository)
+        return TimerManager(context, settingsRepository, scope)
     }
 
     @Provides
@@ -80,23 +84,31 @@ object ManagerModule {
 
     @Provides
     @Singleton
-    fun provideListenersManager(
+    fun provideCoroutineScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppOverlayManager(
         @ApplicationContext context: Context,
         appManager: AppManager,
         monitorManager: MonitorManager,
         overlayManager: OverlayManager,
         timerManager: TimerManager,
         todoRepository: TodoRepository,
-        settingsRepository: SettingsRepository
-    ): ListenerManager {
-        return ListenerManager(
+        settingsRepository: SettingsRepository,
+        scope: CoroutineScope
+    ): AppOverlayManager {
+        return AppOverlayManager(
             context,
             monitorManager,
             overlayManager,
             timerManager,
             appManager,
             todoRepository,
-            settingsRepository
+            settingsRepository,
+            scope
         )
     }
 }

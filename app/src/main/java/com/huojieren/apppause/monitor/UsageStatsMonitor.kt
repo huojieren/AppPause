@@ -9,7 +9,11 @@ import com.huojieren.apppause.managers.AppManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -20,11 +24,17 @@ class UsageStatsMonitor(
     private val tag = "UsageStatsMonitor"
     private var lastApp: AppInfo? = null
     private var monitoringJob: Job? = null
-    private var lastQueryEndTime = 0L // 上一次查询的结束时间
+    private var lastQueryEndTime = 0L
     private val usageStatsManager =
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
-    override fun start(onAppChanged: (AppInfo?) -> Unit) {
+    private val _appChangedEvent = MutableSharedFlow<AppInfo?>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val appChangedEvent: SharedFlow<AppInfo?> = _appChangedEvent.asSharedFlow()
+
+    override fun start() {
         stop()
         monitoringJob = CoroutineScope(Dispatchers.Default).launch {
             logger(tag, "start monitor foreground app")
@@ -34,7 +44,7 @@ class UsageStatsMonitor(
                 if (currentApp != lastApp) {
                     lastApp = currentApp
                     logger(tag, "app changed: [$currentApp]")
-                    onAppChanged(currentApp)
+                    _appChangedEvent.tryEmit(currentApp)
                 }
                 delay(1000)
             }
@@ -49,7 +59,6 @@ class UsageStatsMonitor(
 
     private fun getForegroundApp(): AppInfo? {
         val end = System.currentTimeMillis()
-        // 保证至少查过去 5 秒，避免漏掉 resume 事件
         val begin = if (lastQueryEndTime == 0L) end - 5000 else lastQueryEndTime
         lastQueryEndTime = end
 
@@ -58,7 +67,6 @@ class UsageStatsMonitor(
 
         var detectedApp: AppInfo? = null
 
-        // 遍历事件
         while (events.hasNextEvent()) {
             event = UsageEvents.Event()
             events.getNextEvent(event)

@@ -1,8 +1,6 @@
 package com.huojieren.apppause.managers
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.TimerTimeoutInfo
@@ -10,18 +8,25 @@ import com.huojieren.apppause.data.models.TimerTodoPrompt
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.utils.showToast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 
 class TimerManager(
     private val context: Context,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val scope: CoroutineScope
 ) {
     private val tag = "TimerManager"
-    private val handler = Handler(Looper.getMainLooper())
     private val sharedTimerKey = "__shared_timer__"
     private var perAppTimingEnabled = true
 
@@ -33,31 +38,32 @@ class TimerManager(
     // 使用可变Map来存储倒计时状态
     private val timerStateMap = mutableMapOf<String, TimerState>()
 
+    // 每个倒计时对应的 Job，用于取消
+    private val timerJobs = mutableMapOf<String, Job>()
+
     // 当前正在计时的应用及剩余时间
     private val _currentTimerState = MutableStateFlow<TimerDisplayState?>(null)
     val currentTimerState: StateFlow<TimerDisplayState?> = _currentTimerState.asStateFlow()
 
-    private var onTimeOut: ((TimerTimeoutInfo) -> Unit)? = null
+    private val _timeOutEvent = MutableSharedFlow<TimerTimeoutInfo>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val timeOutEvent: SharedFlow<TimerTimeoutInfo> = _timeOutEvent.asSharedFlow()
 
     // 日志控制
     private var logCounter = 0
-    private val logInterval = 5 // 每5次倒计时间隔输出一次日志
+    private val logInterval = 5
 
     init {
-        loadSettings()
+        scope.launch { loadSettings() }
     }
 
-    private fun loadSettings() {
+    private suspend fun loadSettings() {
         try {
-            cachedWaitBeforeReturnEnabled = runBlocking {
-                settingsRepository.getWaitBeforeReturnEnabled().first()
-            }
-            cachedWaitBeforeReturnSeconds = runBlocking {
-                settingsRepository.getWaitBeforeReturnSeconds().first()
-            }
-            cachedTodoPromptEnabled = runBlocking {
-                settingsRepository.getTodoPromptEnabled().first()
-            }
+            cachedWaitBeforeReturnEnabled = settingsRepository.getWaitBeforeReturnEnabled().first()
+            cachedWaitBeforeReturnSeconds = settingsRepository.getWaitBeforeReturnSeconds().first()
+            cachedTodoPromptEnabled = settingsRepository.getTodoPromptEnabled().first()
             logger(tag, "Settings loaded: waitBeforeReturn=$cachedWaitBeforeReturnEnabled, waitSeconds=$cachedWaitBeforeReturnSeconds, todoPrompt=$cachedTodoPromptEnabled")
         } catch (e: Exception) {
             logger(tag, "Failed to load settings: ${e.message}")
@@ -65,12 +71,9 @@ class TimerManager(
     }
 
     fun refreshSettings() {
-        loadSettings()
+        scope.launch { loadSettings() }
     }
 
-    /**
-     * 倒计时显示状态
-     */
     data class TimerDisplayState(
         val packageName: String,
         val appName: String,
@@ -79,9 +82,6 @@ class TimerManager(
         val isSharedTimingEnabled: Boolean
     )
 
-    /**
-     * 倒计时状态
-     */
     data class TimerState(
         var remainingTime: Long,
         var isRunning: Boolean = false,
@@ -112,26 +112,13 @@ class TimerManager(
         return perAppTimingEnabled
     }
 
-    /**
-     * 获取剩余时间
-     */
     fun getRemainingTime(app: AppInfo): Long {
-        val state = timerStateMap[timerKey(app.packageName)]
-        return state?.remainingTime ?: 0
+        synchronized(timerStateMap) {
+            val state = timerStateMap[timerKey(app.packageName)]
+            return state?.remainingTime ?: 0
+        }
     }
 
-    /**
-     * 设置超时监听器
-     */
-    fun setOnTimeOutListener(listener: (TimerTimeoutInfo) -> Unit) {
-        onTimeOut = listener
-    }
-
-    /**
-     * 启动倒计时
-     * @param app 应用信息
-     * @param timeMs 倒计时时间（毫秒），如果为null则使用当前剩余时间
-     */
     fun start(
         app: AppInfo,
         timeMs: Long? = null,
@@ -140,59 +127,111 @@ class TimerManager(
         val packageName = app.packageName
         val key = timerKey(packageName)
 
-        // 判断是否是继续倒计时（有暂停的倒计时）
-        val previousState = timerStateMap[key]
-        val isContinueTimer = previousState != null
+        synchronized(timerStateMap) {
+            val previousState = timerStateMap[key]
+            val isContinueTimer = previousState != null
 
-        // 先停止现有倒计时
-        stop(packageName)
+            // 取消已有倒计时 Job
+            timerJobs[key]?.cancel()
 
-        // 获取或设置倒计时时间
-        val targetTimeMs = timeMs ?: timerStateMap[key]?.remainingTime ?: 0
-        val targetTodoPrompt = todoPrompt ?: previousState?.todoPrompt
+            // 获取或设置倒计时时间
+            val targetTimeMs = timeMs ?: timerStateMap[key]?.remainingTime ?: 0
+            val targetTodoPrompt = todoPrompt ?: previousState?.todoPrompt
 
-        if (targetTimeMs <= 0) {
-            logger(
-                tag,
-                "No valid time for [$packageName], aborting start",
-                Log.ERROR
+            if (targetTimeMs <= 0) {
+                logger(tag, "No valid time for [$packageName], aborting start", Log.ERROR)
+                return
+            }
+
+            val state = TimerState(
+                remainingTime = targetTimeMs,
+                isRunning = true,
+                startTime = System.currentTimeMillis(),
+                appInfo = app,
+                todoPrompt = targetTodoPrompt,
+                isWaitBeforeReturnEnabled = cachedWaitBeforeReturnEnabled,
+                waitBeforeReturnSeconds = cachedWaitBeforeReturnSeconds,
+                isTodoPromptEnabled = cachedTodoPromptEnabled
             )
-            return
+            timerStateMap[key] = state
+
+            _currentTimerState.value = TimerDisplayState(
+                packageName = packageName,
+                appName = app.name,
+                remainingTimeMs = targetTimeMs,
+                isRunning = true,
+                isSharedTimingEnabled = !perAppTimingEnabled
+            )
+
+            logger(tag, "--------------------")
+            logger(tag, "Starting timer")
+            logger(tag, "app: [${app.name}]")
+            logger(tag, "targetTime: ${targetTimeMs / 1000}s")
+            logger(tag, "--------------------")
+
+            showStartedToast(app, isContinueTimer, targetTimeMs)
+
+            // 启动协程倒计时
+            timerJobs[key] = scope.launch {
+                if (isContinueTimer) delay(800) else delay(800)
+                countdownLoop(key, packageName, state)
+            }
+        }
+    }
+
+    private suspend fun countdownLoop(timerKey: String, packageName: String, state: TimerState) {
+        while (state.isRunning && state.remainingTime > 0) {
+            delay(1000)
+
+            synchronized(timerStateMap) {
+                if (!state.isRunning) {
+                    logger(tag, "Timer not running, stopping countdown for [$packageName]")
+                    return
+                }
+
+                state.remainingTime -= 1000L
+
+                _currentTimerState.value?.let {
+                    if (it.packageName == packageName) {
+                        _currentTimerState.value = it.copy(remainingTimeMs = state.remainingTime)
+                    }
+                }
+
+                logCounter++
+                if (logCounter % logInterval == 0) {
+                    logger(tag, "[$packageName] remaining: ${state.remainingTime / 1000}s")
+                }
+            }
         }
 
-        // 创建新的倒计时状态
-        val state = TimerState(
-            remainingTime = targetTimeMs,
-            isRunning = true,
-            startTime = System.currentTimeMillis(),
-            appInfo = app,
-            todoPrompt = targetTodoPrompt,
-            isWaitBeforeReturnEnabled = cachedWaitBeforeReturnEnabled,
-            waitBeforeReturnSeconds = cachedWaitBeforeReturnSeconds,
-            isTodoPromptEnabled = cachedTodoPromptEnabled
-        )
-        timerStateMap[key] = state
+        if (state.remainingTime <= 0) {
+            synchronized(timerStateMap) {
+                state.remainingTime = 0
+                state.isRunning = false
+                val finishedAppInfo = state.appInfo
+                timerStateMap.remove(timerKey)
+                timerJobs.remove(timerKey)
+                logCounter = 0
 
-        // 更新 StateFlow - 正在运行
-        _currentTimerState.value = TimerDisplayState(
-            packageName = packageName,
-            appName = app.name,
-            remainingTimeMs = targetTimeMs,
-            isRunning = true,
-            isSharedTimingEnabled = !perAppTimingEnabled
-        )
+                if (_currentTimerState.value?.packageName == packageName) {
+                    _currentTimerState.value = null
+                }
 
-        logger(tag, "--------------------")
-        logger(tag, "Starting timer")
-        logger(tag, "app: [${app.name}]")
-        logger(tag, "targetTime: ${targetTimeMs / 1000}s")
-        logger(tag, "--------------------")
-
-        // 显示 Toast
-        showStartedToast(app, isContinueTimer, targetTimeMs)
-
-        // 启动倒计时
-        startCountdown(key, packageName, state)
+                logger(tag, "[$packageName] timer finished")
+                finishedAppInfo?.let {
+                    _timeOutEvent.tryEmit(
+                        TimerTimeoutInfo(
+                            appInfo = it,
+                            todoPrompt = if (state.isTodoPromptEnabled) state.todoPrompt else null,
+                            isSharedTimingEnabled = !perAppTimingEnabled,
+                            isWaitBeforeReturnEnabled = state.isWaitBeforeReturnEnabled,
+                            waitBeforeReturnSeconds = state.waitBeforeReturnSeconds,
+                            isTodoPromptEnabled = state.isTodoPromptEnabled
+                        )
+                    )
+                }
+            }
+        }
     }
 
     private fun showStartedToast(app: AppInfo, isContinueTimer: Boolean, targetTimeMs: Long) {
@@ -224,133 +263,49 @@ class TimerManager(
         showToast(context, message)
     }
 
-    /**
-     * 停止倒计时
-     */
     fun stop(packageName: String) {
         val key = timerKey(packageName)
-        val state = timerStateMap[key]
-        if (state?.isRunning == true) {
-            state.isRunning = false
+        synchronized(timerStateMap) {
+            val state = timerStateMap[key]
+            if (state?.isRunning == true) {
+                state.isRunning = false
+                timerJobs[key]?.cancel()
 
-            // 保留 StateFlow 但标记为暂停状态
-            if (_currentTimerState.value?.packageName == packageName || !perAppTimingEnabled) {
-                _currentTimerState.value = TimerDisplayState(
-                    packageName = _currentTimerState.value?.packageName ?: packageName,
-                    appName = _currentTimerState.value?.appName ?: state.appInfo?.name ?: "",
-                    remainingTimeMs = state.remainingTime,
-                    isRunning = false,
-                    isSharedTimingEnabled = !perAppTimingEnabled
-                )
-                logger(
-                    tag,
-                    "Paused timer for [$packageName], remaining: ${state.remainingTime}ms, updated StateFlow to paused"
-                )
-            }
-
-            logger(
-                tag,
-                "Stopped timer for [$packageName], remaining: ${state.remainingTime / 1000}s"
-            )
-        } else {
-            logger(tag, "No active timer to stop for [$packageName]")
-        }
-    }
-
-    /**
-     * 清空所有倒计时
-     */
-    fun clearAllTimers() {
-        logger(tag, "Clearing all timers, count: ${timerStateMap.size}")
-        timerStateMap.clear()
-        _currentTimerState.value = null
-        logger(tag, "All timers cleared")
-    }
-
-    /**
-     * 检查指定应用的倒计时是否正在运行
-     */
-    fun isTimerRunning(packageName: String): Boolean {
-        val state = timerStateMap[timerKey(packageName)]
-        return state?.isRunning == true
-    }
-
-    /**
-     * 暂停倒计时（与停止相同，但语义更明确）
-     */
-    fun pause(packageName: String) = stop(packageName)
-
-    /**
-     * 启动倒计时循环
-     */
-    private fun startCountdown(timerKey: String, packageName: String, state: TimerState) {
-        val runnable = object : Runnable {
-            override fun run() {
-                if (!state.isRunning) {
-                    logger(
-                        tag,
-                        "Timer not running, stopping countdown for [$packageName]"
+                if (_currentTimerState.value?.packageName == packageName || !perAppTimingEnabled) {
+                    _currentTimerState.value = TimerDisplayState(
+                        packageName = _currentTimerState.value?.packageName ?: packageName,
+                        appName = _currentTimerState.value?.appName ?: state.appInfo?.name ?: "",
+                        remainingTimeMs = state.remainingTime,
+                        isRunning = false,
+                        isSharedTimingEnabled = !perAppTimingEnabled
                     )
-                    return
+                    logger(tag, "Paused timer for [$packageName], remaining: ${state.remainingTime}ms, updated StateFlow to paused")
                 }
 
-                if (state.remainingTime > 0) {
-                    // 减少剩余时间 - 固定使用1秒递减间隔
-                    state.remainingTime -= 1000L
-
-                    // 更新 StateFlow
-                    _currentTimerState.value?.let {
-                        if (it.packageName == packageName) {
-                            _currentTimerState.value =
-                                it.copy(remainingTimeMs = state.remainingTime)
-                        }
-                    }
-
-                    // 定期输出日志
-                    logCounter++
-                    if (logCounter % logInterval == 0) {
-                        logger(
-                            tag,
-                            "[$packageName] remaining: ${state.remainingTime / 1000}s"
-                        )
-                    }
-
-                    // 继续下一次倒计时 - 固定使用1秒间隔
-                    handler.postDelayed(this, 1000L)
-                } else {
-                    // 倒计时结束
-                    state.remainingTime = 0
-                    state.isRunning = false
-                    val finishedAppInfo = state.appInfo
-                    timerStateMap.remove(timerKey)
-                    logCounter = 0
-
-                    // 清除 StateFlow
-                    if (_currentTimerState.value?.packageName == packageName) {
-                        _currentTimerState.value = null
-                    }
-
-                    logger(tag, "[$packageName] timer finished")
-                    finishedAppInfo?.let {
-                        onTimeOut?.invoke(
-                            TimerTimeoutInfo(
-                                appInfo = it,
-                                todoPrompt = if (state.isTodoPromptEnabled) state.todoPrompt else null,
-                                isSharedTimingEnabled = !perAppTimingEnabled,
-                                isWaitBeforeReturnEnabled = state.isWaitBeforeReturnEnabled,
-                                waitBeforeReturnSeconds = state.waitBeforeReturnSeconds,
-                                isTodoPromptEnabled = state.isTodoPromptEnabled
-                            )
-                        )
-                    }
-                }
+                logger(tag, "Stopped timer for [$packageName], remaining: ${state.remainingTime / 1000}s")
+            } else {
+                logger(tag, "No active timer to stop for [$packageName]")
             }
         }
-
-        handler.postDelayed(runnable, 800L)
-        logger(
-            tag,
-            "Countdown started for $packageName, next tick in 1s"
-        )
     }
+
+    fun clearAllTimers() {
+        synchronized(timerStateMap) {
+            logger(tag, "Clearing all timers, count: ${timerStateMap.size}")
+            timerJobs.values.forEach { it.cancel() }
+            timerJobs.clear()
+            timerStateMap.clear()
+            _currentTimerState.value = null
+            logger(tag, "All timers cleared")
+        }
+    }
+
+    fun isTimerRunning(packageName: String): Boolean {
+        synchronized(timerStateMap) {
+            val state = timerStateMap[timerKey(packageName)]
+            return state?.isRunning == true
+        }
+    }
+
+    fun pause(packageName: String) = stop(packageName)
 }
