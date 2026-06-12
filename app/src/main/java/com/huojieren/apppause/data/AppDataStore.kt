@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 
@@ -24,6 +25,10 @@ object DataStoreKeys {
     val ROOM_APP_MIGRATION_COMPLETED = booleanPreferencesKey("room_app_migration_completed")
 
     val SHARED_TIMING_ENABLED = booleanPreferencesKey("shared_timing_enabled")
+
+    val MONITOR_INTENT = stringPreferencesKey("monitor_intent")
+
+    val MONITOR_STRATEGY = stringPreferencesKey("monitor_strategy")
 
     val WAIT_BEFORE_RETURN_ENABLED = booleanPreferencesKey("wait_before_return_enabled")
 

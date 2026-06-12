@@ -183,6 +183,9 @@ fun AppPauseApp(
                         onAccessibilityButtonClicked = {
                             appStatusViewModel?.requestPermission(Permissions.Accessibility)
                         },
+                        onBatteryOptimizationButtonClicked = {
+                            appStatusViewModel?.requestPermission(Permissions.BatteryOptimization)
+                        },
                         onClearLogButtonClicked = {
                             showClearLogDialog = true
                         },

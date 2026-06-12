@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
+import com.huojieren.apppause.data.models.MonitorIntent
 import com.huojieren.apppause.data.repository.AppRepository
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
@@ -93,9 +94,12 @@ class MonitorManager(
 
             val intent = Intent(context, MonitorService::class.java)
             // TODO 2025/11/30 21:55 监控策略切换
-            intent.putExtra("strategy", MonitorStrategy.ACCESSIBILITY.name)
+            val strategy = MonitorStrategy.ACCESSIBILITY
+            intent.putExtra("strategy", strategy.name)
             logger(tag, "startMonitor: calling startForegroundService")
             ContextCompat.startForegroundService(context, intent)
+            settingsRepository.setMonitorIntent(MonitorIntent.Enabled)
+            settingsRepository.setMonitorStrategy(strategy)
             logger(tag, "startMonitor: foreground service started, returning")
         } catch (e: Exception) {
             logger(tag, "Failed to start MonitorService: ${e.message}")
@@ -103,8 +107,10 @@ class MonitorManager(
         }
     }
 
-    fun stopMonitor() {
+    suspend fun stopMonitor() {
         logger(tag, "stopMonitor called")
+
+        settingsRepository.setMonitorIntent(MonitorIntent.Disabled)
 
         // 清空所有倒计时
         timerManager.clearAllTimers()

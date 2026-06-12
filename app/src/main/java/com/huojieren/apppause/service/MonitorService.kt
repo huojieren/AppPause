@@ -2,14 +2,18 @@ package com.huojieren.apppause.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import com.huojieren.apppause.MainActivity
 import com.huojieren.apppause.R
+import com.huojieren.apppause.data.models.MonitorIntent
 import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.StatusManager
@@ -24,12 +28,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MonitorService : Service() {
+
+    companion object {
+        private const val ACTION_STOP_MONITORING =
+            "com.huojieren.apppause.action.STOP_MONITORING"
+    }
 
     @Inject
     lateinit var monitorManager: MonitorManager
@@ -42,6 +53,9 @@ class MonitorService : Service() {
 
     @Inject
     lateinit var timerManager: TimerManager
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
 
     private val tag = "MonitorService"
 
@@ -76,9 +90,23 @@ class MonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logger(tag, "onStartCommand start, intent=$intent")
 
+        if (intent?.action == ACTION_STOP_MONITORING) {
+            stopMonitoringFromNotification()
+            return START_NOT_STICKY
+        }
+
+        if (intent == null && getStoredMonitorIntent() == MonitorIntent.Disabled) {
+            logger(tag, "sticky restart ignored because monitor intent is disabled")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         // 读取监控策略
-        val strategy = intent?.getStringExtra("strategy")
+        val strategy = intent?.getStringExtra("strategy") ?: getStoredMonitorStrategy().name
         logger(tag, "get strategy: [$strategy]")
+
+        monitor?.stop()
+        monitor = null
 
         // 创建检测器
         monitor = when (strategy) {
@@ -119,13 +147,7 @@ class MonitorService : Service() {
         logger(tag, "startForeground start")
         startForeground(
             notificationId,
-            NotificationCompat.Builder(this, channelId)
-                .setContentTitle("应用使用监控中")
-                .setContentText("正在使用${strategyName}监控已选应用")
-                .setSmallIcon(R.drawable.ic_notification)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setOngoing(true)
-                .build()
+            buildMonitorNotification("正在使用${strategyName}监控已选应用")
         )
         logger(tag, "startForeground end")
 
@@ -195,6 +217,61 @@ class MonitorService : Service() {
         logger(tag, "createNotificationChannel end")
     }
 
+    private fun buildMonitorNotification(contentText: String) =
+        NotificationCompat.Builder(this, channelId)
+            .setContentTitle("应用使用监控中")
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setContentIntent(createOpenAppPendingIntent())
+            .addAction(
+                R.drawable.ic_notification,
+                "停止监控",
+                createStopMonitoringPendingIntent()
+            )
+            .build()
+
+    private fun createOpenAppPendingIntent(): PendingIntent {
+        val intent = Intent(this, MainActivity::class.java)
+        return PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun createStopMonitoringPendingIntent(): PendingIntent {
+        val intent = Intent(this, MonitorService::class.java).apply {
+            action = ACTION_STOP_MONITORING
+        }
+        return PendingIntent.getService(
+            this,
+            1,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun stopMonitoringFromNotification() {
+        logger(tag, "stop monitoring from notification")
+        runBlocking {
+            settingsRepository.setMonitorIntent(MonitorIntent.Disabled)
+        }
+        timerManager.clearAllTimers()
+        statusManager.setIsMonitoring(false)
+        stopSelf()
+    }
+
+    private fun getStoredMonitorIntent(): MonitorIntent = runBlocking {
+        settingsRepository.getMonitorIntent().first()
+    }
+
+    private fun getStoredMonitorStrategy(): MonitorStrategy = runBlocking {
+        settingsRepository.getMonitorStrategy().first()
+    }
+
     private fun acquireWakeLock() {
         val pm = getSystemService(POWER_SERVICE) as PowerManager
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AppPause::MonitorWakeLock")
@@ -256,25 +333,13 @@ class MonitorService : Service() {
             "updateNotification: appName=$appName, remaining=$remainingTimeMs, isValid=$isValid, content=$contentText"
         )
 
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("应用使用监控中")
-            .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .build()
+        val notification = buildMonitorNotification(contentText)
 
         notificationManager.notify(notificationId, notification)
     }
 
     private fun showInitialNotification() {
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("应用使用监控中")
-            .setContentText("暂无检测到的应用")
-            .setSmallIcon(R.drawable.ic_notification)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .build()
+        val notification = buildMonitorNotification("暂无检测到的应用")
 
         notificationManager.notify(notificationId, notification)
     }

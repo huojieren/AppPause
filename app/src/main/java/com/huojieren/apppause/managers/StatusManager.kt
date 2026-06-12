@@ -31,6 +31,10 @@ class StatusManager {
     private val _hasAccessibility = MutableStateFlow(false)
     val hasAccessibility: StateFlow<Boolean> = _hasAccessibility.asStateFlow()
 
+    private val _hasBatteryOptimizationExemption = MutableStateFlow(false)
+    val hasBatteryOptimizationExemption: StateFlow<Boolean> =
+        _hasBatteryOptimizationExemption.asStateFlow()
+
     fun setIsMonitoring(value: Boolean) {
         _isMonitoring.value = value
         logger(tag, "setIsMonitoring: $value")
@@ -50,5 +54,9 @@ class StatusManager {
 
     fun setHasAccessibility(value: Boolean) {
         _hasAccessibility.value = value
+    }
+
+    fun setHasBatteryOptimizationExemption(value: Boolean) {
+        _hasBatteryOptimizationExemption.value = value
     }
 }

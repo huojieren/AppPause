@@ -19,6 +19,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private data class PermissionFlags(
+    val hasOverlay: Boolean,
+    val hasNotification: Boolean,
+    val hasUsageStats: Boolean,
+    val hasAccessibility: Boolean,
+    val hasBatteryOptimizationExemption: Boolean
+)
+
 @HiltViewModel
 class AppStatusViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -32,19 +40,41 @@ class AppStatusViewModel @Inject constructor(
     private val tag = "AppStatusViewModel"
     private val appContext = context.applicationContext
 
-    private val permissionState = combine(
+    private val monitorState = combine(
         statusManager.isMonitoring,
+        settingsRepository.getMonitorIntent()
+    ) { isMonitoring, monitorIntent ->
+        isMonitoring to monitorIntent
+    }
+
+    private val permissionFlags = combine(
         statusManager.hasOverlay,
         statusManager.hasNotification,
         statusManager.hasUsageStats,
-        statusManager.hasAccessibility
-    ) { isMonitoring, hasOverlay, hasNotification, hasUsageStats, hasAccessibility ->
-        AppStatusUiState(
-            isMonitoring = isMonitoring,
+        statusManager.hasAccessibility,
+        statusManager.hasBatteryOptimizationExemption
+    ) { hasOverlay, hasNotification, hasUsageStats, hasAccessibility, hasBatteryOptimizationExemption ->
+        PermissionFlags(
             hasOverlay = hasOverlay,
             hasNotification = hasNotification,
             hasUsageStats = hasUsageStats,
-            hasAccessibility = hasAccessibility
+            hasAccessibility = hasAccessibility,
+            hasBatteryOptimizationExemption = hasBatteryOptimizationExemption
+        )
+    }
+
+    private val permissionState = combine(
+        monitorState,
+        permissionFlags
+    ) { monitorState, permissionFlags ->
+        AppStatusUiState(
+            isMonitoring = monitorState.first,
+            monitorIntent = monitorState.second,
+            hasOverlay = permissionFlags.hasOverlay,
+            hasNotification = permissionFlags.hasNotification,
+            hasUsageStats = permissionFlags.hasUsageStats,
+            hasAccessibility = permissionFlags.hasAccessibility,
+            hasBatteryOptimizationExemption = permissionFlags.hasBatteryOptimizationExemption
         )
     }
 
@@ -75,12 +105,26 @@ class AppStatusViewModel @Inject constructor(
             statusManager.setHasNotification(permissionManager.refreshPermission(Permissions.Notification))
             statusManager.setHasUsageStats(permissionManager.refreshPermission(Permissions.UsageStats))
             statusManager.setHasAccessibility(permissionManager.refreshPermission(Permissions.Accessibility))
+            statusManager.setHasBatteryOptimizationExemption(
+                permissionManager.refreshPermission(Permissions.BatteryOptimization)
+            )
         }
     }
 
     fun requestPermission(permission: Permissions) {
         logger(tag, "requestPermission $permission")
-        permissionManager.requestPermission(permission)
+        val isGranted = when (permission) {
+            Permissions.Overlay -> statusManager.hasOverlay.value
+            Permissions.Notification -> statusManager.hasNotification.value
+            Permissions.UsageStats -> statusManager.hasUsageStats.value
+            Permissions.Accessibility -> statusManager.hasAccessibility.value
+            Permissions.BatteryOptimization -> statusManager.hasBatteryOptimizationExemption.value
+        }
+        if (isGranted) {
+            showToast(appContext, "已获取")
+        } else {
+            permissionManager.requestPermission(permission)
+        }
     }
 
     fun setSharedTimingEnabled(enabled: Boolean) {

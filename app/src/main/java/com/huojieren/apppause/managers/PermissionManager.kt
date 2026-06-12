@@ -6,11 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.huojieren.apppause.data.Permissions
+import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 
 class PermissionManager(
@@ -20,15 +22,13 @@ class PermissionManager(
      * 检查权限是否已授权
      */
     fun refreshPermission(key: Permissions): Boolean {
-        when (key) {
+        val permission = when (key) {
             // 检查悬浮窗权限是否已授权
-            Permissions.Overlay -> {
-                return Settings.canDrawOverlays(context)
-            }
+            Permissions.Overlay -> Settings.canDrawOverlays(context)
 
             // 检查通知权限是否已授权
             Permissions.Notification -> {
-                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     ContextCompat.checkSelfPermission(
                         context,
                         Manifest.permission.POST_NOTIFICATIONS
@@ -54,14 +54,20 @@ class PermissionManager(
                         context.packageName
                     )
                 }
-                return mode == AppOpsManager.MODE_ALLOWED
+                mode == AppOpsManager.MODE_ALLOWED
             }
 
             // 检查无障碍服务权限是否已授权
-            Permissions.Accessibility -> {
-                return AppPauseAccessibilityService.isInitialized()
+            Permissions.Accessibility -> AppPauseAccessibilityService.isInitialized()
+
+            // 检查电池优化 exemption 权限是否已授权
+            Permissions.BatteryOptimization -> {
+                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+                powerManager.isIgnoringBatteryOptimizations(context.packageName)
             }
         }
+        logger("PermissionManager", "refreshPermission: $key, $permission")
+        return permission
     }
 
     /**
@@ -101,6 +107,17 @@ class PermissionManager(
                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
+            }
+
+            Permissions.BatteryOptimization -> {
+                val intent1 = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = "package:${context.packageName}".toUri()
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent1)
+                val intent2 = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent2)
             }
         }
     }
