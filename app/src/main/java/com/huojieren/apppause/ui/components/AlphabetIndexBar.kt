@@ -19,7 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.theme.AppTheme

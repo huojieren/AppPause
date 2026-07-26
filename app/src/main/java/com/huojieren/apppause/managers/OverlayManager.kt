@@ -10,7 +10,7 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.ui.FloatingWindowLifecycleOwner
 import com.huojieren.apppause.ui.theme.AppTheme
 import kotlinx.coroutines.ExperimentalCoroutinesApi

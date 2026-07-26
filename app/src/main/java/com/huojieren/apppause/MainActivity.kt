@@ -11,8 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
-import androidx.core.content.edit
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.ui.AppPauseApp
 import com.huojieren.apppause.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -61,9 +60,4 @@ class MainActivity : ComponentActivity() {
         logger(tag, "preWarmNotificationChannels: channel created")
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        getSharedPreferences("app_status", MODE_PRIVATE)
-            .edit { putBoolean("normal_exit", true) }
-    }
 }

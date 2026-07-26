@@ -14,7 +14,7 @@ import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

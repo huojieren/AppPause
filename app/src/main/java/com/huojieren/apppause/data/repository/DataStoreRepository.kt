@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.edit
 import com.huojieren.apppause.data.DataStoreKeys
 import com.huojieren.apppause.data.appDataStore
 import com.huojieren.apppause.data.models.AppInfo
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

@@ -1,7 +1,7 @@
 package com.huojieren.apppause.monitor
 
 import com.huojieren.apppause.data.models.AppInfo
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 import kotlinx.coroutines.CoroutineScope

@@ -4,8 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.huojieren.apppause.data.Permissions
-import com.huojieren.apppause.data.repository.LogRepository
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
+import com.huojieren.apppause.data.diagnostics.DiagnosticsManager
+import com.huojieren.apppause.data.diagnostics.model.ExportResult
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.PermissionManager
@@ -31,7 +32,7 @@ private data class PermissionFlags(
 class AppStatusViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val permissionManager: PermissionManager,
-    private val logRepository: LogRepository,
+    private val diagnosticsManager: DiagnosticsManager,
     private val settingsRepository: SettingsRepository,
     private val monitorManager: MonitorManager,
     private val statusManager: StatusManager,
@@ -161,7 +162,7 @@ class AppStatusViewModel @Inject constructor(
     }
 
     fun clearLog() {
-        if (logRepository.clearLog()) {
+        if (diagnosticsManager.clear()) {
             showToast(context, "日志已清空")
         } else {
             showToast(context, "清空日志失败")
@@ -169,10 +170,13 @@ class AppStatusViewModel @Inject constructor(
     }
 
     fun saveLog() {
-        when (logRepository.saveLog()) {
-            0 -> showToast(context, "日志已保存到：Download/App Pause/app_logs.zip")
-            1 -> showToast(context, "没有日志可保存")
-            -1 -> showToast(context, "保存日志失败")
+        when (val result = diagnosticsManager.export()) {
+            ExportResult.Success -> showToast(context, "诊断包已保存到：Download/AppPause")
+            ExportResult.NoLogs -> showToast(context, "没有诊断材料可保存")
+            is ExportResult.Failed -> {
+                logger(tag, "Export diagnostics failed: ${result.error.message}", android.util.Log.ERROR, result.error)
+                showToast(context, "保存诊断包失败")
+            }
         }
     }
 

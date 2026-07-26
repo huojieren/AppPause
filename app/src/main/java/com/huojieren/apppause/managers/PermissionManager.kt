@@ -12,7 +12,7 @@ import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.huojieren.apppause.data.Permissions
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.service.AppPauseAccessibilityService
 
 class PermissionManager(

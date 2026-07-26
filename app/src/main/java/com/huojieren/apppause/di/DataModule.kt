@@ -6,7 +6,6 @@ import com.huojieren.apppause.data.local.dao.AppDao
 import com.huojieren.apppause.data.local.dao.TodoDao
 import com.huojieren.apppause.data.local.dao.TodoGroupDao
 import com.huojieren.apppause.data.repository.DataStoreRepository
-import com.huojieren.apppause.data.repository.LogRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,14 +22,6 @@ object DataModule {
         @ApplicationContext context: Context
     ): DataStoreRepository {
         return DataStoreRepository(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideLogRepository(
-        @ApplicationContext context: Context
-    ): LogRepository {
-        return LogRepository(context)
     }
 
     @Provides
