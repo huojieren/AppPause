@@ -9,6 +9,7 @@ import com.huojieren.apppause.data.diagnostics.export.DiagnosticsExporter
 import com.huojieren.apppause.data.diagnostics.incident.ExitInfoCollector
 import com.huojieren.apppause.data.diagnostics.incident.IncidentWriter
 import com.huojieren.apppause.data.diagnostics.model.DiagnosticEvent
+import com.huojieren.apppause.data.diagnostics.model.DiagnosticIncident
 import com.huojieren.apppause.data.diagnostics.model.ExportResult
 import com.huojieren.apppause.data.diagnostics.model.ProcessState
 import com.huojieren.apppause.data.diagnostics.runtime.RuntimeLogTree
@@ -104,6 +105,8 @@ class DiagnosticsManager @Inject constructor(
         AppLog.logger(TAG, "Clear diagnostics failed: ${it.message}", Log.ERROR, it)
         false
     }
+
+    fun getDiagnosticIncidents(): List<DiagnosticIncident> = store.getDiagnosticIncidents()
 
     fun export(): ExportResult = exporter.export()
 

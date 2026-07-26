@@ -13,7 +13,7 @@ fun BottomBar(
     onNavigate: (String) -> Unit
 ) {
     NavigationBar {
-        AppPauseScreen.entries.forEach { screen ->
+        AppPauseScreen.entries.filter(AppPauseScreen::showInBottomBar).forEach { screen ->
             NavigationBarItem(
                 icon = {
                     screen.icon?.let { Icon(it, contentDescription = screen.title) }

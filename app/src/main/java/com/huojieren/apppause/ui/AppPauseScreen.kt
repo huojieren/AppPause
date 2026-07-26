@@ -39,11 +39,13 @@ import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.ui.components.BottomBar
 import com.huojieren.apppause.ui.components.ConfirmDialog
+import com.huojieren.apppause.ui.screens.DiagnosticsScreen
 import com.huojieren.apppause.ui.screens.MainScreen
 import com.huojieren.apppause.ui.screens.SelectAppScreen
 import com.huojieren.apppause.ui.screens.SettingsScreen
 import com.huojieren.apppause.ui.screens.TodoListScreen
 import com.huojieren.apppause.ui.state.AppStatusUiState
+import com.huojieren.apppause.ui.state.DiagnosticsUiState
 import com.huojieren.apppause.ui.state.SelectAppUiState
 import com.huojieren.apppause.ui.state.TodoListUiState
 import com.huojieren.apppause.ui.theme.AppTheme
@@ -51,16 +53,23 @@ import com.huojieren.apppause.ui.viewModel.AppStatusViewModel
 import com.huojieren.apppause.ui.viewModel.SelectAppViewModel
 import com.huojieren.apppause.ui.viewModel.TodoViewModel
 
-enum class AppPauseScreen(val route: String, val title: String, val icon: ImageVector?) {
+enum class AppPauseScreen(
+    val route: String,
+    val title: String,
+    val icon: ImageVector?,
+    val showInBottomBar: Boolean = true
+) {
     MainScreen("main", "主页", Icons.Default.Home),
     AppManager("app_manager", "应用", Icons.AutoMirrored.Filled.List),
     TodoList("todo_list", "待办", Icons.Filled.CheckCircle),
     SettingsScreen("settings", "设置", Icons.Filled.Settings),
+    Diagnostics("diagnostics", "诊断信息", null, showInBottomBar = false),
 }
 
 @Composable
 fun AppPauseApp(
     appStatusUiState: AppStatusUiState? = null,
+    diagnosticsUiState: DiagnosticsUiState? = null,
     selectAppUiState: SelectAppUiState? = null,
     todoListUiState: TodoListUiState? = null,
     startDestination: String = AppPauseScreen.MainScreen.route
@@ -92,12 +101,18 @@ fun AppPauseApp(
     val actualTodoListUiState =
         todoListUiState ?: todoViewModel!!.uiState.collectAsState().value
 
+    val actualDiagnosticsUiState = diagnosticsUiState ?: if (appStatusViewModel != null) {
+        appStatusViewModel.diagnosticsUiState.collectAsState(initial = DiagnosticsUiState()).value
+    } else {
+        DiagnosticsUiState()
+    }
+
     var showClearLogDialog by remember { mutableStateOf(false) }
 
     if (showClearLogDialog) {
         ConfirmDialog(
-            title = "清空日志",
-            message = "确定要清空所有缓存日志吗？此操作不可撤销。",
+            title = "清空诊断材料",
+            message = "确定要清空所有本地诊断材料吗？此操作不可撤销。",
             onDismiss = { showClearLogDialog = false },
             onConfirm = {
                 appStatusViewModel?.clearLog()
@@ -114,6 +129,7 @@ fun AppPauseApp(
         composable(AppPauseScreen.AppManager.route) { }
         composable(AppPauseScreen.TodoList.route) { }
         composable(AppPauseScreen.SettingsScreen.route) { }
+        composable(AppPauseScreen.Diagnostics.route) { }
     }
 
     Scaffold(
@@ -186,11 +202,9 @@ fun AppPauseApp(
                         onBatteryOptimizationButtonClicked = {
                             appStatusViewModel?.requestPermission(Permissions.BatteryOptimization)
                         },
-                        onClearLogButtonClicked = {
-                            showClearLogDialog = true
-                        },
-                        onSaveLogButtonClicked = {
-                            appStatusViewModel?.saveLog()
+                        onDiagnosticsClicked = {
+                            appStatusViewModel?.refreshDiagnostics()
+                            navController.navigate(AppPauseScreen.Diagnostics.route)
                         },
                         onSharedTimingChanged = {
                             appStatusViewModel?.setSharedTimingEnabled(it)
@@ -204,6 +218,19 @@ fun AppPauseApp(
                         onTodoPromptChanged = {
                             appStatusViewModel?.setTodoPromptEnabled(it)
                         },
+                        modifier = Modifier.padding(
+                            vertical = 20.dp,
+                            horizontal = 16.dp
+                        )
+                    )
+                }
+
+                AppPauseScreen.Diagnostics.route -> {
+                    DiagnosticsScreen(
+                        uiState = actualDiagnosticsUiState,
+                        onBack = { navController.popBackStack() },
+                        onExport = { appStatusViewModel?.saveLog() },
+                        onClear = { showClearLogDialog = true },
                         modifier = Modifier.padding(
                             vertical = 20.dp,
                             horizontal = 16.dp

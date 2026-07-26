@@ -13,10 +13,13 @@ import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
 import com.huojieren.apppause.managers.TimerManager
 import com.huojieren.apppause.ui.state.AppStatusUiState
+import com.huojieren.apppause.ui.state.DiagnosticsUiState
 import com.huojieren.apppause.utils.showToast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -94,9 +97,13 @@ class AppStatusViewModel @Inject constructor(
         )
     }
 
+    private val _diagnosticsUiState = MutableStateFlow(DiagnosticsUiState())
+    val diagnosticsUiState = _diagnosticsUiState.asStateFlow()
+
     init {
         logger(tag, "AppStatusViewModel init")
         refreshState()
+        refreshDiagnostics()
     }
 
     fun refreshState() {
@@ -163,10 +170,15 @@ class AppStatusViewModel @Inject constructor(
 
     fun clearLog() {
         if (diagnosticsManager.clear()) {
+            refreshDiagnostics()
             showToast(context, "日志已清空")
         } else {
             showToast(context, "清空日志失败")
         }
+    }
+
+    fun refreshDiagnostics() {
+        _diagnosticsUiState.value = DiagnosticsUiState(diagnosticsManager.getDiagnosticIncidents())
     }
 
     fun saveLog() {

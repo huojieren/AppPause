@@ -2,6 +2,8 @@ package com.huojieren.apppause.data.diagnostics.storage
 
 import android.content.Context
 import android.util.Log
+import com.huojieren.apppause.data.diagnostics.model.DiagnosticIncident
+import com.huojieren.apppause.data.diagnostics.model.IncidentType
 import com.huojieren.apppause.data.diagnostics.model.ProcessState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -132,6 +134,15 @@ class DiagnosticStore @Inject constructor(
         }.distinctBy { it.absolutePath }.sortedBy { it.name }
     }
 
+    fun getDiagnosticIncidents(): List<DiagnosticIncident> = synchronized(lock) {
+        getIncidentFiles()
+            .asSequence()
+            .filter { it.extension == "log" }
+            .mapNotNull(::readIncidentSummary)
+            .sortedByDescending(DiagnosticIncident::occurredAt)
+            .toList()
+    }
+
     fun clearAll() = synchronized(lock) {
         getRuntimeLogFiles().forEach(File::delete)
         getIncidentFiles().forEach(File::delete)
@@ -151,6 +162,31 @@ class DiagnosticStore @Inject constructor(
     }
 
     private fun getRuntimeBackupFile(index: Int): File = File(runtimeDir, "$RUNTIME_LOG_FILE_NAME.$index")
+
+    private fun readIncidentSummary(file: File): DiagnosticIncident? = runCatching {
+        val fields = file.useLines { lines ->
+            lines
+                .takeWhile(String::isNotBlank)
+                .mapNotNull { line ->
+                    line.split('=', limit = 2).takeIf { it.size == 2 }?.let { (key, value) -> key to value }
+                }
+                .toMap()
+        }
+        val type = fields["type"]?.let(IncidentType::valueOf) ?: return null
+        val id = file.nameWithoutExtension
+        DiagnosticIncident(
+            id = id,
+            type = type,
+            occurredAt = file.lastModified(),
+            reason = fields["reason"],
+            description = fields["description"],
+            exceptionName = fields["exception"],
+            message = fields["message"],
+            hasTrace = incidentsDir.listFiles { candidate ->
+                candidate.name.startsWith("$id.") && candidate.extension != "log"
+            }?.isNotEmpty() == true
+        )
+    }.getOrNull()
 
     private fun ensureDirectoriesLocked() {
         listOf(rootDir, runtimeDir, incidentsDir, stateDir).forEach { directory ->
