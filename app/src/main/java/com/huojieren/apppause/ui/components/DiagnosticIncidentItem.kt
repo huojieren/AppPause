@@ -1,13 +1,16 @@
 package com.huojieren.apppause.ui.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.huojieren.apppause.data.diagnostics.model.DiagnosticIncident
 import com.huojieren.apppause.data.diagnostics.model.IncidentType
 import com.huojieren.apppause.ui.DarkComponentPreview
@@ -21,30 +24,44 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun DiagnosticIncidentItem(
     incident: DiagnosticIncident,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        ListItem(
-            headlineContent = {
-                Text(incident.type.displayName(), style = MaterialTheme.typography.titleMedium)
-            },
-            supportingContent = {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Text(
+                text = incident.type.displayName(),
+                style = MaterialTheme.typography.titleMedium
+            )
+            incident.summary()?.let { summary ->
                 Text(
-                    text = listOfNotNull(
-                        incident.occurredAt.formatTimestamp(),
-                        incident.summary(),
-                        "附带系统追踪".takeIf { incident.hasTrace }
-                    ).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        )
+            Text(
+                text = listOfNotNull(
+                    incident.occurredAt.formatTimestamp(),
+                    "附带系统追踪".takeIf { incident.hasTrace }
+                ).joinToString(" · "),
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
@@ -58,6 +75,7 @@ private fun DiagnosticIncident.summary(): String? = when (type) {
         exceptionName?.substringAfterLast('.'),
         message?.takeIf(String::isNotBlank)
     ).joinToString(": ").ifBlank { null }
+
     IncidentType.PROCESS_EXIT -> listOfNotNull(
         reason?.toReadableExitReason(),
         description?.takeIf(String::isNotBlank)
@@ -93,7 +111,8 @@ fun DiagnosticIncidentItemPreview() {
                 reason = "LOW_MEMORY(7)",
                 description = "系统因内存紧张结束了进程",
                 hasTrace = true
-            )
+            ),
+            onClick = {}
         )
     }
 }

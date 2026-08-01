@@ -121,6 +121,11 @@ class DiagnosticStore @Inject constructor(
         incidentsDir.listFiles { file -> file.isFile }?.sortedBy { it.name }.orEmpty()
     }
 
+    /** 返回一个事故描述及其 trace、tombstone 等附件。 */
+    fun getIncidentMaterialFiles(incidentId: String): List<File> = synchronized(lock) {
+        incidentMaterialFilesLocked(incidentId)
+    }
+
     fun getLegacyFiles(): List<File> = synchronized(lock) {
         buildList {
             File(legacyCacheDir, LEGACY_RUNTIME_LOG_FILE_NAME).takeIf { it.exists() }?.let(::add)
@@ -151,6 +156,12 @@ class DiagnosticStore @Inject constructor(
         getLegacyFiles().forEach(File::delete)
     }
 
+    /** 删除单个事故及其关联附件，不影响滚动运行日志。 */
+    fun deleteIncident(incidentId: String): Boolean = synchronized(lock) {
+        val files = incidentMaterialFilesLocked(incidentId)
+        files.isNotEmpty() && files.all(File::delete)
+    }
+
     fun toZipEntryName(file: File): String = synchronized(lock) {
         when (file.parentFile) {
             runtimeDir -> "runtime/${file.name}"
@@ -162,6 +173,11 @@ class DiagnosticStore @Inject constructor(
     }
 
     private fun getRuntimeBackupFile(index: Int): File = File(runtimeDir, "$RUNTIME_LOG_FILE_NAME.$index")
+
+    private fun incidentMaterialFilesLocked(incidentId: String): List<File> =
+        getIncidentFiles().filter { file ->
+            file.name == "$incidentId.log" || file.name.startsWith("$incidentId.")
+        }
 
     private fun readIncidentSummary(file: File): DiagnosticIncident? = runCatching {
         val fields = file.useLines { lines ->
@@ -217,8 +233,10 @@ class DiagnosticStore @Inject constructor(
 
     private fun trimIncidentsLocked() {
         val files = getIncidentFiles()
+            .filter { it.extension == "log" }
             .sortedByDescending { it.lastModified() }
-        files.drop(LogRetentionPolicy.INCIDENT_MAX_FILES).forEach(File::delete)
+        files.drop(LogRetentionPolicy.INCIDENT_MAX_FILES)
+            .forEach { file -> incidentMaterialFilesLocked(file.nameWithoutExtension).forEach(File::delete) }
     }
 
     private fun writeAtomicallyLocked(file: File, bytes: ByteArray) {

@@ -192,6 +192,26 @@ class AppStatusViewModel @Inject constructor(
         }
     }
 
+    fun saveIncident(incidentId: String) {
+        when (val result = diagnosticsManager.exportIncident(incidentId)) {
+            ExportResult.Success -> showToast(context, "事件诊断包已保存到：Download/AppPause")
+            ExportResult.NoLogs -> showToast(context, "没有可导出的事件材料")
+            is ExportResult.Failed -> {
+                logger(tag, "Export incident failed: ${result.error.message}", android.util.Log.ERROR, result.error)
+                showToast(context, "保存事件诊断包失败")
+            }
+        }
+    }
+
+    fun deleteIncident(incidentId: String) {
+        if (diagnosticsManager.deleteIncident(incidentId)) {
+            refreshDiagnostics()
+            showToast(context, "异常记录已删除")
+        } else {
+            showToast(context, "删除异常记录失败")
+        }
+    }
+
     fun toggleMonitoring() {
         logger(tag, "toggleMonitoring")
         viewModelScope.launch {

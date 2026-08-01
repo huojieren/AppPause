@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import com.huojieren.apppause.data.diagnostics.model.ExportResult
 import com.huojieren.apppause.data.diagnostics.storage.DiagnosticStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,9 +29,21 @@ class DiagnosticsExporter @Inject constructor(
 ) {
     fun export(): ExportResult {
         val files = exportableFiles()
-        if (files.isEmpty()) return ExportResult.NoLogs
+        return export(files, "diagnostics")
+    }
 
-        val fileName = "diagnostics-${SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())}.zip"
+    /** 导出单项事故材料，并附带当前滚动运行日志作为排查上下文。 */
+    fun exportIncident(incidentId: String): ExportResult {
+        val files = buildList {
+            addAll(store.getIncidentMaterialFiles(incidentId))
+            addAll(store.getRuntimeLogFiles())
+        }.filter { it.exists() && it.length() > 0 }.distinctBy { it.absolutePath }
+        return export(files, "diagnostic-$incidentId")
+    }
+
+    private fun export(files: List<File>, fileNamePrefix: String): ExportResult {
+        if (files.isEmpty()) return ExportResult.NoLogs
+        val fileName = "$fileNamePrefix-${SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())}.zip"
         return runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 saveWithMediaStore(fileName, files)
@@ -47,6 +60,7 @@ class DiagnosticsExporter @Inject constructor(
         addAll(store.getLegacyFiles())
     }.filter { it.exists() && it.length() > 0 }.distinctBy { it.absolutePath }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun saveWithMediaStore(fileName: String, files: List<File>) {
         val resolver = context.contentResolver
         val values = ContentValues().apply {

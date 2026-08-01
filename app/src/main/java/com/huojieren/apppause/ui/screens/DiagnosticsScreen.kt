@@ -6,15 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +23,6 @@ import com.huojieren.apppause.data.diagnostics.model.IncidentType
 import com.huojieren.apppause.ui.DarkComponentPreview
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.components.DiagnosticIncidentItem
-import com.huojieren.apppause.ui.components.SettingsClickableRow
 import com.huojieren.apppause.ui.state.DiagnosticsUiState
 import com.huojieren.apppause.ui.theme.AppTheme
 
@@ -37,73 +31,58 @@ fun DiagnosticsScreen(
     modifier: Modifier = Modifier,
     uiState: DiagnosticsUiState,
     onBack: () -> Unit,
-    onExport: () -> Unit,
-    onClear: () -> Unit
+    onIncidentClicked: (DiagnosticIncident) -> Unit
 ) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回设置")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "返回设置",
+                )
             }
             Text(
                 text = "诊断信息",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.titleLarge
             )
         }
 
-        if (uiState.incidents.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "暂无异常记录",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.incidents, key = DiagnosticIncident::id) { incident ->
-                    DiagnosticIncidentItem(incident = incident)
+        Column(
+            modifier = modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+
+
+            if (uiState.incidents.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "暂无异常记录",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(uiState.incidents, key = DiagnosticIncident::id) { incident ->
+                        DiagnosticIncidentItem(
+                            incident = incident,
+                            onClick = { onIncidentClicked(incident) }
+                        )
+                    }
                 }
             }
-        }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            )
-        ) {
-            SettingsClickableRow(
-                title = "导出诊断材料",
-                subtitle = "保存当前日志和事故文件到下载目录",
-                onClick = onExport
-            )
-            HorizontalDivider(
-                modifier = Modifier.padding(start = 16.dp),
-                thickness = DividerDefaults.Thickness,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-            )
-            SettingsClickableRow(
-                title = "清空诊断材料",
-                subtitle = "删除本地日志、事故文件和旧版本材料",
-                onClick = onClear,
-                isHighlight = true
-            )
         }
     }
 }
@@ -134,8 +113,7 @@ fun DiagnosticsScreenPreview() {
                 )
             ),
             onBack = {},
-            onExport = {},
-            onClear = {}
+            onIncidentClicked = {}
         )
     }
 }

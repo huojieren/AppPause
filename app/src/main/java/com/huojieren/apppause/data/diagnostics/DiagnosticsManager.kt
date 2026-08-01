@@ -108,7 +108,11 @@ class DiagnosticsManager @Inject constructor(
 
     fun getDiagnosticIncidents(): List<DiagnosticIncident> = store.getDiagnosticIncidents()
 
+    fun deleteIncident(incidentId: String): Boolean = store.deleteIncident(incidentId)
+
     fun export(): ExportResult = exporter.export()
+
+    fun exportIncident(incidentId: String): ExportResult = exporter.exportIncident(incidentId)
 
     private fun installCrashHandler() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
