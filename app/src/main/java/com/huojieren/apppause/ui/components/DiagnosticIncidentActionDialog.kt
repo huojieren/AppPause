@@ -52,7 +52,7 @@ fun DiagnosticIncidentActionDialogPreview() {
             incident = DiagnosticIncident(
                 id = "process-exit-20260726-123000-100",
                 type = IncidentType.PROCESS_EXIT,
-                occurredAt = 1_784_500_000_000
+                occurredAtEpochMs = 1_784_500_000_000
             ),
             onDismiss = {},
             onExport = {},

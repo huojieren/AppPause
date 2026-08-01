@@ -4,7 +4,7 @@ package com.huojieren.apppause.data.diagnostics.model
 data class DiagnosticIncident(
     val id: String,
     val type: IncidentType,
-    val occurredAt: Long,
+    val occurredAtEpochMs: Long,
     val reason: String? = null,
     val description: String? = null,
     val exceptionName: String? = null,

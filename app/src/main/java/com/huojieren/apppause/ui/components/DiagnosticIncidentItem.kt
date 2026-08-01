@@ -54,7 +54,7 @@ fun DiagnosticIncidentItem(
             }
             Text(
                 text = listOfNotNull(
-                    incident.occurredAt.formatTimestamp(),
+                    incident.occurredAtEpochMs.formatTimestamp(),
                     "附带系统追踪".takeIf { incident.hasTrace }
                 ).joinToString(" · "),
                 modifier = Modifier.padding(top = 4.dp),
@@ -107,7 +107,7 @@ fun DiagnosticIncidentItemPreview() {
             incident = DiagnosticIncident(
                 id = "process-exit-20260726-123000-100",
                 type = IncidentType.PROCESS_EXIT,
-                occurredAt = 1_784_500_000_000,
+                occurredAtEpochMs = 1_784_500_000_000,
                 reason = "LOW_MEMORY(7)",
                 description = "系统因内存紧张结束了进程",
                 hasTrace = true

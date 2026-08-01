@@ -9,6 +9,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,6 +35,8 @@ class DiagnosticStore @Inject constructor(
         private const val LEGACY_LOG_ROOT_DIR_NAME = "logs"
         private const val LEGACY_REPORTS_DIR_NAME = "diagnostics"
         private const val LEGACY_RUNTIME_LOG_FILE_NAME = "app_logs.log"
+        private val INCIDENT_FILE_TIMESTAMP =
+            Regex("(?:java-crash|process-exit)-(\\d{8}-\\d{6}-\\d{3})")
     }
 
     private val lock = Any()
@@ -144,7 +148,7 @@ class DiagnosticStore @Inject constructor(
             .asSequence()
             .filter { it.extension == "log" }
             .mapNotNull(::readIncidentSummary)
-            .sortedByDescending(DiagnosticIncident::occurredAt)
+            .sortedByDescending(DiagnosticIncident::occurredAtEpochMs)
             .toList()
     }
 
@@ -193,7 +197,7 @@ class DiagnosticStore @Inject constructor(
         DiagnosticIncident(
             id = id,
             type = type,
-            occurredAt = file.lastModified(),
+            occurredAtEpochMs = readOccurredAtEpochMs(file, fields),
             reason = fields["reason"],
             description = fields["description"],
             exceptionName = fields["exception"],
@@ -202,6 +206,18 @@ class DiagnosticStore @Inject constructor(
                 candidate.name.startsWith("$id.") && candidate.extension != "log"
             }?.isNotEmpty() == true
         )
+    }.getOrNull()
+
+    private fun readOccurredAtEpochMs(file: File, fields: Map<String, String>): Long =
+        fields["occurredAtEpochMs"]?.toLongOrNull()
+            ?: fields["exitTimestamp"]?.parseTimestamp("yyyy-MM-dd HH:mm:ss.SSS")
+            ?: fields["createdAt"]?.parseTimestamp("yyyy-MM-dd HH:mm:ss.SSS")
+            ?: INCIDENT_FILE_TIMESTAMP.find(file.name)?.groupValues?.get(1)
+                ?.parseTimestamp("yyyyMMdd-HHmmss-SSS")
+            ?: file.lastModified()
+
+    private fun String.parseTimestamp(pattern: String): Long? = runCatching {
+        SimpleDateFormat(pattern, Locale.US).apply { isLenient = false }.parse(this)?.time
     }.getOrNull()
 
     private fun ensureDirectoriesLocked() {

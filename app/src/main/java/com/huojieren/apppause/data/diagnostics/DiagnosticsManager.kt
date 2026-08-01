@@ -80,7 +80,12 @@ class DiagnosticsManager @Inject constructor(
      */
     fun recordEvent(event: DiagnosticEvent) {
         val details = event.attributes.entries.joinToString(separator = " ") { (key, value) -> "$key=$value" }
-        AppLog.logger("Diagnostics", "event=${event.name}${if (details.isBlank()) "" else " $details"}", Log.INFO)
+        AppLog.logger(
+            "Diagnostics",
+            "event=${event.name} occurredAtEpochMs=${event.occurredAtEpochMs}" +
+                if (details.isBlank()) "" else " $details",
+            Log.INFO
+        )
     }
 
     /**

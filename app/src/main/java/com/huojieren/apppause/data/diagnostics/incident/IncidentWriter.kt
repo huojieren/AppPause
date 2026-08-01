@@ -25,12 +25,14 @@ class IncidentWriter @Inject constructor(
     private val store: DiagnosticStore
 ) {
     fun writeJavaCrash(thread: Thread, throwable: Throwable) {
+        val occurredAtEpochMs = System.currentTimeMillis()
         runCatching {
-            val incidentId = newIncidentId(IncidentType.JAVA_CRASH, Process.myPid())
+            val incidentId = newIncidentId(IncidentType.JAVA_CRASH, Process.myPid(), occurredAtEpochMs)
             store.writeIncident(
                 "$incidentId.log",
                 buildString {
                     appendLine("type=${IncidentType.JAVA_CRASH.name}")
+                    appendLine("occurredAtEpochMs=$occurredAtEpochMs")
                     appendLine("createdAt=${formatTimestamp(System.currentTimeMillis())}")
                     appendProcessContext()
                     appendLine("thread=${thread.name}")
@@ -53,6 +55,7 @@ class IncidentWriter @Inject constructor(
             "$incidentId.log",
             buildString {
                 appendLine("type=${IncidentType.PROCESS_EXIT.name}")
+                appendLine("occurredAtEpochMs=${exitInfo.timestamp}")
                 appendLine("createdAt=${formatTimestamp(System.currentTimeMillis())}")
                 appendLine("exitTimestamp=${formatTimestamp(exitInfo.timestamp)}")
                 appendLine("package=${context.packageName}")

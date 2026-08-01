@@ -98,7 +98,7 @@ fun DiagnosticsScreenPreview() {
                     DiagnosticIncident(
                         id = "process-exit-20260726-123000-100",
                         type = IncidentType.PROCESS_EXIT,
-                        occurredAt = 1_784_500_000_000,
+                        occurredAtEpochMs = 1_784_500_000_000,
                         reason = "LOW_MEMORY(7)",
                         description = "系统因内存紧张结束了进程",
                         hasTrace = true
@@ -106,7 +106,7 @@ fun DiagnosticsScreenPreview() {
                     DiagnosticIncident(
                         id = "java-crash-20260725-221000-100",
                         type = IncidentType.JAVA_CRASH,
-                        occurredAt = 1_784_400_000_000,
+                        occurredAtEpochMs = 1_784_400_000_000,
                         exceptionName = "java.lang.IllegalStateException",
                         message = "Monitor service is not ready"
                     )

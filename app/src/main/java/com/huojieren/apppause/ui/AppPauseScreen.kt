@@ -489,7 +489,7 @@ private fun mockDiagnosticIncidents(): List<DiagnosticIncident> = listOf(
     DiagnosticIncident(
         id = "process-exit-20260801-120000-100",
         type = IncidentType.PROCESS_EXIT,
-        occurredAt = 1_784_800_000_000,
+        occurredAtEpochMs = 1_784_800_000_000,
         reason = "LOW_MEMORY(7)",
         description = "系统因内存紧张结束了进程",
         hasTrace = true
@@ -497,7 +497,7 @@ private fun mockDiagnosticIncidents(): List<DiagnosticIncident> = listOf(
     DiagnosticIncident(
         id = "java-crash-20260801-091500-100",
         type = IncidentType.JAVA_CRASH,
-        occurredAt = 1_784_789_000_000,
+        occurredAtEpochMs = 1_784_789_000_000,
         exceptionName = "java.lang.IllegalStateException",
         message = "Monitor service is not ready"
     )
