@@ -93,3 +93,6 @@ open-opencode.bat
 
 # 忽略Windows命令错误输出文件
 nul
+
+# 本地修复报告
+docs/report/

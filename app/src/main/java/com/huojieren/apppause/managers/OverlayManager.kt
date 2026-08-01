@@ -31,6 +31,7 @@ class OverlayManager(
     private var lifecycleOwner: FloatingWindowLifecycleOwner? = null
     private var windowManager: WindowManager? = null
     private var composeView: ComposeView? = null
+    private var fadeInAnimator: ValueAnimator? = null
 
     private val _fadeInCompleteEvent = MutableSharedFlow<Unit>(replay = 1)
     val fadeInCompleteEvent: SharedFlow<Unit> = _fadeInCompleteEvent.asSharedFlow()
@@ -76,44 +77,55 @@ class OverlayManager(
             it.initialize()
         }
 
-        composeView = ComposeView(context).apply {
+        val view = ComposeView(context).apply {
             setContent {
                 AppTheme(darkTheme = isDarkTheme) {
                     content()
                 }
             }
         }
+        composeView = view
 
-        composeView?.let { view ->
-            lifecycleOwner?.attachToComposeView(view)
-        }
+        lifecycleOwner?.attachToComposeView(view)
 
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        windowManager?.addView(composeView, layoutParams)
+        windowManager?.addView(view, layoutParams)
 
-        fadeIn(layoutParams, isSlowFadeIn)
+        fadeIn(view, layoutParams, isSlowFadeIn)
     }
 
     private fun fadeIn(
+        view: ComposeView,
         layoutParams: WindowManager.LayoutParams,
         isSlowFadeIn: Boolean
     ) {
         val duration = if (isSlowFadeIn) FADE_IN_DURATION_SLOW else FADE_IN_DURATION_FAST
-        ValueAnimator.ofFloat(0f, 1f).apply {
+        var isCancelled = false
+        fadeInAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             this.duration = duration
             interpolator = DecelerateInterpolator()
             addUpdateListener { animator ->
                 layoutParams.alpha = animator.animatedValue as Float
-                windowManager?.updateViewLayout(composeView, layoutParams)
+                windowManager?.updateViewLayout(view, layoutParams)
             }
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationStart(animation: android.animation.Animator) {
                     logger(tag, "fadeIn: started, duration=${duration}ms")
                 }
 
+                override fun onAnimationCancel(animation: android.animation.Animator) {
+                    isCancelled = true
+                    logger(tag, "fadeIn: cancelled")
+                }
+
                 override fun onAnimationEnd(animation: android.animation.Animator) {
-                    logger(tag, "fadeIn: completed, emitting fadeInCompleteEvent")
-                    _fadeInCompleteEvent.tryEmit(Unit)
+                    if (fadeInAnimator === animation) {
+                        fadeInAnimator = null
+                    }
+                    if (!isCancelled) {
+                        logger(tag, "fadeIn: completed, emitting fadeInCompleteEvent")
+                        _fadeInCompleteEvent.tryEmit(Unit)
+                    }
                 }
             })
             start()
@@ -126,9 +138,11 @@ class OverlayManager(
             return
         }
 
-        logger(tag, "removeOverlay: starting fade out")
         val view = composeView ?: return
         val params = view.layoutParams as? WindowManager.LayoutParams ?: return
+        fadeInAnimator?.cancel()
+        fadeInAnimator = null
+        logger(tag, "removeOverlay: starting fade out")
 
         ValueAnimator.ofFloat(1f, 0f).apply {
             duration = FADE_OUT_DURATION
@@ -148,6 +162,8 @@ class OverlayManager(
     }
 
     private fun cleanup() {
+        fadeInAnimator?.cancel()
+        fadeInAnimator = null
         composeView?.let {
             try {
                 windowManager?.removeView(it)
