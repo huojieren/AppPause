@@ -20,7 +20,7 @@ fun DiagnosticIncidentActionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(incident.type.displayName()) },
+        title = { Text(incident.displayName()) },
         text = { Text("可导出此事件的材料和当前运行日志上下文，或删除该事件及其附件。") },
         confirmButton = {
             TextButton(onClick = onExport) {
@@ -38,9 +38,13 @@ fun DiagnosticIncidentActionDialog(
     )
 }
 
-private fun IncidentType.displayName(): String = when (this) {
+private fun DiagnosticIncident.displayName(): String = when (type) {
     IncidentType.JAVA_CRASH -> "应用崩溃"
-    IncidentType.PROCESS_EXIT -> "进程异常退出"
+    IncidentType.PROCESS_EXIT -> if (reason?.startsWith("USER_") == true) {
+        "进程主动结束"
+    } else {
+        "进程异常退出"
+    }
 }
 
 @LightComponentPreview

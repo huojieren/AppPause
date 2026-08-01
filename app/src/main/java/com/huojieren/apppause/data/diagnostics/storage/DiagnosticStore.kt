@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.huojieren.apppause.data.diagnostics.model.DiagnosticIncident
 import com.huojieren.apppause.data.diagnostics.model.IncidentType
+import com.huojieren.apppause.data.diagnostics.model.ProcessExitRecordId
 import com.huojieren.apppause.data.diagnostics.model.ProcessState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -13,6 +14,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 /**
  * 统一管理诊断材料的文件布局、轮转、保留和原子状态写入。
@@ -76,7 +78,7 @@ class DiagnosticStore @Inject constructor(
         file
     }
 
-    fun writeIncidentTrace(fileName: String, bytes: ByteArray): File = synchronized(lock) {
+    fun writeIncidentMaterial(fileName: String, bytes: ByteArray): File = synchronized(lock) {
         ensureDirectoriesLocked()
         val file = File(incidentsDir, fileName)
         writeAtomicallyLocked(file, bytes)
@@ -111,6 +113,34 @@ class DiagnosticStore @Inject constructor(
             retained.joinToString(separator = "\n", postfix = "\n").toByteArray(StandardCharsets.UTF_8)
         )
     }
+
+    fun getRecordedExitIds(): Set<String> = synchronized(lock) {
+        getIncidentFiles()
+            .asSequence()
+            .filter { it.extension == "log" || it.name.endsWith(".process-exit.txt") }
+            .mapNotNull { file -> ProcessExitRecordId.fromFields(readIncidentFields(file)) }
+            .toSet()
+    }
+
+    fun findMatchingJavaCrash(pid: Int, occurredAtEpochMs: Long, toleranceMs: Long): String? =
+        synchronized(lock) {
+            getIncidentFiles()
+                .asSequence()
+                .filter { it.extension == "log" }
+                .mapNotNull { file ->
+                    val fields = readIncidentFields(file)
+                    if (fields["type"] != IncidentType.JAVA_CRASH.name ||
+                        fields["pid"]?.toIntOrNull() != pid
+                    ) {
+                        return@mapNotNull null
+                    }
+                    val difference = abs(readOccurredAtEpochMs(file, fields) - occurredAtEpochMs)
+                    file.nameWithoutExtension to difference
+                }
+                .filter { (_, difference) -> difference <= toleranceMs }
+                .minByOrNull { (_, difference) -> difference }
+                ?.first
+        }
 
     fun getRuntimeLogFiles(): List<File> = synchronized(lock) {
         buildList {
@@ -156,7 +186,6 @@ class DiagnosticStore @Inject constructor(
         getRuntimeLogFiles().forEach(File::delete)
         getIncidentFiles().forEach(File::delete)
         latestStateFile.delete()
-        handledExitsFile.delete()
         getLegacyFiles().forEach(File::delete)
     }
 
@@ -184,16 +213,10 @@ class DiagnosticStore @Inject constructor(
         }
 
     private fun readIncidentSummary(file: File): DiagnosticIncident? = runCatching {
-        val fields = file.useLines { lines ->
-            lines
-                .takeWhile(String::isNotBlank)
-                .mapNotNull { line ->
-                    line.split('=', limit = 2).takeIf { it.size == 2 }?.let { (key, value) -> key to value }
-                }
-                .toMap()
-        }
+        val fields = readIncidentFields(file)
         val type = fields["type"]?.let(IncidentType::valueOf) ?: return null
         val id = file.nameWithoutExtension
+        val attachments = incidentsDir.listFiles { candidate -> candidate.name.startsWith("$id.") }.orEmpty()
         DiagnosticIncident(
             id = id,
             type = type,
@@ -202,11 +225,21 @@ class DiagnosticStore @Inject constructor(
             description = fields["description"],
             exceptionName = fields["exception"],
             message = fields["message"],
-            hasTrace = incidentsDir.listFiles { candidate ->
-                candidate.name.startsWith("$id.") && candidate.extension != "log"
-            }?.isNotEmpty() == true
+            hasTrace = attachments.any { it.name.endsWith(".trace.txt") || it.name.endsWith(".tombstone.pb") },
+            hasSystemExitEvidence = attachments.any { it.name.endsWith(".process-exit.txt") }
         )
     }.getOrNull()
+
+    private fun readIncidentFields(file: File): Map<String, String> = runCatching {
+        file.useLines { lines ->
+            lines
+                .takeWhile(String::isNotBlank)
+                .mapNotNull { line ->
+                    line.split('=', limit = 2).takeIf { it.size == 2 }?.let { (key, value) -> key to value }
+                }
+                .toMap()
+        }
+    }.getOrDefault(emptyMap())
 
     private fun readOccurredAtEpochMs(file: File, fields: Map<String, String>): Long =
         fields["occurredAtEpochMs"]?.toLongOrNull()

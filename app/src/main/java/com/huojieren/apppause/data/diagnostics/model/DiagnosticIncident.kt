@@ -9,5 +9,6 @@ data class DiagnosticIncident(
     val description: String? = null,
     val exceptionName: String? = null,
     val message: String? = null,
-    val hasTrace: Boolean = false
+    val hasTrace: Boolean = false,
+    val hasSystemExitEvidence: Boolean = false
 )

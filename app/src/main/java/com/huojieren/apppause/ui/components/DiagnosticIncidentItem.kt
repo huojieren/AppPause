@@ -42,7 +42,7 @@ fun DiagnosticIncidentItem(
                 .padding(12.dp)
         ) {
             Text(
-                text = incident.type.displayName(),
+                text = incident.displayName(),
                 style = MaterialTheme.typography.titleMedium
             )
             incident.summary()?.let { summary ->
@@ -55,6 +55,7 @@ fun DiagnosticIncidentItem(
             Text(
                 text = listOfNotNull(
                     incident.occurredAtEpochMs.formatTimestamp(),
+                    "系统已确认退出".takeIf { incident.hasSystemExitEvidence },
                     "附带系统追踪".takeIf { incident.hasTrace }
                 ).joinToString(" · "),
                 modifier = Modifier.padding(top = 4.dp),
@@ -65,9 +66,13 @@ fun DiagnosticIncidentItem(
     }
 }
 
-private fun IncidentType.displayName(): String = when (this) {
+private fun DiagnosticIncident.displayName(): String = when (type) {
     IncidentType.JAVA_CRASH -> "应用崩溃"
-    IncidentType.PROCESS_EXIT -> "进程异常退出"
+    IncidentType.PROCESS_EXIT -> if (reason?.startsWith("USER_") == true) {
+        "进程主动结束"
+    } else {
+        "进程异常退出"
+    }
 }
 
 private fun DiagnosticIncident.summary(): String? = when (type) {
@@ -110,7 +115,8 @@ fun DiagnosticIncidentItemPreview() {
                 occurredAtEpochMs = 1_784_500_000_000,
                 reason = "LOW_MEMORY(7)",
                 description = "系统因内存紧张结束了进程",
-                hasTrace = true
+                hasTrace = true,
+                hasSystemExitEvidence = true
             ),
             onClick = {}
         )

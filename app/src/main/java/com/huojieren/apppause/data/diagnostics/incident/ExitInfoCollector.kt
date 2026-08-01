@@ -30,7 +30,10 @@ class ExitInfoCollector @Inject constructor(
     private fun collectApi30(limit: Int) {
         runCatching {
             val activityManager = context.getSystemService(ActivityManager::class.java)
-            val handledIds = store.getHandledExitIds()
+            val indexedIds = store.getHandledExitIds()
+            val recordedIds = store.getRecordedExitIds()
+            recordedIds.minus(indexedIds).forEach(store::markExitHandled)
+            val handledIds = indexedIds + recordedIds
             activityManager.getHistoricalProcessExitReasons(null, 0, limit)
                 .asSequence()
                 .filter { incidentWriter.exitId(it) !in handledIds }

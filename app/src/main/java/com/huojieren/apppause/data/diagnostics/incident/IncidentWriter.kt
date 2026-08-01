@@ -7,10 +7,12 @@ import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.huojieren.apppause.data.diagnostics.model.IncidentType
+import com.huojieren.apppause.data.diagnostics.model.ProcessExitRecordId
 import com.huojieren.apppause.data.diagnostics.storage.DiagnosticStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -50,29 +52,40 @@ class IncidentWriter @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.R)
     fun writeProcessExit(exitInfo: ApplicationExitInfo): Boolean = runCatching {
-        val incidentId = newIncidentId(IncidentType.PROCESS_EXIT, exitInfo.pid, exitInfo.timestamp)
-        store.writeIncident(
-            "$incidentId.log",
-            buildString {
-                appendLine("type=${IncidentType.PROCESS_EXIT.name}")
-                appendLine("occurredAtEpochMs=${exitInfo.timestamp}")
-                appendLine("createdAt=${formatTimestamp(System.currentTimeMillis())}")
-                appendLine("exitTimestamp=${formatTimestamp(exitInfo.timestamp)}")
-                appendLine("package=${context.packageName}")
-                appendLine("pid=${exitInfo.pid}")
-                appendLine("processName=${exitInfo.processName}")
-                appendLine("reason=${reasonToString(exitInfo.reason)}(${exitInfo.reason})")
-                appendLine("status=${exitInfo.status}")
-                appendLine("importance=${exitInfo.importance}")
-                appendLine("pssKb=${exitInfo.pss}")
-                appendLine("rssKb=${exitInfo.rss}")
-                appendLine("description=${exitInfo.description.orEmpty()}")
-                appendLine("processStateSummary=${exitInfo.processStateSummary?.toString(Charsets.UTF_8).orEmpty()}")
-                appendLine("lastState=${store.readLatestState().orEmpty()}")
-            }
-        )
+        val sourceExitId = exitId(exitInfo)
+        val matchingJavaCrashId = if (exitInfo.reason == ApplicationExitInfo.REASON_CRASH &&
+            exitInfo.processName == context.packageName
+        ) {
+            store.findMatchingJavaCrash(exitInfo.pid, exitInfo.timestamp, JAVA_CRASH_MATCH_TOLERANCE_MS)
+        } else {
+            null
+        }
+        val incidentId = matchingJavaCrashId ?: newProcessExitIncidentId(exitInfo, sourceExitId)
+        val content = buildString {
+            appendLine("type=${IncidentType.PROCESS_EXIT.name}")
+            appendLine("sourceExitId=$sourceExitId")
+            appendLine("occurredAtEpochMs=${exitInfo.timestamp}")
+            appendLine("createdAt=${formatTimestamp(System.currentTimeMillis())}")
+            appendLine("exitTimestamp=${formatTimestamp(exitInfo.timestamp)}")
+            appendLine("package=${context.packageName}")
+            appendLine("pid=${exitInfo.pid}")
+            appendLine("processName=${exitInfo.processName}")
+            appendLine("reason=${reasonToString(exitInfo.reason)}(${exitInfo.reason})")
+            appendLine("status=${exitInfo.status}")
+            appendLine("importance=${exitInfo.importance}")
+            appendLine("pssKb=${exitInfo.pss}")
+            appendLine("rssKb=${exitInfo.rss}")
+            appendLine("description=${exitInfo.description.orEmpty()}")
+            appendLine("processStateSummary=${exitInfo.processStateSummary?.toString(Charsets.UTF_8).orEmpty()}")
+            appendLine("lastState=${store.readLatestState().orEmpty()}")
+        }
+        if (matchingJavaCrashId != null) {
+            store.writeIncidentMaterial("$incidentId.process-exit.txt", content.toByteArray(Charsets.UTF_8))
+        } else {
+            store.writeIncident("$incidentId.log", content)
+        }
         exitInfo.traceInputStream?.use { trace ->
-            store.writeIncidentTrace(
+            store.writeIncidentMaterial(
                 "$incidentId.${traceFileExtension(exitInfo)}",
                 trace.readFully()
             )
@@ -85,7 +98,7 @@ class IncidentWriter @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.R)
     fun exitId(exitInfo: ApplicationExitInfo): String =
-        "${exitInfo.timestamp}-${exitInfo.pid}-${exitInfo.reason}-${exitInfo.processName}"
+        ProcessExitRecordId.create(exitInfo.timestamp, exitInfo.pid, exitInfo.reason, exitInfo.processName)
 
     private fun StringBuilder.appendProcessContext() {
         appendLine("package=${context.packageName}")
@@ -96,6 +109,16 @@ class IncidentWriter @Inject constructor(
     private fun newIncidentId(type: IncidentType, pid: Int, timestamp: Long = System.currentTimeMillis()): String {
         val timestampText = SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date(timestamp))
         return "${type.filePrefix}-$timestampText-$pid-${UUID.randomUUID().toString().take(8)}"
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun newProcessExitIncidentId(exitInfo: ApplicationExitInfo, sourceExitId: String): String {
+        val timestampText = SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date(exitInfo.timestamp))
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(sourceExitId.toByteArray(Charsets.UTF_8))
+            .joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xff) }
+            .take(8)
+        return "${IncidentType.PROCESS_EXIT.filePrefix}-$timestampText-${exitInfo.pid}-$digest"
     }
 
     private fun formatTimestamp(timestamp: Long): String =
@@ -136,5 +159,9 @@ class IncidentWriter @Inject constructor(
     private fun InputStream.readFully(): ByteArray = ByteArrayOutputStream().use { output ->
         copyTo(output)
         output.toByteArray()
+    }
+
+    private companion object {
+        const val JAVA_CRASH_MATCH_TOLERANCE_MS = 5_000L
     }
 }
