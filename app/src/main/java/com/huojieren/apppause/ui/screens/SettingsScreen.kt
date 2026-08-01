@@ -41,8 +41,7 @@ fun SettingsScreen(
     onUsageStatsButtonClicked: () -> Unit,
     onAccessibilityButtonClicked: () -> Unit,
     onBatteryOptimizationButtonClicked: () -> Unit,
-    onClearLogButtonClicked: () -> Unit,
-    onSaveLogButtonClicked: () -> Unit,
+    onDiagnosticsClicked: () -> Unit,
     onSharedTimingChanged: (Boolean) -> Unit,
     onWaitBeforeReturnChanged: (Boolean) -> Unit,
     onWaitBeforeReturnSecondsChanged: (Int) -> Unit,
@@ -77,10 +76,7 @@ fun SettingsScreen(
             onWaitBeforeReturnSecondsChanged = onWaitBeforeReturnSecondsChanged,
             onTodoPromptChanged = onTodoPromptChanged,
         )
-        LogGroup(
-            onClearLogButtonClicked = onClearLogButtonClicked,
-            onSaveLogButtonClicked = onSaveLogButtonClicked
-        )
+        DiagnosticsGroup(onDiagnosticsClicked = onDiagnosticsClicked)
         AboutGroup()
     }
 }
@@ -106,8 +102,7 @@ fun SettingsScreenPreview() {
             onUsageStatsButtonClicked = {},
             onAccessibilityButtonClicked = {},
             onBatteryOptimizationButtonClicked = {},
-            onClearLogButtonClicked = {},
-            onSaveLogButtonClicked = {},
+            onDiagnosticsClicked = {},
             onSharedTimingChanged = {},
             onWaitBeforeReturnChanged = {},
             onWaitBeforeReturnSecondsChanged = {},
@@ -213,24 +208,15 @@ private fun TimingGroup(
 }
 
 @Composable
-private fun LogGroup(
+private fun DiagnosticsGroup(
     modifier: Modifier = Modifier,
-    onClearLogButtonClicked: () -> Unit,
-    onSaveLogButtonClicked: () -> Unit
+    onDiagnosticsClicked: () -> Unit
 ) {
     SettingsCard(modifier = modifier) {
         SettingsClickableRow(
-            title = "保存缓存日志",
-            subtitle = "导出当前缓存日志用于排查问题",
-            onClick = onSaveLogButtonClicked,
-            isHighlight = false
-        )
-        SettingsDivider()
-        SettingsClickableRow(
-            title = "清空缓存日志",
-            subtitle = "删除本地缓存日志",
-            onClick = onClearLogButtonClicked,
-            isHighlight = true
+            title = "诊断信息",
+            subtitle = "查看本地诊断材料、导出或清空",
+            onClick = onDiagnosticsClicked
         )
     }
 }

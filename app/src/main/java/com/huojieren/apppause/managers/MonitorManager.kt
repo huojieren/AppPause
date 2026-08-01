@@ -6,7 +6,7 @@ import androidx.core.content.ContextCompat
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.MonitorIntent
 import com.huojieren.apppause.data.repository.AppRepository
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.monitor.ForegroundAppMonitor
 import com.huojieren.apppause.monitor.ForegroundAppMonitor.MonitorStrategy

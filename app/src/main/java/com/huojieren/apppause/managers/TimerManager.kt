@@ -5,7 +5,7 @@ import android.util.Log
 import com.huojieren.apppause.data.models.AppInfo
 import com.huojieren.apppause.data.models.TimerTimeoutInfo
 import com.huojieren.apppause.data.models.TimerTodoPrompt
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.utils.showToast
 import kotlinx.coroutines.CoroutineScope

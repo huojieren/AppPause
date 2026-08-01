@@ -3,7 +3,11 @@ package com.huojieren.apppause.service
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.view.accessibility.AccessibilityEvent
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import android.content.Intent
+import com.huojieren.apppause.data.diagnostics.DiagnosticsManager
+import com.huojieren.apppause.data.diagnostics.model.DiagnosticEvent
+import com.huojieren.apppause.data.diagnostics.model.ProcessState
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.managers.StatusManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.channels.BufferOverflow
@@ -18,6 +22,10 @@ class AppPauseAccessibilityService : AccessibilityService() {
 
     @Inject
     lateinit var statusManager: StatusManager
+
+    @Inject
+    lateinit var diagnosticsManager: DiagnosticsManager
+
     private val tag = "AppPauseAccessibilityService"
 
     private var lastLogTime = 0L
@@ -49,6 +57,15 @@ class AppPauseAccessibilityService : AccessibilityService() {
         logger(tag, "AccessibilityService connected")
         instance = this
         statusManager.setHasAccessibility(true)
+        diagnosticsManager.recordEvent(DiagnosticEvent("accessibility_service_connected"))
+        diagnosticsManager.updateProcessState(
+            ProcessState(
+                source = "accessibility_service_connected",
+                monitoring = statusManager.isMonitoring.value,
+                accessibilityConnected = true,
+                monitorServiceActive = statusManager.isMonitoring.value
+            )
+        )
     }
 
     override fun onDestroy() {
@@ -56,6 +73,20 @@ class AppPauseAccessibilityService : AccessibilityService() {
         logger(tag, "AccessibilityService destroyed")
         instance = null
         statusManager.setHasAccessibility(false)
+        diagnosticsManager.recordEvent(
+            DiagnosticEvent(
+                "accessibility_service_destroyed",
+                mapOf("lastLogTime" to lastLogTime.toString())
+            )
+        )
+        diagnosticsManager.updateProcessState(
+            ProcessState(
+                source = "accessibility_service_destroyed",
+                monitoring = statusManager.isMonitoring.value,
+                accessibilityConnected = false,
+                monitorServiceActive = statusManager.isMonitoring.value
+            )
+        )
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -98,6 +129,27 @@ class AppPauseAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() {
         logger(tag, "AccessibilityService interrupted")
+        diagnosticsManager.recordEvent(DiagnosticEvent("accessibility_feedback_interrupted"))
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        logger(tag, "AccessibilityService unbound")
+        diagnosticsManager.recordEvent(
+            DiagnosticEvent(
+                "accessibility_service_unbound",
+                mapOf("lastLogTime" to lastLogTime.toString())
+            )
+        )
+        instance = null
         statusManager.setHasAccessibility(false)
+        diagnosticsManager.updateProcessState(
+            ProcessState(
+                source = "accessibility_service_unbound",
+                monitoring = statusManager.isMonitoring.value,
+                accessibilityConnected = false,
+                monitorServiceActive = statusManager.isMonitoring.value
+            )
+        )
+        return super.onUnbind(intent)
     }
 }

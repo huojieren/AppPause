@@ -40,7 +40,7 @@ import com.huojieren.apppause.data.local.entity.TodoEntity
 import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.TimerTodoPrompt
 import com.huojieren.apppause.data.models.TodoPromptInput
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.ui.LightComponentPreview
 import com.huojieren.apppause.ui.components.Picker
 import com.huojieren.apppause.ui.state.rememberPickerState

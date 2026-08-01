@@ -6,8 +6,7 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- 旧版本曾将日志写入 files/，不应随用户数据备份或恢复。 -->
+    <exclude domain="file" path="logs/" />
+    <exclude domain="file" path="diagnostics/" />
 </full-backup-content>

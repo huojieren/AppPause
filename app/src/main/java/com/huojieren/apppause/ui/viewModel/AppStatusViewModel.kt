@@ -4,18 +4,22 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.huojieren.apppause.data.Permissions
-import com.huojieren.apppause.data.repository.LogRepository
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
+import com.huojieren.apppause.data.diagnostics.DiagnosticsManager
+import com.huojieren.apppause.data.diagnostics.model.ExportResult
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.managers.MonitorManager
 import com.huojieren.apppause.managers.PermissionManager
 import com.huojieren.apppause.managers.StatusManager
 import com.huojieren.apppause.managers.TimerManager
 import com.huojieren.apppause.ui.state.AppStatusUiState
+import com.huojieren.apppause.ui.state.DiagnosticsUiState
 import com.huojieren.apppause.utils.showToast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,7 +35,7 @@ private data class PermissionFlags(
 class AppStatusViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val permissionManager: PermissionManager,
-    private val logRepository: LogRepository,
+    private val diagnosticsManager: DiagnosticsManager,
     private val settingsRepository: SettingsRepository,
     private val monitorManager: MonitorManager,
     private val statusManager: StatusManager,
@@ -93,9 +97,13 @@ class AppStatusViewModel @Inject constructor(
         )
     }
 
+    private val _diagnosticsUiState = MutableStateFlow(DiagnosticsUiState())
+    val diagnosticsUiState = _diagnosticsUiState.asStateFlow()
+
     init {
         logger(tag, "AppStatusViewModel init")
         refreshState()
+        refreshDiagnostics()
     }
 
     fun refreshState() {
@@ -161,18 +169,46 @@ class AppStatusViewModel @Inject constructor(
     }
 
     fun clearLog() {
-        if (logRepository.clearLog()) {
+        if (diagnosticsManager.clear()) {
+            refreshDiagnostics()
             showToast(context, "日志已清空")
         } else {
             showToast(context, "清空日志失败")
         }
     }
 
+    fun refreshDiagnostics() {
+        _diagnosticsUiState.value = DiagnosticsUiState(diagnosticsManager.getDiagnosticIncidents())
+    }
+
     fun saveLog() {
-        when (logRepository.saveLog()) {
-            0 -> showToast(context, "日志已保存到：Download/App Pause/app_logs.zip")
-            1 -> showToast(context, "没有日志可保存")
-            -1 -> showToast(context, "保存日志失败")
+        when (val result = diagnosticsManager.export()) {
+            ExportResult.Success -> showToast(context, "诊断包已保存到：Download/AppPause")
+            ExportResult.NoLogs -> showToast(context, "没有诊断材料可保存")
+            is ExportResult.Failed -> {
+                logger(tag, "Export diagnostics failed: ${result.error.message}", android.util.Log.ERROR, result.error)
+                showToast(context, "保存诊断包失败")
+            }
+        }
+    }
+
+    fun saveIncident(incidentId: String) {
+        when (val result = diagnosticsManager.exportIncident(incidentId)) {
+            ExportResult.Success -> showToast(context, "事件诊断包已保存到：Download/AppPause")
+            ExportResult.NoLogs -> showToast(context, "没有可导出的事件材料")
+            is ExportResult.Failed -> {
+                logger(tag, "Export incident failed: ${result.error.message}", android.util.Log.ERROR, result.error)
+                showToast(context, "保存事件诊断包失败")
+            }
+        }
+    }
+
+    fun deleteIncident(incidentId: String) {
+        if (diagnosticsManager.deleteIncident(incidentId)) {
+            refreshDiagnostics()
+            showToast(context, "异常记录已删除")
+        } else {
+            showToast(context, "删除异常记录失败")
         }
     }
 

@@ -6,7 +6,7 @@ import com.huojieren.apppause.data.models.AppInfoUi
 import com.huojieren.apppause.data.models.AppLetterGroup
 import com.huojieren.apppause.data.models.toEntity
 import com.huojieren.apppause.data.repository.AppRepository
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.ui.state.SelectAppUiState
 import dagger.hilt.android.lifecycle.HiltViewModel

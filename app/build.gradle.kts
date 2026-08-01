@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout) // 布局
     implementation(libs.androidx.material3) // Material3
     implementation(libs.androidx.material.icons.core) // Material Icons
+    implementation(libs.androidx.material.icons.extended) // Extended Material Icons
     implementation(libs.androidx.activity.compose) // Activity Compose 集成
     implementation(libs.androidx.lifecycle.viewmodel.compose) // ViewModel Compose 集成
     implementation(libs.androidx.runtime) // Runtime

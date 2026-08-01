@@ -22,10 +22,15 @@ description: UI Compose coding conventions for this project
 
 ## 3. Preview Conventions (Key Update)
 
-- **Every Screen must have one Preview function** with both `@LightComponentPreview` +
-  `@DarkComponentPreview` annotations
+- **Every Screen must have one component-level Preview function** with both
+  `@LightComponentPreview` + `@DarkComponentPreview` annotations.
 - **Every Component must have one Preview function** with both `@LightComponentPreview` +
-  `@DarkComponentPreview` annotations
+  `@DarkComponentPreview` annotations.
+- **Every route declared in `AppPauseScreen` must additionally have an application-level Preview**
+  in `AppPauseScreen.kt`, with both `@LightAppPreview` + `@DarkAppPreview` annotations and that
+  route as `startDestination`. This verifies navigation, `Scaffold`, page padding, bottom bar, and
+  other parent-owned layout.
+- A component-level Screen Preview does **not** replace its route-level application Preview.
 - **Never use single-theme Preview** (e.g., only `@LightComponentPreview`)
 - **Correct format**:
   ```kotlin
@@ -35,6 +40,22 @@ description: UI Compose coding conventions for this project
   fun SettingsScreenPreview() { ... }
   ```
 - Use mock data in Preview to verify UI rendering
+
+Application-level Preview example:
+
+```kotlin
+@LightAppPreview
+@DarkAppPreview
+@Composable
+fun DiagnosticsAppPreview() {
+    AppTheme {
+        AppPauseApp(
+            diagnosticsUiState = mockDiagnosticsUiState(),
+            startDestination = AppPauseScreen.Diagnostics.route
+        )
+    }
+}
+```
 
 ## 4. ViewModel and State Relationship
 

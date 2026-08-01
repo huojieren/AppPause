@@ -11,7 +11,7 @@ import com.huojieren.apppause.data.models.TimerTimeoutInfo
 import com.huojieren.apppause.data.models.TimerTodoPrompt
 import com.huojieren.apppause.data.models.TodoPromptInput
 import com.huojieren.apppause.data.models.toUI
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.data.repository.TodoRepository
 import com.huojieren.apppause.ui.screens.TimeOutScreen

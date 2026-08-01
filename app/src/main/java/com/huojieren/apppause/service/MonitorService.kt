@@ -12,7 +12,10 @@ import androidx.core.app.NotificationCompat
 import com.huojieren.apppause.MainActivity
 import com.huojieren.apppause.R
 import com.huojieren.apppause.data.models.MonitorIntent
-import com.huojieren.apppause.data.repository.LogRepository.Companion.logger
+import com.huojieren.apppause.data.diagnostics.DiagnosticsManager
+import com.huojieren.apppause.data.diagnostics.model.DiagnosticEvent
+import com.huojieren.apppause.data.diagnostics.model.ProcessState
+import com.huojieren.apppause.data.logging.AppLog.logger
 import com.huojieren.apppause.data.repository.SettingsRepository
 import com.huojieren.apppause.managers.AppManager
 import com.huojieren.apppause.managers.MonitorManager
@@ -57,6 +60,9 @@ class MonitorService : Service() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var diagnosticsManager: DiagnosticsManager
+
     private val tag = "MonitorService"
 
     // 唤醒锁
@@ -84,6 +90,15 @@ class MonitorService : Service() {
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
         acquireWakeLock()
+        diagnosticsManager.recordEvent(DiagnosticEvent("monitor_service_created"))
+        diagnosticsManager.updateProcessState(
+            ProcessState(
+                source = "monitor_service_created",
+                monitoring = statusManager.isMonitoring.value,
+                accessibilityConnected = AppPauseAccessibilityService.isInitialized(),
+                monitorServiceActive = true
+            )
+        )
         logger(tag, "onCreate end")
     }
 
@@ -142,6 +157,26 @@ class MonitorService : Service() {
             is AccessibilityMonitor -> "无障碍服务"
             else -> "Unknown"
         }
+        diagnosticsManager.recordEvent(
+            DiagnosticEvent(
+                "monitor_service_started",
+                mapOf(
+                    "intentNull" to (intent == null).toString(),
+                    "flags" to flags.toString(),
+                    "startId" to startId.toString(),
+                    "strategy" to strategy
+                )
+            )
+        )
+        diagnosticsManager.updateProcessState(
+            ProcessState(
+                source = "monitor_service_started",
+                monitoring = true,
+                accessibilityConnected = AppPauseAccessibilityService.isInitialized(),
+                monitorServiceActive = true,
+                monitorStrategy = strategy
+            )
+        )
 
         // 启动前台通知
         logger(tag, "startForeground start")
@@ -181,6 +216,15 @@ class MonitorService : Service() {
 
     override fun onDestroy() {
         logger(tag, "destroy notification")
+        diagnosticsManager.recordEvent(
+            DiagnosticEvent(
+                "monitor_service_destroyed",
+                mapOf(
+                    "monitorClass" to (monitor?.javaClass?.simpleName ?: "null"),
+                    "wakeLockHeld" to if (::wakeLock.isInitialized) wakeLock.isHeld.toString() else "uninitialized"
+                )
+            )
+        )
         monitorManager.stopCollecting()
         timerStateJob?.cancel()
         wakeLockRefreshJob?.cancel()
@@ -200,6 +244,14 @@ class MonitorService : Service() {
 
         // 清除监控状态
         statusManager.setIsMonitoring(false)
+        diagnosticsManager.updateProcessState(
+            ProcessState(
+                source = "monitor_service_destroyed",
+                monitoring = false,
+                accessibilityConnected = AppPauseAccessibilityService.isInitialized(),
+                monitorServiceActive = false
+            )
+        )
 
         super.onDestroy()
     }
