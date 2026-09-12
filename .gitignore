@@ -96,3 +96,6 @@ nul
 
 # 本地修复报告
 docs/report/
+
+# Codex 本地配置
+/.codex/

@@ -47,5 +47,11 @@
 ## 代码规范
 
 - UI Compose 规范：参见 `.agents/skills/ui-convention/SKILL.md`。
-- 涉及 Git 状态检查、分支、提交、合并、回滚、推送或历史修改时，使用机器级
-  `$git-workflow` skill。
+
+## Git 工作流
+
+- 通用 Git 安全操作遵循用户级 `$git-workflow` skill；暂存、提交、切换分支、合并、回滚、拉取和推送等写操作均需获得对应的明确授权，提交不代表推送。
+- `dev` 是日常开发与集成分支；`master` 是稳定发布分支，仅在版本发布或大迭代获得明确指令时才把 `dev` 或发布分支合入 `master`。
+- `feature/*`、`fix/*`、`refactor/*`、`docs/*` 从 `dev` 派生并合回 `dev`；`hotfix/*` 从 `master` 派生并将修复同步回 `dev`；Codex 创建的分支默认使用 `codex/` 前缀。
+- 提交信息使用 `<type>(<scope>): <中文说明>`，其中 `type` 和可选的 `scope` 使用简短英文；提交前检查实际暂存差异并执行与风险相称的验证，不使用 `--no-verify`。
+- 合并需要保留分支拓扑时使用 `git merge --no-ff <source>`；功能和修复分支合入 `dev`，合并后运行相关验证且不自动推送。
